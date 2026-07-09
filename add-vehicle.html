@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Add Vehicle — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.09);}
+  .sidebar{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,0.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,0.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,0.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:28px 32px;max-width:720px;}
+  label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+  input[type=text],input[type=number],input[type=tel],textarea{width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+  input:focus,select:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,.2);}
+  .fg{margin-bottom:20px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .sec{font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#e2e2e8;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:8px;margin-top:28px;}
+  .sec:first-of-type{margin-top:0;}
+  .sec .ms{font-size:18px;color:#00f0ff;}
+  .btn-submit{display:inline-flex;align-items:center;gap:7px;padding:13px 28px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border-radius:11px;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 24px rgba(0,240,255,.18);}
+  .btn-submit:hover{filter:brightness(1.08);transform:translateY(-1px);}
+  .btn-submit:disabled{opacity:.55;cursor:default;transform:none;}
+  .btn-back{display:inline-flex;align-items:center;gap:5px;padding:11px 18px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:14px;border-radius:10px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btn-back:hover{background:rgba(255,255,255,.08);}
+  .photo-preview{height:160px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03);position:relative;margin-bottom:10px;border:1px solid rgba(255,255,255,.07);}
+  .photo-preview img{width:100%;height:100%;object-fit:cover;}
+  .photo-clear{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:none;color:#e2e2e8;border-radius:50%;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;}
+  .upload-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#b9cacb;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all .18s;}
+  .upload-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14);}
+  .readonly-field{padding:11px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:10px;font-size:14px;color:#00f0ff;font-family:'JetBrains Mono',monospace;}
+  .err{display:none;padding:10px 14px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:9px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
+  .success-banner{display:none;padding:14px 18px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#00d4aa;margin-bottom:16px;align-items:center;gap:8px;}
+  @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr !important}.body{padding:14px 14px !important}}
+</style>
+</head>
+<body>
+<div id="sidebar-root" class="sidebar"></div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <a href="admin-fleet.html" class="btn-back" style="padding:7px 12px">
+        <span class="material-symbols-outlined ms" style="font-size:18px">arrow_back</span>
+      </a>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Add New Vehicle</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Add a vehicle to your fleet</div>
+      </div>
+    </div>
+    <span id="orgLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;letter-spacing:.12em;text-transform:uppercase"></span>
+  </div>
+
+  <div class="body">
+
+    <div class="success-banner" id="successBanner">
+      <span class="material-symbols-outlined ms" style="font-size:16px">check_circle</span>
+      Vehicle added to fleet successfully! <a href="admin-fleet.html" style="color:#00d4aa;margin-left:8px">View Fleet →</a>
+    </div>
+    <div class="err" id="errBox"></div>
+
+    <form id="addVehForm">
+
+      <!-- ── Identification ── -->
+      <div class="sec"><span class="material-symbols-outlined ms">directions_car</span> Vehicle Identification</div>
+      <div class="grid2">
+        <div class="fg"><label>Make *</label><input id="avMake" type="text" placeholder="e.g. Caterpillar" required/></div>
+        <div class="fg"><label>Model *</label><input id="avModel" type="text" placeholder="e.g. 390F Excavator" required/></div>
+        <div class="fg"><label>Year *</label><input id="avYear" type="number" placeholder="2024" min="1980" max="2030" required/></div>
+        <div class="fg"><label>Registration Plate *</label><input id="avPlate" type="text" placeholder="ABC-123-X" required/></div>
+      </div>
+
+      <!-- ── Type ── -->
+      <div class="sec"><span class="material-symbols-outlined ms">category</span> Vehicle Type</div>
+      <div class="fg">
+        <label>Vehicle Type *</label>
+        <select id="avType" required>
+          <optgroup label="──── Earth Moving ────">
+            <option value="Excavator">Excavator</option>
+            <option value="Mini Excavator">Mini Excavator</option>
+            <option value="Backhoe Loader">Backhoe Loader</option>
+            <option value="Wheel Loader">Wheel Loader</option>
+            <option value="Compact Track Loader">Compact Track Loader</option>
+            <option value="Skid Steer Loader">Skid Steer Loader</option>
+            <option value="Bulldozer">Bulldozer</option>
+            <option value="Motor Grader">Motor Grader</option>
+            <option value="Compactor">Compactor</option>
+          </optgroup>
+          <optgroup label="──── Trucks (On-Road) ────">
+            <option value="Heavy Truck">Heavy Truck</option>
+            <option value="Rigid Truck">Rigid Truck</option>
+            <option value="Tipper Truck">Tipper Truck</option>
+            <option value="Flatbed Truck">Flatbed Truck</option>
+            <option value="Curtainsider Truck">Curtainsider Truck</option>
+            <option value="Refrigerated Truck">Refrigerated Truck</option>
+            <option value="Tanker Truck">Tanker Truck</option>
+            <option value="Concrete Mixer">Concrete Mixer</option>
+            <option value="Car Transporter">Car Transporter</option>
+            <option value="Crane Truck">Crane Truck</option>
+          </optgroup>
+          <optgroup label="──── Trailers ────">
+            <option value="Flatbed Trailer">Flatbed Trailer</option>
+            <option value="Curtainsider Trailer">Curtainsider Trailer</option>
+            <option value="Refrigerated Trailer">Refrigerated Trailer</option>
+            <option value="Tanker Trailer">Tanker Trailer</option>
+            <option value="Tipper Trailer">Tipper Trailer</option>
+            <option value="Lowboy Trailer">Lowboy Trailer</option>
+            <option value="Skeletal Trailer">Skeletal Trailer</option>
+            <option value="Car Transporter Trailer">Car Transporter Trailer</option>
+          </optgroup>
+          <optgroup label="──── Mining & Heavy Haul ────">
+            <option value="Drill Rig">Drill Rig</option>
+            <option value="Rigid Dump Truck">Rigid Dump Truck</option>
+            <option value="Articulated Hauler">Articulated Hauler</option>
+          </optgroup>
+          <optgroup label="──── Cranes & Lifting ────">
+            <option value="Crane">Crane</option>
+            <option value="Mobile Crane">Mobile Crane</option>
+            <option value="Tower Crane">Tower Crane</option>
+            <option value="Crawler Crane">Crawler Crane</option>
+            <option value="Overhead Crane">Overhead Crane</option>
+            <option value="Boom Truck">Boom Truck</option>
+            <option value="Container Reachstacker">Container Reachstacker</option>
+            <option value="Straddle Carrier">Straddle Carrier</option>
+            <option value="High Reach Truck">High Reach Truck</option>
+          </optgroup>
+          <optgroup label="──── Forklifts & Warehouse ────">
+            <option value="Forklift">Forklift</option>
+            <option value="Rough Terrain Forklift">Rough Terrain Forklift</option>
+            <option value="Order Picker">Order Picker</option>
+            <option value="Pallet Jack">Pallet Jack</option>
+            <option value="Telehandler">Telehandler</option>
+          </optgroup>
+          <optgroup label="──── Aerial Work Platforms ────">
+            <option value="Scissor Lift">Scissor Lift</option>
+            <option value="Boom Lift">Boom Lift</option>
+          </optgroup>
+          <optgroup label="──── Power & Utilities ────">
+            <option value="Generator">Generator</option>
+            <option value="Compressor">Compressor</option>
+            <option value="Light Tower">Light Tower</option>
+            <option value="Water Pump">Water Pump</option>
+          </optgroup>
+          <optgroup label="──── Specialty & Road ────">
+            <option value="Road Sweeper">Road Sweeper</option>
+            <option value="Water Bowser">Water Bowser</option>
+            <option value="Concrete Pump">Concrete Pump</option>
+            <option value="Asphalt Paver">Asphalt Paver</option>
+            <option value="Cold Planer">Cold Planer</option>
+          </optgroup>
+          <optgroup label="──── Light Vehicles ────">
+            <option value="Van">Van</option>
+            <option value="Pickup Truck">Pickup Truck</option>
+            <option value="Minibus">Minibus</option>
+          </optgroup>
+          <optgroup label="──── Other ────">
+            <option value="Other">Other</option>
+          </optgroup>
+        </select>
+        <div id="otherTypeWrap" style="display:none;margin-top:10px">
+          <label>Specify Vehicle Type *</label>
+          <input id="avTypeOther" type="text" placeholder="Describe the vehicle type…" style="border-color:rgba(0,240,255,.3)"/>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:4px">This will be used as the vehicle type label</div>
+        </div>
+      </div>
+
+      <!-- ── Photo ── -->
+      <div class="sec"><span class="material-symbols-outlined ms">photo_camera</span> Vehicle Photo <span style="font-family:'Inter',sans-serif;font-size:12px;font-weight:400;color:#849495;letter-spacing:0;text-transform:none">(optional)</span></div>
+      <div class="fg">
+        <div id="photoPreview" style="display:none" class="photo-preview">
+          <img id="avPhotoImg" src="" alt=""/>
+          <button type="button" class="photo-clear" onclick="clearPhoto()">×</button>
+        </div>
+        <input type="file" id="avPhoto" accept="image/*" style="display:none" onchange="handlePhoto(this)"/>
+        <button type="button" class="upload-btn" onclick="document.getElementById('avPhoto').click()">
+          <span class="material-symbols-outlined ms" style="font-size:18px">add_photo_alternate</span>
+          Upload Vehicle Photo
+        </button>
+      </div>
+
+      <!-- ── Service ── -->
+      <div class="sec"><span class="material-symbols-outlined ms">build</span> Odometer & Service</div>
+      <div class="grid2">
+        <div class="fg">
+          <label>Current Odometer (km) *</label>
+          <input id="avKm" type="number" placeholder="0" min="0" required oninput="calcNext()"/>
+        </div>
+        <div class="fg">
+          <label>Service Interval (km) *</label>
+          <input id="avInterval" type="number" placeholder="10000" min="500" required oninput="calcNext()"/>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Next Service at (km) — auto-calculated</label>
+        <div class="readonly-field" id="avNextSvc">— enter odometer &amp; interval above —</div>
+      </div>
+
+      <!-- ── Status ── -->
+      <div class="sec"><span class="material-symbols-outlined ms">info</span> Initial Status</div>
+      <div class="fg" style="margin-bottom:32px">
+        <label>Status</label>
+        <select id="avStatus">
+          <option value="available">Available</option>
+          <option value="maintenance">Under Maintenance</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span class="material-symbols-outlined ms" style="font-size:18px">add</span>
+          Add to Fleet
+        </button>
+        <a href="admin-fleet.html" class="btn-back">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="dc.js"></script>
+<script src="sidebar.js"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('add-vehicle.html');
+var user = EC_AUTH.require(['admin']);
+DC_DATA.setOrgScope(user.orgId);
+document.getElementById('orgLabel').textContent = user.org || 'EquipCore';
+
+var _photoData = null;
+
+// Show/hide "Other" text field
+document.getElementById('avType').addEventListener('change', function() {
+  var wrap = document.getElementById('otherTypeWrap');
+  var inp  = document.getElementById('avTypeOther');
+  if (this.value === 'Other') {
+    wrap.style.display = 'block';
+    inp.required = true;
+    inp.focus();
+  } else {
+    wrap.style.display = 'none';
+    inp.required = false;
+    inp.value = '';
+  }
+});
+
+function handlePhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _photoData = e.target.result;
+    document.getElementById('avPhotoImg').src = _photoData;
+    document.getElementById('photoPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto() {
+  _photoData = null;
+  document.getElementById('avPhoto').value = '';
+  document.getElementById('avPhotoImg').src = '';
+  document.getElementById('photoPreview').style.display = 'none';
+}
+
+function calcNext() {
+  var km  = parseInt(document.getElementById('avKm').value) || 0;
+  var ivl = parseInt(document.getElementById('avInterval').value) || 0;
+  document.getElementById('avNextSvc').textContent = (km && ivl) ? (km + ivl).toLocaleString() + ' km' : '— enter odometer & interval above —';
+}
+
+document.getElementById('addVehForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var err  = document.getElementById('errBox');
+  var btn  = document.getElementById('submitBtn');
+  err.style.display = 'none';
+
+  var make       = document.getElementById('avMake').value.trim();
+  var model      = document.getElementById('avModel').value.trim();
+  var year       = parseInt(document.getElementById('avYear').value);
+  var typeSelect = document.getElementById('avType').value;
+  var typeOther  = document.getElementById('avTypeOther').value.trim();
+  var type       = typeSelect === 'Other' ? typeOther : typeSelect;
+  var plate      = document.getElementById('avPlate').value.trim().toUpperCase();
+  var km         = parseInt(document.getElementById('avKm').value) || 0;
+  var interval   = parseInt(document.getElementById('avInterval').value) || 0;
+  var status     = document.getElementById('avStatus').value;
+
+  if (!make || !model || !year || !typeSelect || !plate) { err.textContent = 'Please fill in all required fields.'; err.style.display = 'block'; return; }
+  if (typeSelect === 'Other' && !typeOther) { err.textContent = 'Please specify the vehicle type.'; err.style.display = 'block'; document.getElementById('avTypeOther').focus(); return; }
+  if (interval < 500) { err.textContent = 'Service interval must be at least 500 km.'; err.style.display = 'block'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Adding…';
+
+  try {
+    await DC_DATA.init();
+    await DC_DATA.addVehicle({
+      make, model, year, type,
+      regPlate: plate,
+      km, serviceIntervalKm: interval,
+      nextServiceKm: km + interval,
+      status,
+      photo: _photoData || null,
+      orgId: user.orgId || null,
+    });
+    document.getElementById('successBanner').style.display = 'flex';
+    document.getElementById('addVehForm').reset();
+    clearPhoto();
+    document.getElementById('avNextSvc').textContent = '— enter odometer & interval above —';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch(ex) {
+    err.textContent = ex.message || 'Failed to add vehicle. Please try again.';
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:18px">add</span> Add to Fleet';
+  }
+});
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>

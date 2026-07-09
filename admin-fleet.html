@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fleet Management — EquipCore Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+  .tbl td{padding:11px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tbody tr:hover td{background:rgba(0,240,255,.02);}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  .bblue{background:rgba(0,240,255,.1);color:#00f0ff;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:filter .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:background .18s;}
+  .btng:hover{background:rgba(255,255,255,.09);}
+  .btny{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,217,61,.08);color:#ffd93d;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,217,61,.18);cursor:pointer;transition:background .18s;}
+  .btny:hover{background:rgba(255,217,61,.14);}
+  input,select,textarea{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;width:100%;outline:none;transition:border-color .18s;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+  select optgroup{background:#0d1014;color:#849495;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:5px;}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(8,10,14,.85);backdrop-filter:blur(12px);z-index:900;align-items:center;justify-content:center;}
+  .modal-bg.show{display:flex;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .modal-bg.show .modal-card{animation:slideUp .22s ease both;}
+  /* Type dropdown */
+  .type-dd{display:none;position:fixed;z-index:9999;background:#0d1014;border:1px solid rgba(0,240,255,.15);border-radius:11px;max-height:min(420px,60vh);overflow-y:scroll;box-shadow:0 16px 40px rgba(0,0,0,.8),0 0 0 1px rgba(0,240,255,.06);}
+  .type-dd::-webkit-scrollbar{width:5px;}
+  .type-dd::-webkit-scrollbar-track{background:transparent;}
+  .type-dd::-webkit-scrollbar-thumb{background:rgba(0,240,255,.25);border-radius:3px;}
+  .type-dd::-webkit-scrollbar-thumb:hover{background:rgba(0,240,255,.45);}
+  .type-dd-group{padding:8px 12px 3px;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:#00f0ff;opacity:0.4;border-top:1px solid rgba(255,255,255,.05);margin-top:4px;}
+  .type-dd-group:first-child{border-top:none;margin-top:0;padding-top:6px;}
+  .type-dd-item{padding:7px 14px;font-size:13px;cursor:pointer;color:#e2e2e8;transition:background .1s;}
+  .type-dd-item:hover,.type-dd-item.sel{background:rgba(0,240,255,.1);color:#00f0ff;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){
+    .body{padding:14px 12px!important}
+    .topbar{padding:0 14px!important;height:auto!important;min-height:56px;flex-wrap:wrap;padding-top:10px!important;padding-bottom:10px!important;gap:6px}
+    #statsRow{grid-template-columns:repeat(2,1fr)!important}
+    .tbl th,.tbl td{padding:8px 10px!important;font-size:12px!important}
+    .modal-bg{align-items:flex-end!important}
+    .modal-bg .modal-card{border-radius:16px 16px 0 0!important;width:100%!important;max-width:100%!important;margin:0!important;max-height:88vh!important;overflow-y:auto!important}
+    .btnp,.btng,.btny{min-height:42px}
+  }
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Fleet Management</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Upload vehicles, manage service schedules and fleet status</div>
+    </div>
+    <a href="add-vehicle.html" class="btnp" style="font-size:12px;padding:7px 13px;text-decoration:none">
+      <span class="material-symbols-outlined ms" style="font-size:15px">add</span>Add Vehicle
+    </a>
+  </div>
+
+  <div class="body">
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px" id="statsRow"></div>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <div style="position:relative;flex:1;min-width:200px;max-width:280px">
+        <span class="material-symbols-outlined ms" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;color:#849495;pointer-events:none">search</span>
+        <input id="vSearch" placeholder="Search make, model, plate…" style="padding-left:33px" oninput="renderTable()"/>
+      </div>
+      <select id="vStatus" onchange="renderTable()" style="width:150px">
+        <option value="all">All Statuses</option>
+        <option value="available">Available</option>
+        <option value="on_rent">On Rent</option>
+        <option value="maintenance">Maintenance</option>
+      </select>
+      <select id="vSvc" onchange="renderTable()" style="width:170px">
+        <option value="all">All Service Status</option>
+        <option value="due">Service Due / Overdue</option>
+        <option value="ok">Up to Date</option>
+      </select>
+      <select id="vType" onchange="renderTable()" style="width:190px">
+        <option value="all">All Types</option>
+        <optgroup label="Earth Moving">
+          <option value="EXCAVATOR">Excavator</option>
+          <option value="MINI_EXCAVATOR">Mini Excavator</option>
+          <option value="BACKHOE_LOADER">Backhoe Loader</option>
+          <option value="WHEEL_LOADER">Wheel Loader</option>
+          <option value="COMPACT_TRACK_LOADER">Compact Track Loader</option>
+          <option value="SKID_STEER_LOADER">Skid Steer Loader</option>
+          <option value="BULLDOZER">Bulldozer</option>
+          <option value="MOTOR_GRADER">Motor Grader</option>
+          <option value="COMPACTOR">Compactor</option>
+        </optgroup>
+        <optgroup label="Trucks">
+          <option value="HEAVY_TRUCK">Heavy Truck</option>
+          <option value="RIGID_TRUCK">Rigid Truck</option>
+          <option value="TIPPER_TRUCK">Tipper Truck</option>
+          <option value="FLATBED_TRUCK">Flatbed Truck</option>
+          <option value="CURTAINSIDER_TRUCK">Curtainsider Truck</option>
+          <option value="REFRIGERATED_TRUCK">Refrigerated Truck</option>
+          <option value="TANKER_TRUCK">Tanker Truck</option>
+          <option value="CONCRETE_MIXER">Concrete Mixer</option>
+          <option value="CAR_TRANSPORTER">Car Transporter</option>
+          <option value="CRANE_TRUCK">Crane Truck</option>
+        </optgroup>
+        <optgroup label="Trailers">
+          <option value="FLATBED_TRAILER">Flatbed Trailer</option>
+          <option value="CURTAINSIDER_TRAILER">Curtainsider Trailer</option>
+          <option value="REFRIGERATED_TRAILER">Refrigerated Trailer</option>
+          <option value="TANKER_TRAILER">Tanker Trailer</option>
+          <option value="TIPPER_TRAILER">Tipper Trailer</option>
+          <option value="LOWBOY_TRAILER">Lowboy Trailer</option>
+          <option value="SKELETAL_TRAILER">Skeletal Trailer</option>
+          <option value="CAR_TRANSPORTER_TRAILER">Car Transporter Trailer</option>
+        </optgroup>
+        <optgroup label="Mining &amp; Heavy Haul">
+          <option value="DRILL_RIG">Drill Rig</option>
+          <option value="RIGID_DUMP_TRUCK">Rigid Dump Truck</option>
+          <option value="ARTICULATED_HAULER">Articulated Hauler</option>
+        </optgroup>
+        <optgroup label="Cranes &amp; Lifting">
+          <option value="CRANE">Crane</option>
+          <option value="MOBILE_CRANE">Mobile Crane</option>
+          <option value="TOWER_CRANE">Tower Crane</option>
+          <option value="CRAWLER_CRANE">Crawler Crane</option>
+          <option value="OVERHEAD_CRANE">Overhead Crane</option>
+          <option value="BOOM_TRUCK">Boom Truck</option>
+          <option value="CONTAINER_REACHSTACKER">Container Reachstacker</option>
+          <option value="STRADDLE_CARRIER">Straddle Carrier</option>
+        </optgroup>
+        <optgroup label="Forklifts &amp; Warehouse">
+          <option value="FORKLIFT">Forklift</option>
+          <option value="HIGH_REACH_TRUCK">High Reach Truck</option>
+          <option value="ROUGH_TERRAIN_FORKLIFT">Rough Terrain Forklift</option>
+          <option value="ORDER_PICKER">Order Picker</option>
+          <option value="PALLET_JACK">Pallet Jack</option>
+          <option value="TELEHANDLER">Telehandler</option>
+        </optgroup>
+        <optgroup label="Aerial Work Platforms">
+          <option value="SCISSOR_LIFT">Scissor Lift</option>
+          <option value="BOOM_LIFT">Boom Lift</option>
+        </optgroup>
+        <optgroup label="Power &amp; Utilities">
+          <option value="GENERATOR">Generator</option>
+          <option value="COMPRESSOR">Compressor</option>
+          <option value="LIGHT_TOWER">Light Tower</option>
+          <option value="WATER_PUMP">Water Pump</option>
+        </optgroup>
+        <optgroup label="Specialty &amp; Road">
+          <option value="ROAD_SWEEPER">Road Sweeper</option>
+          <option value="WATER_BOWSER">Water Bowser</option>
+          <option value="CONCRETE_PUMP">Concrete Pump</option>
+          <option value="ASPHALT_PAVER">Asphalt Paver</option>
+          <option value="COLD_PLANER">Cold Planer</option>
+        </optgroup>
+        <optgroup label="Light Vehicles">
+          <option value="VAN">Van</option>
+          <option value="PICKUP_TRUCK">Pickup Truck</option>
+          <option value="MINIBUS">Minibus</option>
+        </optgroup>
+        <option value="OTHER">Other</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="glass" style="border-radius:13px;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr>
+            <th>Vehicle</th>
+            <th>Type</th>
+            <th>Plate</th>
+            <th>Odometer</th>
+            <th>Next Service At</th>
+            <th>Svc Status</th>
+            <th>Fleet Status</th>
+            <th>Added</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="vBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Vehicle Modal -->
+<div class="modal-bg" id="addVehModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:520px;border-color:rgba(0,240,255,.14);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:#00f0ff">local_shipping</span>
+      </div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Add New Vehicle</div>
+        <div style="font-size:12px;color:#849495">Upload a vehicle to the fleet catalog</div>
+      </div>
+      <button onclick="closeAddVeh()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:22px;line-height:1">×</button>
+    </div>
+    <form id="addVehForm" style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label>Make</label><input id="avMake" placeholder="Caterpillar" required/></div>
+        <div><label>Model</label><input id="avModel" placeholder="390F Excavator" required/></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label>Year</label><input id="avYear" type="number" placeholder="2024" min="1990" max="2030" required/></div>
+        <div>
+          <label>Vehicle Type</label>
+          <!-- Searchable type dropdown -->
+          <div style="position:relative" id="avTypeWrap">
+            <div style="position:relative">
+              <input type="text" id="avTypeSearch"
+                     placeholder="Search vehicle type…"
+                     autocomplete="off"
+                     style="padding-right:32px"
+                     oninput="filterVTypes()"
+                     onfocus="openVTypeDD()"
+                     onblur="setTimeout(closeVTypeDD,180)"/>
+              <span class="material-symbols-outlined ms" style="position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:16px;color:#849495;pointer-events:none">expand_more</span>
+            </div>
+            <input type="hidden" id="avType" value="Excavator"/>
+          </div>
+        </div>
+      </div>
+      <div><label>Registration Plate</label><input id="avPlate" placeholder="ABC-123-X" required/></div>
+      <!-- Photo upload -->
+      <div>
+        <label>Vehicle Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;color:#849495">(optional)</span></label>
+        <div id="photoPreview" style="display:none;margin-bottom:8px;height:140px;border-radius:9px;overflow:hidden;background:rgba(255,255,255,.04);position:relative">
+          <img id="avPhotoImg" src="" alt="" style="width:100%;height:100%;object-fit:cover"/>
+          <button type="button" onclick="clearPhoto()" style="position:absolute;top:7px;right:7px;background:rgba(0,0,0,.65);border:none;color:#e2e2e8;border-radius:50%;width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1">×</button>
+        </div>
+        <input type="file" id="avPhoto" accept="image/*" style="display:none" onchange="handlePhotoSelect(this)"/>
+        <button type="button" onclick="document.getElementById('avPhoto').click()" class="btng" style="width:100%;justify-content:center;gap:7px">
+          <span class="material-symbols-outlined ms" style="font-size:15px">add_photo_alternate</span>Upload Vehicle Photo
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label>Current Odometer (km)</label>
+          <input id="avKm" type="number" placeholder="0" min="0" required oninput="calcNextSvc()"/>
+        </div>
+        <div>
+          <label>Service Interval (km)</label>
+          <input id="avInterval" type="number" placeholder="10000" min="500" required oninput="calcNextSvc()"/>
+        </div>
+      </div>
+      <div>
+        <label>Next Service at (km)</label>
+        <input id="avNextSvc" type="text" placeholder="— enter odometer &amp; interval above —" readonly style="background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.05);color:#00f0ff;cursor:default;font-family:'JetBrains Mono',monospace"/>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:4px">Auto-calculated · read only</div>
+      </div>
+      <div><label>Initial Status</label>
+        <select id="avStatus">
+          <option value="available">Available</option>
+          <option value="maintenance">Under Maintenance</option>
+        </select>
+      </div>
+      <div id="avErr" style="display:none;padding:9px 12px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:8px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+      <button class="btnp" type="submit" style="width:100%;justify-content:center;padding:11px">
+        <span class="material-symbols-outlined ms" style="font-size:16px">add</span>Add to Fleet
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Service Modal -->
+<div class="modal-bg" id="editSvcModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:420px;border-color:rgba(255,217,61,.14)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(255,217,61,.1);display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:#ffd93d">build</span>
+      </div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Service Settings</div>
+        <div style="font-size:12px;color:#849495" id="svcVehLabel">—</div>
+      </div>
+      <button onclick="closeEditSvc()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:22px;line-height:1">×</button>
+    </div>
+    <form id="editSvcForm" style="display:flex;flex-direction:column;gap:14px">
+      <input type="hidden" id="svcVehId"/>
+      <div>
+        <label>Current Odometer (km)</label>
+        <input id="svcKm" type="number" min="0" required oninput="recalcNext()"/>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:4px">Update current km reading if it has changed</div>
+      </div>
+      <div>
+        <label>Service Interval (km)</label>
+        <input id="svcInterval" type="number" min="500" required oninput="recalcNext()"/>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:4px">Service required every X km</div>
+      </div>
+      <div>
+        <label>Next Service at (km)</label>
+        <input id="svcNextKm" type="text" readonly style="background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.05);color:#00f0ff;cursor:default;font-family:'JetBrains Mono',monospace"/>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:4px">Auto-calculated · read only</div>
+      </div>
+      <button class="btnp" type="submit" style="width:100%;justify-content:center;padding:11px">Update Service Settings</button>
+    </form>
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="firebase-config.js"></script>
+<script src="dc.js?v=2"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('admin-fleet.html');
+const _ecUser = EC_AUTH.require(['admin']);
+DC_DATA.setOrgScope(_ecUser.orgId);
+
+// ─── Type helpers ────────────────────────────────────────────────────────────
+function typeLabel(t) {
+  if (!t) return '—';
+  return t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+// ─── Searchable type dropdown ─────────────────────────────────────────────────
+const VEH_TYPE_GROUPS = [
+  { g: 'Earth Moving',         t: ['Excavator','Mini Excavator','Backhoe Loader','Wheel Loader','Compact Track Loader','Skid Steer Loader','Bulldozer','Motor Grader','Compactor'] },
+  { g: 'Trucks',               t: ['Heavy Truck','Rigid Truck','Tipper Truck','Flatbed Truck','Curtainsider Truck','Refrigerated Truck','Tanker Truck','Concrete Mixer','Car Transporter','Crane Truck'] },
+  { g: 'Trailers',             t: ['Flatbed Trailer','Curtainsider Trailer','Refrigerated Trailer','Tanker Trailer','Tipper Trailer','Lowboy Trailer','Skeletal Trailer','Car Transporter Trailer'] },
+  { g: 'Mining & Heavy Haul',  t: ['Drill Rig','Rigid Dump Truck','Articulated Hauler'] },
+  { g: 'Cranes & Lifting',     t: ['Crane','Mobile Crane','Tower Crane','Crawler Crane','Overhead Crane','Boom Truck','Container Reachstacker','Straddle Carrier'] },
+  { g: 'Forklifts & Warehouse',t: ['Forklift','High Reach Truck','Rough Terrain Forklift','Order Picker','Pallet Jack','Telehandler'] },
+  { g: 'Aerial Work Platforms',t: ['Scissor Lift','Boom Lift'] },
+  { g: 'Power & Utilities',    t: ['Generator','Compressor','Light Tower','Water Pump'] },
+  { g: 'Specialty & Road',     t: ['Road Sweeper','Water Bowser','Concrete Pump','Asphalt Paver','Cold Planer'] },
+  { g: 'Light Vehicles',       t: ['Van','Pickup Truck','Minibus'] },
+  { g: 'Other',                t: ['Other'] },
+];
+
+let _vtDD = null;
+function _getVtDD() {
+  if (!_vtDD || !document.body.contains(_vtDD)) {
+    _vtDD = document.createElement('div');
+    _vtDD.id = 'avTypeDD';
+    _vtDD.className = 'type-dd';
+    document.body.appendChild(_vtDD);
+  }
+  return _vtDD;
+}
+function renderVTypeDD(q) {
+  const dd  = _getVtDD();
+  const cur = document.getElementById('avType').value;
+  q = (q || '').toLowerCase();
+  let html = '';
+  VEH_TYPE_GROUPS.forEach(grp => {
+    const matches = q ? grp.t.filter(t => t.toLowerCase().includes(q)) : grp.t;
+    if (!matches.length) return;
+    html += `<div class="type-dd-group">${grp.g}</div>`;
+    matches.forEach(t => {
+      const sel = cur === t;
+      html += `<div class="type-dd-item${sel?' sel':''}" onmousedown="selectVType(event,'${t.replace(/'/g,"\\'")}')">${t}</div>`;
+    });
+  });
+  if (!html) html = `<div style="padding:12px 14px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px">No types found</div>`;
+  dd.innerHTML = html;
+}
+function openVTypeDD() {
+  const inp = document.getElementById('avTypeSearch');
+  const r   = inp.getBoundingClientRect();
+  const dd  = _getVtDD();
+  renderVTypeDD(inp.value);
+  // Prefer opening upward if less than 340px below
+  const spaceBelow = window.innerHeight - r.bottom;
+  const spaceAbove = r.top;
+  const maxH = Math.min(420, spaceBelow > 340 ? spaceBelow - 12 : spaceAbove - 12);
+  dd.style.cssText = `display:block;width:${r.width}px;left:${r.left}px;max-height:${maxH}px;`;
+  if (spaceBelow >= 340 || spaceBelow >= spaceAbove) {
+    dd.style.top = (r.bottom + 4) + 'px';
+  } else {
+    dd.style.top = (r.top - Math.min(maxH, 420) - 4) + 'px';
+  }
+  // Scroll selected item into view
+  requestAnimationFrame(() => {
+    const sel = dd.querySelector('.type-dd-item.sel');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+  });
+}
+function closeVTypeDD() {
+  _getVtDD().style.display = 'none';
+  document.getElementById('avTypeSearch').value = document.getElementById('avType').value || 'Excavator';
+}
+function filterVTypes() {
+  const inp = document.getElementById('avTypeSearch');
+  const r   = inp.getBoundingClientRect();
+  const dd  = _getVtDD();
+  renderVTypeDD(inp.value);
+  dd.style.cssText = `display:block;width:${r.width}px;left:${r.left}px;top:${r.bottom + 4}px;`;
+}
+function selectVType(e, type) {
+  e.preventDefault();
+  document.getElementById('avType').value = type;
+  document.getElementById('avTypeSearch').value = type;
+  _getVtDD().style.display = 'none';
+}
+
+// ─── Badges ──────────────────────────────────────────────────────────────────
+function svcBadge(v) {
+  const left = v.nextServiceKm - v.km;
+  if (left <= 0)    return `<span class="b bo">Overdue</span>`;
+  if (left <= 2000) return `<span class="b bp">Due Soon</span>`;
+  return `<span class="b ba">Up to Date</span>`;
+}
+
+function fleetBadge(s) {
+  if (s === 'available')   return `<span class="b ba">Available</span>`;
+  if (s === 'on_rent')     return `<span class="b bblue">On Rent</span>`;
+  if (s === 'maintenance') return `<span class="b bp">Maintenance</span>`;
+  return `<span class="b">${s}</span>`;
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const veh = DC_DATA.getVehicles();
+  const total  = veh.length;
+  const avail  = veh.filter(v => v.status === 'available').length;
+  const onRent = veh.filter(v => v.status === 'on_rent').length;
+  const maint  = veh.filter(v => v.status === 'maintenance').length;
+  const dueSvc = veh.filter(v => (v.nextServiceKm - v.km) <= 2000).length;
+  document.getElementById('statsRow').innerHTML = [
+    { icon:'garage',        bg:'rgba(0,240,255,.1)',  color:'#00f0ff', val:total,   label:'Total Fleet' },
+    { icon:'check_circle',  bg:'rgba(0,212,170,.1)',  color:'#00d4aa', val:avail,   label:'Available' },
+    { icon:'local_shipping',bg:'rgba(0,240,255,.08)', color:'#00dbe9', val:onRent,  label:'On Rent' },
+    { icon:'build',         bg:'rgba(255,217,61,.1)', color:'#ffd93d', val:maint,   label:'Maintenance' },
+    { icon:'warning',       bg:'rgba(255,107,107,.1)',color:'#ff6b6b', val:dueSvc,  label:'Service Due' },
+  ].map(c => `<div class="glass-lo" style="border-radius:12px;padding:16px;display:flex;align-items:center;gap:10px">
+    <div style="width:34px;height:34px;border-radius:9px;background:${c.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <span class="material-symbols-outlined ms" style="font-size:17px;color:${c.color}">${c.icon}</span>
+    </div>
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:${c.color}">${c.val}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">${c.label}</div>
+    </div>
+  </div>`).join('');
+}
+
+// ─── Table ────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const q      = (document.getElementById('vSearch').value || '').toLowerCase();
+  const sf     = document.getElementById('vStatus').value;
+  const svcf   = document.getElementById('vSvc').value;
+  const typef  = document.getElementById('vType').value;
+  const veh    = DC_DATA.getVehicles().filter(v => {
+    if (sf !== 'all' && v.status !== sf) return false;
+    const left = v.nextServiceKm - v.km;
+    if (svcf === 'due' && left > 2000)  return false;
+    if (svcf === 'ok'  && left <= 2000) return false;
+    if (typef !== 'all' && v.type !== typef) return false;
+    if (q && !`${v.make} ${v.model} ${v.regPlate} ${typeLabel(v.type)}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const tbody = document.getElementById('vBody');
+  if (!veh.length) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No vehicles match your filters</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = veh.map(v => {
+    const left = v.nextServiceKm - v.km;
+    const leftColor = left <= 0 ? '#ff6b6b' : left <= 2000 ? '#ffd93d' : '#849495';
+    const leftLabel = left <= 0
+      ? `${Math.abs(left).toLocaleString()} km overdue`
+      : `${left.toLocaleString()} km remaining`;
+    const canToggle = v.status !== 'on_rent';
+    const toggleLabel = v.status === 'maintenance' ? 'Set Available' : 'Maintenance';
+    return `<tr>
+      <td data-label="Vehicle">
+        <div style="display:flex;align-items:center;gap:10px">
+          ${v.imageUrl
+            ? `<img src="${v.imageUrl}" alt="" style="width:38px;height:38px;border-radius:7px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)"/>`
+            : `<div style="width:38px;height:38px;border-radius:7px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:17px;color:#849495">local_shipping</span></div>`}
+          <div>
+            <div style="font-weight:600">${v.make} ${v.model}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${v.regPlate} · ${v.year}</div>
+          </div>
+        </div>
+      </td>
+      <td data-label="Type" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${typeLabel(v.type)}</td>
+      <td data-label="Plate" style="font-family:'JetBrains Mono',monospace;font-size:12px">${v.regPlate}</td>
+      <td data-label="Odometer" style="font-family:'JetBrains Mono',monospace;font-size:12px">${v.km.toLocaleString()} km</td>
+      <td data-label="Next Svc">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px">${v.nextServiceKm.toLocaleString()} km</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${leftColor}">${leftLabel}</div>
+      </td>
+      <td data-label="Svc Status">${svcBadge(v)}</td>
+      <td data-label="Status">${fleetBadge(v.status)}</td>
+      <td data-label="Added" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${v.addedAt}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btng" style="font-size:12px;padding:8px 12px" onclick="openEditSvc('${v.id}')">
+            <span class="material-symbols-outlined ms" style="font-size:14px">build</span>Service
+          </button>
+          ${canToggle ? `<button class="btng" style="font-size:12px;padding:8px 12px" onclick="toggleStatus('${v.id}')">${toggleLabel}</button>` : ''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleStatus(id) {
+  const v = DC_DATA.getVehicles().find(v => v.id === id);
+  if (!v || v.status === 'on_rent') return;
+  await DC_DATA.updateVehicleStatus(id, v.status === 'maintenance' ? 'available' : 'maintenance');
+  renderAll();
+}
+
+// ─── Photo handling ───────────────────────────────────────────────────────────
+let _photoData = null;
+function compressImg(file, cb) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 480, ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * ratio); c.height = Math.round(img.height * ratio);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      cb(c.toDataURL('image/jpeg', 0.78));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function handlePhotoSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  compressImg(file, dataUrl => {
+    _photoData = dataUrl;
+    document.getElementById('avPhotoImg').src = dataUrl;
+    document.getElementById('photoPreview').style.display = 'block';
+  });
+}
+function clearPhoto() {
+  _photoData = null;
+  document.getElementById('avPhoto').value = '';
+  document.getElementById('avPhotoImg').src = '';
+  document.getElementById('photoPreview').style.display = 'none';
+}
+
+// ─── Add Vehicle ──────────────────────────────────────────────────────────────
+function calcNextSvc() {
+  const km  = +document.getElementById('avKm').value;
+  const ivl = +document.getElementById('avInterval').value;
+  const el  = document.getElementById('avNextSvc');
+  if (km >= 0 && ivl > 0) {
+    const raw = km + ivl;
+    el.value = raw.toLocaleString() + ' km';
+    el.dataset.raw = raw;
+  } else { el.value = ''; el.dataset.raw = ''; }
+}
+function openAddVeh() {
+  document.getElementById('addVehForm').reset();
+  document.getElementById('avErr').style.display = 'none';
+  clearPhoto();
+  const nxtEl = document.getElementById('avNextSvc');
+  nxtEl.value = ''; nxtEl.dataset.raw = '';
+  selectVType({ preventDefault(){} }, 'Excavator');
+  refreshCS('avStatus');
+  document.getElementById('addVehModal').classList.add('show');
+}
+function closeAddVeh() { document.getElementById('addVehModal').classList.remove('show'); }
+document.getElementById('addVehForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const make   = document.getElementById('avMake').value.trim();
+  const model  = document.getElementById('avModel').value.trim();
+  const year   = +document.getElementById('avYear').value;
+  const type   = document.getElementById('avType').value;
+  const plate  = document.getElementById('avPlate').value.trim().toUpperCase();
+  const km     = +document.getElementById('avKm').value;
+  const ivl    = +document.getElementById('avInterval').value;
+  const nxt    = +(document.getElementById('avNextSvc').dataset.raw || km + ivl);
+  const status = document.getElementById('avStatus').value;
+  const exists = DC_DATA.getVehicles().find(v => v.regPlate === plate);
+  if (exists) {
+    const err = document.getElementById('avErr');
+    err.textContent = `Plate ${plate} already exists in the fleet.`;
+    err.style.display = 'block'; return;
+  }
+  if (!type) {
+    const err = document.getElementById('avErr');
+    err.textContent = 'Please select a vehicle type.';
+    err.style.display = 'block'; return;
+  }
+  await DC_DATA.addVehicle({ make, model, year, type, regPlate: plate, km, serviceIntervalKm: ivl, nextServiceKm: nxt, status, photo: _photoData, orgId: _ecUser.orgId || null });
+  closeAddVeh();
+  renderAll();
+});
+
+// ─── Edit Service ─────────────────────────────────────────────────────────────
+function recalcNext() {
+  const km  = +document.getElementById('svcKm').value;
+  const ivl = +document.getElementById('svcInterval').value;
+  const el  = document.getElementById('svcNextKm');
+  if (km >= 0 && ivl > 0) {
+    const raw = km + ivl;
+    el.value = raw.toLocaleString() + ' km';
+    el.dataset.raw = raw;
+  } else { el.value = ''; el.dataset.raw = ''; }
+}
+function openEditSvc(id) {
+  const v = DC_DATA.getVehicles().find(v => v.id === id);
+  if (!v) return;
+  document.getElementById('svcVehId').value      = id;
+  document.getElementById('svcVehLabel').textContent = `${v.make} ${v.model} · ${v.regPlate}`;
+  document.getElementById('svcKm').value         = v.km;
+  document.getElementById('svcInterval').value   = v.serviceIntervalKm;
+  const nxtEl = document.getElementById('svcNextKm');
+  nxtEl.value = v.nextServiceKm.toLocaleString() + ' km';
+  nxtEl.dataset.raw = v.nextServiceKm;
+  document.getElementById('editSvcModal').classList.add('show');
+}
+function closeEditSvc() { document.getElementById('editSvcModal').classList.remove('show'); }
+document.getElementById('editSvcForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id  = document.getElementById('svcVehId').value;
+  const km  = +document.getElementById('svcKm').value;
+  const ivl = +document.getElementById('svcInterval').value;
+  const nxt = +(document.getElementById('svcNextKm').dataset.raw || km + ivl);
+  await DC_DATA.updateVehicleKm(id, km);
+  await DC_DATA.updateVehicleService(id, ivl, nxt);
+  closeEditSvc();
+  renderAll();
+});
+
+function renderAll() { renderStats(); renderTable(); }
+DC_DATA.init().then(renderAll).catch(err => {
+  console.error('[DC_DATA]', err);
+  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${err.message}</div>`);
+});
+</script>
+</body></html>

@@ -1,0 +1,613 @@
+# EquipCore — Data Connect Mutations
+
+# ─── Organisations ────────────────────────────────────────────────────────────
+
+mutation CreateOrganisation(
+  $name: String!
+  $sector: String!
+  $regId: String!
+  $contactEmail: String!
+  $domain: String!
+  $logoUrl: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  organisation_insert(data: {
+    name: $name
+    sector: $sector
+    regId: $regId
+    contactEmail: $contactEmail
+    domain: $domain
+    logoUrl: $logoUrl
+    status: ACTIVE
+  })
+}
+
+mutation UpdateOrgStatus($id: UUID!, $status: OrgStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  organisation_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateOrganisation(
+  $id: UUID!
+  $name: String
+  $sector: String
+  $contactEmail: String
+  $domain: String
+  $logoUrl: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  organisation_update(id: $id, data: {
+    name: $name
+    sector: $sector
+    contactEmail: $contactEmail
+    domain: $domain
+    logoUrl: $logoUrl
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteOrganisation($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  organisation_delete(id: $id)
+}
+
+# ─── Org Requests ─────────────────────────────────────────────────────────────
+
+mutation CreateOrgRequest(
+  $orgName: String!
+  $sector: String!
+  $regId: String!
+  $contactName: String!
+  $contactEmail: String!
+  $domain: String!
+) @auth(level: PUBLIC, insecureReason: "Anyone can submit an org registration request.") {
+  orgRequest_insert(data: {
+    orgName: $orgName
+    sector: $sector
+    regId: $regId
+    contactName: $contactName
+    contactEmail: $contactEmail
+    domain: $domain
+    status: PENDING
+  })
+}
+
+mutation ApproveOrgRequest($id: UUID!, $resultingOrgId: UUID!, $adminNotes: String) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  orgRequest_update(id: $id, data: {
+    status: APPROVED
+    resultingOrgId: $resultingOrgId
+    adminNotes: $adminNotes
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation RejectOrgRequest($id: UUID!, $adminNotes: String) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  orgRequest_update(id: $id, data: {
+    status: REJECTED
+    adminNotes: $adminNotes
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteOrgRequest($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  orgRequest_delete(id: $id)
+}
+
+# ─── Users ────────────────────────────────────────────────────────────────────
+
+mutation CreateUser(
+  $name: String!
+  $email: String!
+  $role: UserRole!
+  $organisationId: UUID
+  $avatarUrl: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  user_insert(data: {
+    name: $name
+    email: $email
+    role: $role
+    organisationId: $organisationId
+    status: ACTIVE
+    avatarUrl: $avatarUrl
+    emailVerified: false
+    failedAttempts: 0
+  })
+}
+
+mutation UpdateUserStatus($id: UUID!, $status: UserStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  user_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateUserRole($id: UUID!, $role: UserRole!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  user_update(id: $id, data: { role: $role, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateUserProfile(
+  $id: UUID!
+  $name: String
+  $bio: String
+  $position: String
+  $department: String
+  $phone: String
+  $avatarUrl: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  user_update(id: $id, data: {
+    name: $name
+    bio: $bio
+    position: $position
+    department: $department
+    phone: $phone
+    avatarUrl: $avatarUrl
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateUserAvatar($id: UUID!, $avatarUrl: String!) @auth(level: USER) {
+  user_update(id: $id, data: { avatarUrl: $avatarUrl, updatedAt_expr: "request.time" })
+}
+
+mutation RecordUserLogin($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  user_update(id: $id, data: {
+    lastLoginAt_expr: "request.time"
+    failedAttempts: 0
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation RecordFailedLogin($id: UUID!, $failedAttempts: Int!, $lockedUntil: Timestamp) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  user_update(id: $id, data: {
+    failedAttempts: $failedAttempts
+    lockedUntil: $lockedUntil
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteUser($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  user_delete(id: $id)
+}
+
+# ─── Vehicles ─────────────────────────────────────────────────────────────────
+
+mutation CreateVehicle(
+  $make: String!
+  $model: String!
+  $year: Int!
+  $type: VehicleType!
+  $regPlate: String!
+  $description: String
+  $km: Int!
+  $serviceIntervalKm: Int!
+  $nextServiceKm: Int!
+  $imageUrl: String
+  $organisationId: UUID
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle_insert(data: {
+    make: $make
+    model: $model
+    year: $year
+    type: $type
+    regPlate: $regPlate
+    description: $description
+    km: $km
+    serviceIntervalKm: $serviceIntervalKm
+    nextServiceKm: $nextServiceKm
+    status: AVAILABLE
+    imageUrl: $imageUrl
+    organisationId: $organisationId
+  })
+}
+
+mutation UpdateVehicleStatus($id: UUID!, $status: VehicleStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateVehicleKm($id: UUID!, $km: Int!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle_update(id: $id, data: {
+    km: $km
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateVehicleService($id: UUID!, $nextServiceKm: Int!, $serviceIntervalKm: Int!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle_update(id: $id, data: {
+    nextServiceKm: $nextServiceKm
+    serviceIntervalKm: $serviceIntervalKm
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateVehicleOrg($id: UUID!, $organisationId: UUID) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle_update(id: $id, data: { organisationId: $organisationId, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateVehicleImage($id: UUID!, $imageUrl: String!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle_update(id: $id, data: { imageUrl: $imageUrl, updatedAt_expr: "request.time" })
+}
+
+mutation DeleteVehicle($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle_delete(id: $id)
+}
+
+# ─── Vehicle Images ───────────────────────────────────────────────────────────
+
+mutation AddVehicleImage($vehicleId: UUID!, $imageUrl: String!, $caption: String, $sortOrder: Int) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicleImage_insert(data: {
+    vehicleId: $vehicleId
+    imageUrl: $imageUrl
+    caption: $caption
+    sortOrder: $sortOrder
+  })
+}
+
+mutation DeleteVehicleImage($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicleImage_delete(id: $id)
+}
+
+# ─── Maintenance Queries ──────────────────────────────────────────────────────
+
+mutation CreateMaintenanceQuery(
+  $vehicleId: UUID!
+  $vehicleLabel: String!
+  $type: MaintenanceType!
+  $description: String!
+  $priority: MaintenancePriority!
+  $loggedByName: String!
+  $loggedByUserId: UUID
+  $issueImageUrl: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQuery_insert(data: {
+    vehicleId: $vehicleId
+    vehicleLabel: $vehicleLabel
+    type: $type
+    description: $description
+    priority: $priority
+    status: OPEN
+    loggedByName: $loggedByName
+    loggedByUserId: $loggedByUserId
+    issueImageUrl: $issueImageUrl
+  })
+}
+
+mutation UpdateMaintenanceStatus($id: UUID!, $status: MaintenanceStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQuery_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation ResolveMaintenanceQuery($id: UUID!, $resolvedById: UUID!, $resolutionNotes: String) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQuery_update(id: $id, data: {
+    status: RESOLVED
+    resolvedById: $resolvedById
+    resolutionNotes: $resolutionNotes
+    resolvedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateMaintenancePriority($id: UUID!, $priority: MaintenancePriority!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQuery_update(id: $id, data: { priority: $priority, updatedAt_expr: "request.time" })
+}
+
+mutation DeleteMaintenanceQuery($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQuery_delete(id: $id)
+}
+
+# ─── Rentals ──────────────────────────────────────────────────────────────────
+
+mutation CreateRental(
+  $vehicleId: UUID
+  $equipmentName: String!
+  $clientName: String!
+  $organisationId: UUID
+  $startDate: Date!
+  $returnDate: Date!
+  $valueZar: Float!
+  $status: RentalStatus
+  $notes: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rental_insert(data: {
+    vehicleId: $vehicleId
+    equipmentName: $equipmentName
+    clientName: $clientName
+    organisationId: $organisationId
+    startDate: $startDate
+    returnDate: $returnDate
+    valueZar: $valueZar
+    status: $status
+    notes: $notes
+  })
+}
+
+mutation UpdateRentalStatus($id: UUID!, $status: RentalStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rental_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateRental(
+  $id: UUID!
+  $startDate: Date
+  $returnDate: Date
+  $valueZar: Float
+  $status: RentalStatus
+  $notes: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rental_update(id: $id, data: {
+    startDate: $startDate
+    returnDate: $returnDate
+    valueZar: $valueZar
+    status: $status
+    notes: $notes
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteRental($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rental_delete(id: $id)
+}
+
+# ─── Rental Applications ──────────────────────────────────────────────────────
+
+mutation CreateRentalApplication(
+  $ref: String!
+  $applicantUserId: UUID
+  $organisationId: UUID
+  # Personal
+  $firstName: String!
+  $lastName: String!
+  $idNumber: String!
+  $dateOfBirth: Date!
+  $email: String!
+  $phone: String!
+  $address: String!
+  $city: String
+  $province: SaProvince
+  $postalCode: String
+  # Financial
+  $employmentStatus: EmploymentStatus!
+  $employerName: String!
+  $monthlyIncome: Float!
+  $yearsEmployed: Int
+  $bank: BankName!
+  $accountType: AccountType
+  $outstandingCredit: Float
+  $creditCheckConsent: Boolean
+  # Equipment
+  $vehicleId: UUID
+  $equipmentName: String!
+  $dailyRate: Float
+  $startDate: Date!
+  $endDate: Date!
+  $estimatedCost: Float
+  $deliveryAddress: String!
+  $purpose: RentalPurpose
+  $rentalNotes: String
+  # Consent
+  $consentCreditCheck: Boolean!
+  $consentTerms: Boolean!
+  $consentUnderstanding: Boolean!
+) @auth(level: PUBLIC, insecureReason: "Anyone can submit a rental application.") {
+  rentalApplication_insert(data: {
+    ref: $ref
+    applicantUserId: $applicantUserId
+    organisationId: $organisationId
+    status: PENDING
+    firstName: $firstName
+    lastName: $lastName
+    idNumber: $idNumber
+    dateOfBirth: $dateOfBirth
+    email: $email
+    phone: $phone
+    address: $address
+    city: $city
+    province: $province
+    postalCode: $postalCode
+    employmentStatus: $employmentStatus
+    employerName: $employerName
+    monthlyIncome: $monthlyIncome
+    yearsEmployed: $yearsEmployed
+    bank: $bank
+    accountType: $accountType
+    outstandingCredit: $outstandingCredit
+    creditCheckConsent: $creditCheckConsent
+    vehicleId: $vehicleId
+    equipmentName: $equipmentName
+    dailyRate: $dailyRate
+    startDate: $startDate
+    endDate: $endDate
+    estimatedCost: $estimatedCost
+    deliveryAddress: $deliveryAddress
+    purpose: $purpose
+    rentalNotes: $rentalNotes
+    consentCreditCheck: $consentCreditCheck
+    consentTerms: $consentTerms
+    consentUnderstanding: $consentUnderstanding
+  })
+}
+
+mutation ReviewRentalApplication(
+  $id: UUID!
+  $status: ApplicationStatus!
+  $reviewedById: UUID!
+  $rejectionReason: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rentalApplication_update(id: $id, data: {
+    status: $status
+    reviewedById: $reviewedById
+    rejectionReason: $rejectionReason
+    reviewedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation AttachApplicationDocuments(
+  $id: UUID!
+  $idDocumentUrl: String
+  $proofOfIncomeUrl: String
+  $supportingDocUrl: String
+) @auth(level: USER) {
+  rentalApplication_update(id: $id, data: {
+    idDocumentUrl: $idDocumentUrl
+    proofOfIncomeUrl: $proofOfIncomeUrl
+    supportingDocUrl: $supportingDocUrl
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteRentalApplication($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rentalApplication_delete(id: $id)
+}
+
+# ─── Catalog Items ────────────────────────────────────────────────────────────
+
+mutation CreateCatalogItem(
+  $name: String!
+  $subtitle: String
+  $category: CatalogCategory!
+  $description: String
+  $specs: String
+  $dailyRate: Float!
+  $status: VehicleStatus
+  $availableFrom: Date
+  $imageUrl: String!
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  catalogItem_insert(data: {
+    name: $name
+    subtitle: $subtitle
+    category: $category
+    description: $description
+    specs: $specs
+    dailyRate: $dailyRate
+    status: $status
+    availableFrom: $availableFrom
+    imageUrl: $imageUrl
+  })
+}
+
+mutation UpdateCatalogItem(
+  $id: UUID!
+  $name: String
+  $subtitle: String
+  $description: String
+  $specs: String
+  $dailyRate: Float
+  $imageUrl: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  catalogItem_update(id: $id, data: {
+    name: $name
+    subtitle: $subtitle
+    description: $description
+    specs: $specs
+    dailyRate: $dailyRate
+    imageUrl: $imageUrl
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateCatalogItemStatus($id: UUID!, $status: VehicleStatus!, $availableFrom: Date) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  catalogItem_update(id: $id, data: {
+    status: $status
+    availableFrom: $availableFrom
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteCatalogItem($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  catalogItem_delete(id: $id)
+}
+
+# ─── Catalog Images ───────────────────────────────────────────────────────────
+
+mutation AddCatalogImage($catalogItemId: UUID!, $imageUrl: String!, $caption: String, $sortOrder: Int) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  catalogImage_insert(data: {
+    catalogItemId: $catalogItemId
+    imageUrl: $imageUrl
+    caption: $caption
+    sortOrder: $sortOrder
+  })
+}
+
+mutation DeleteCatalogImage($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  catalogImage_delete(id: $id)
+}
+
+# ─── Waitlist ─────────────────────────────────────────────────────────────────
+
+mutation JoinWaitlist(
+  $catalogItemId: UUID!
+  $userId: UUID
+  $name: String!
+  $email: String!
+  $phone: String
+) @auth(level: PUBLIC, insecureReason: "Anyone can join a waitlist.") {
+  waitlistEntry_insert(data: {
+    catalogItemId: $catalogItemId
+    userId: $userId
+    name: $name
+    email: $email
+    phone: $phone
+    status: PENDING
+  })
+}
+
+mutation NotifyWaitlistEntry($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  waitlistEntry_update(id: $id, data: {
+    status: NOTIFIED
+    notifiedAt_expr: "request.time"
+  })
+}
+
+mutation ExpireWaitlistEntry($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  waitlistEntry_update(id: $id, data: { status: EXPIRED })
+}
+
+mutation DeleteWaitlistEntry($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  waitlistEntry_delete(id: $id)
+}
+
+# ─── Contact Inquiries ────────────────────────────────────────────────────────
+
+mutation CreateContactInquiry(
+  $referenceId: String!
+  $name: String!
+  $email: String!
+  $subject: String!
+  $message: String!
+) @auth(level: PUBLIC, insecureReason: "Anyone can submit a contact inquiry.") {
+  contactInquiry_insert(data: {
+    referenceId: $referenceId
+    name: $name
+    email: $email
+    subject: $subject
+    message: $message
+    status: NEW
+  })
+}
+
+mutation UpdateInquiryStatus($id: UUID!, $status: InquiryStatus!, $repliedById: UUID) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  contactInquiry_update(id: $id, data: {
+    status: $status
+    repliedById: $repliedById
+    repliedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteContactInquiry($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  contactInquiry_delete(id: $id)
+}
+
+# ─── Audit Logs ───────────────────────────────────────────────────────────────
+
+mutation CreateAuditLog(
+  $userId: UUID
+  $userName: String
+  $userRole: String
+  $action: String!
+  $details: String
+  $page: String
+  $ipAddress: String
+  $userAgent: String
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  auditLog_insert(data: {
+    userId: $userId
+    userName: $userName
+    userRole: $userRole
+    action: $action
+    details: $details
+    page: $page
+    ipAddress: $ipAddress
+    userAgent: $userAgent
+  })
+}

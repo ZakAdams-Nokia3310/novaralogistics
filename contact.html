@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Contact — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex-shrink:0;}
+  .body{padding:40px;flex:1;}
+  label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px;}
+  input,select,textarea{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;padding:12px 14px;width:100%;outline:none;transition:border-color .18s;resize:vertical;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+  .btnp{display:inline-flex;align-items:center;gap:6px;padding:13px 24px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;border-radius:11px;border:none;cursor:pointer;width:100%;justify-content:center;transition:all .2s;box-shadow:0 0 20px rgba(0,240,255,.15);}
+  .btnp:hover{filter:brightness(1.08);}
+  .contact-method{display:flex;align-items:flex-start;gap:14px;padding:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:900px){.contact-grid{grid-template-columns:1fr !important}}
+  @media(max-width:600px){.contact-name-grid{grid-template-columns:1fr !important}}
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Contact</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Get in touch with our team</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div style="max-width:900px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(0,240,255,.55);letter-spacing:.2em;text-transform:uppercase;margin-bottom:12px">Get In Touch</div>
+      <h1 style="font-family:'Hanken Grotesk',sans-serif;font-size:clamp(26px,4vw,44px);font-weight:900;letter-spacing:-.03em;margin-bottom:8px"><span class="grad">We're here</span> to help.</h1>
+      <p style="font-size:15px;color:#b9cacb;margin-bottom:36px;max-width:500px">Questions about rental pricing, technical support, or becoming a provider? Our team responds within 2 business hours.</p>
+
+      <div class="contact-grid" style="display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start">
+
+        <!-- Form -->
+        <div class="glass" style="border-radius:14px;padding:26px">
+          <form id="contactForm">
+            <!-- Honeypot — must remain empty; bots fill it automatically -->
+            <input type="text" name="website" id="hp_contact" data-honeypot tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"/>
+            <div class="contact-name-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+              <div><label>Full Name</label><input id="cName" placeholder="Zakariyya Adams" required autocomplete="name"/></div>
+              <div><label>Email Address</label><input id="cEmail" type="email" placeholder="you@company.com" required autocomplete="email"/></div>
+            </div>
+            <div style="margin-bottom:14px"><label>Subject</label>
+              <select id="cSubject" required>
+                <option value="">Select a topic…</option>
+                <option>Rental Enquiry</option>
+                <option>Technical Support</option>
+                <option>Become a Provider</option>
+                <option>Credit Check / Application</option>
+                <option>Billing & Invoices</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div style="margin-bottom:20px"><label>Message</label><textarea id="cMessage" rows="5" placeholder="Tell us how we can help…" required></textarea></div>
+            <button class="btnp" type="submit" id="submitBtn"><span class="material-symbols-outlined ms" style="font-size:18px">send</span>Send Message</button>
+          </form>
+        </div>
+
+        <!-- Contact info -->
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="contact-method">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:18px;color:#00f0ff">mail</span></div>
+            <div><div style="font-weight:600;font-size:13px;margin-bottom:3px">Email</div><div style="font-size:13px;color:#849495">hello@equipcore.co.za</div><div style="font-size:12px;color:#849495">Response: 2 hrs</div></div>
+          </div>
+          <div class="contact-method">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,212,170,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:18px;color:#00d4aa">phone_in_talk</span></div>
+            <div><div style="font-weight:600;font-size:13px;margin-bottom:3px">Phone / WhatsApp</div><div style="font-size:13px;color:#849495">+27 11 000 0000</div><div style="font-size:12px;color:#849495">Mon–Fri 08:00–18:00</div></div>
+          </div>
+          <div class="contact-method">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(255,180,162,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:18px;color:#ffb4a2">emergency_share</span></div>
+            <div><div style="font-weight:600;font-size:13px;margin-bottom:3px">24/7 Roadside</div><div style="font-size:13px;color:#849495">+27 11 000 9988</div><div style="font-size:12px;color:#849495">Emergency dispatch only</div></div>
+          </div>
+          <div class="contact-method">
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(209,188,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:18px;color:#d1bcff">location_on</span></div>
+            <div><div style="font-weight:600;font-size:13px;margin-bottom:3px">Head Office</div><div style="font-size:13px;color:#849495">123 Industrial Blvd<br/>Johannesburg, GP 2001</div></div>
+          </div>
+
+          <!-- Status -->
+          <div style="padding:14px;background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.15);border-radius:11px;display:flex;align-items:center;gap:10px">
+            <span style="width:8px;height:8px;border-radius:50%;background:#00d4aa;box-shadow:0 0 8px #00d4aa;flex-shrink:0;animation:pulse 2s ease infinite;display:inline-block"></span>
+            <div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00d4aa;text-transform:uppercase;letter-spacing:.1em">Systems Operational</div><div style="font-size:12px;color:#849495;margin-top:2px">All services running normally</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success overlay -->
+<div id="successBox" style="display:none;position:fixed;bottom:24px;right:24px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);backdrop-filter:blur(16px);border-radius:12px;padding:16px 20px;z-index:999;display:none;align-items:center;gap:11px;max-width:360px">
+  <span class="material-symbols-outlined ms" style="font-size:22px;color:#00d4aa;flex-shrink:0;font-variation-settings:'FILL' 1,'wght' 700,'GRAD' 0,'opsz' 24">check_circle</span>
+  <div><div style="font-weight:600;font-size:13px;margin-bottom:2px">Message Sent!</div><div style="font-size:12px;color:#b9cacb" id="successRef"></div></div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('contact.html');
+
+document.getElementById('contactForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const form = e.target;
+
+  // Honeypot check
+  if (EC_SECURITY.isHoneypotTripped(form)) return;
+
+  // Rate limit contact submissions (5 per minute)
+  if (!EC_SECURITY.checkRateLimit('contact')) {
+    alert('Too many submissions. Please wait a moment.'); return;
+  }
+
+  // Validate inputs
+  const name    = EC_SECURITY.sanitizeInput(document.getElementById('cName').value, 'name');
+  const email   = EC_SECURITY.sanitizeInput(document.getElementById('cEmail').value, 'email');
+  const subject = EC_SECURITY.stripTags(document.getElementById('cSubject').value);
+  const message = EC_SECURITY.stripTags(document.getElementById('cMessage').value);
+
+  if (!EC_SECURITY.isValidName(name))  { alert('Please enter your full name (at least 2 characters).'); return; }
+  if (!EC_SECURITY.isValidEmail(email)){ alert('Please enter a valid email address.'); return; }
+  if (!subject)                        { alert('Please select a subject.'); return; }
+  if (message.trim().length < 10)      { alert('Please enter a message of at least 10 characters.'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = 'Sending…'; btn.disabled = true;
+
+  // Cryptographically secure reference number
+  const ref = 'REF-' + EC_SECURITY.secureRandHex(3).toUpperCase();
+
+  EC_SECURITY.audit('CONTACT_FORM_SUBMITTED', { subject, email: EC_SECURITY.maskEmail(email) });
+
+  setTimeout(() => {
+    document.getElementById('successRef').textContent = 'Your message was received. Ref: ' + ref;
+    document.getElementById('successBox').style.display = 'flex';
+    setTimeout(() => { document.getElementById('successBox').style.display = 'none'; }, 5000);
+    form.reset();
+    btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:18px">send</span>Send Message';
+    btn.disabled = false;
+  }, 1200);
+});
+
+const s=document.createElement('style');s.textContent='@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}';document.head.appendChild(s);
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>

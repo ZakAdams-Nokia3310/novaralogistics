@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>My Rentals — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex-shrink:0;}
+  .body{padding:22px 26px;flex:1;}
+  .tab-btn{padding:8px 18px;border-radius:8px;border:none;background:transparent;color:#b9cacb;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:all .18s;}
+  .tab-btn.on{background:rgba(255,255,255,.07);color:#e2e2e8;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bc{background:rgba(209,188,255,.1);color:#d1bcff;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr) !important}}
+  @media(max-width:380px){.stats-grid{grid-template-columns:1fr !important}}
+  .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">My Rentals</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Active, upcoming and past rental history</div>
+    </div>
+    <a href="apply-rental.html" class="btnp"><span class="material-symbols-outlined ms" style="font-size:15px">add</span>Apply to Rent</a>
+  </div>
+
+  <div class="body">
+    <!-- Stats -->
+    <div class="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px">
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#00f0ff;margin-bottom:2px">4</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Active</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#ffd93d;margin-bottom:2px">1</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Upcoming</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#d1bcff;margin-bottom:2px">18</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Completed</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;margin-bottom:2px">R142k</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Total Spent</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:3px;background:rgba(255,255,255,.04);padding:4px;border-radius:11px;width:fit-content;margin-bottom:20px;border:1px solid rgba(255,255,255,.06)" id="tabs">
+      <button class="tab-btn on" data-tab="active">Active (4)</button>
+      <button class="tab-btn" data-tab="upcoming">Upcoming (1)</button>
+      <button class="tab-btn" data-tab="past">Past (18)</button>
+    </div>
+
+    <!-- Active -->
+    <div id="tab-active">
+      <div class="glass" style="border-radius:13px;overflow:hidden;margin-bottom:12px">
+        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
+          <div style="width:64px;height:58px;border-radius:10px;overflow:hidden;flex-shrink:0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl_y15epJuonz3E-t3iWCBJXshwATQKMAd06A5SevQDKLuVo0MiEssY_huGzaf0yHgpvUgLZev71AFf9ceEZesXTCr7zF0KXckYeigSrTpfdwrwHE_JNEXUVaeK7-s-qbMcrub3vhO5taAAoUP1ozQu9WEqlCdyOMVfRpSCGVAazKsXOQbn5Em3RFLahOER-1ATJ1c6a06jzVkopmDMEe76_iqgDDljlIveCaruhdlNQJCypZzUyV9Q7hh3Z-x94lsX4Jvk18WB-8" style="width:100%;height:100%;object-fit:cover"/></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Cat 320 GC Excavator</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4821 · Sandton Site C</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">R22,400</div><span class="b ba">Active</span></div></div>
+            <div style="font-size:12px;color:#849495;margin-bottom:8px">28 May – 12 Jun 2026 · 12 days remaining</div>
+            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px;margin-bottom:10px"><div style="width:65%;height:100%;background:#00f0ff;border-radius:999px"></div></div>
+            <div style="display:flex;gap:8px"><button class="btng" style="font-size:12px;padding:6px 11px">Details</button><button class="btng" style="font-size:12px;padding:6px 11px">Invoice</button><button class="btnp" style="font-size:12px;padding:6px 11px" onclick="alert('Extension request submitted for #RNT-4821.')">Request Extension</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="glass" style="border-radius:13px;overflow:hidden;margin-bottom:12px">
+        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
+          <div style="width:64px;height:58px;border-radius:10px;overflow:hidden;flex-shrink:0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeUtKz6a__P0G7rMBEJ5GxUBEsVjv41hJkCUJVLiDayl2PqH-WUP95NErXlfC9g2pbM6dkaWYK3OJ9XtqN1olhpQI2TMLSl3CI_4D-q8UR5aDXQrbfetvHMVphYgqllAowLW5yGUq1c3BtRNAq87o3vgcKZ8kJpM1xI-PNMjC_eM9ZUvoQ84tDrFbHj9WH06gqq74pSHlfIkjANgjdCHQpXOdwVWzY5XVROJLRe8x_XgKL5JkVDoa4X3oNtZdldYfpJmnte5mnpSg" style="width:100%;height:100%;object-fit:cover"/></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Scania R500 Truck</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4802 · Port Elizabeth Hub</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">R8,200/d</div><span class="b ba">Active</span></div></div>
+            <div style="font-size:12px;color:#849495;margin-bottom:8px">1 Jun – 5 Nov 2026 · 24 days remaining</div>
+            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px;margin-bottom:10px"><div style="width:20%;height:100%;background:#00f0ff;border-radius:999px"></div></div>
+            <div style="display:flex;gap:8px"><button class="btng" style="font-size:12px;padding:6px 11px">Details</button><button class="btng" style="font-size:12px;padding:6px 11px">Invoice</button><button class="btnp" style="font-size:12px;padding:6px 11px" onclick="alert('Extension request submitted for #RNT-4802.')">Request Extension</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="glass" style="border-radius:13px;overflow:hidden;margin-bottom:12px">
+        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
+          <div style="width:64px;height:58px;border-radius:10px;background:rgba(255,255,255,.04);flex-shrink:0;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:24px;color:#849495">bolt</span></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Aggreko 500kVA Generator</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4808 · Mine Site B</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">R14,700</div><span class="b ba">Active</span></div></div>
+            <div style="font-size:12px;color:#849495;margin-bottom:8px">3 Jun – 17 Jun 2026 · 13 days remaining</div>
+            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px;margin-bottom:10px"><div style="width:10%;height:100%;background:#00f0ff;border-radius:999px"></div></div>
+            <div style="display:flex;gap:8px"><button class="btng" style="font-size:12px;padding:6px 11px">Details</button><button class="btng" style="font-size:12px;padding:6px 11px">Invoice</button><button class="btnp" style="font-size:12px;padding:6px 11px" onclick="alert('Extension requested.')">Request Extension</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="glass" style="border-radius:13px;overflow:hidden">
+        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
+          <div style="width:64px;height:58px;border-radius:10px;background:rgba(255,255,255,.04);flex-shrink:0;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:24px;color:#849495">local_shipping</span></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Volvo A40G Haul Truck</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4810 · Rustenburg Site</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">R20,600</div><span class="b bp">Pending</span></div></div>
+            <div style="font-size:12px;color:#ffd93d">Awaiting provider confirmation</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming (hidden) -->
+    <div id="tab-upcoming" style="display:none">
+      <div class="glass" style="border-radius:13px;overflow:hidden">
+        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
+          <div style="width:64px;height:58px;border-radius:10px;background:rgba(255,255,255,.04);flex-shrink:0;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:24px;color:#849495">construction</span></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Liebherr LTM 1100 Crane</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4825 · Johannesburg CBD</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">R32,000</div><span class="b bc">Confirmed</span></div></div>
+            <div style="font-size:12px;color:#849495">Starts 15 Jun 2026 · 11 days from now</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Past (hidden) -->
+    <div id="tab-past" style="display:none">
+      <div class="glass tbl-scroll" style="border-radius:13px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;min-width:520px">
+          <thead><tr style="background:rgba(255,255,255,.02)">
+            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">ID</th>
+            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Equipment</th>
+            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Period</th>
+            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Total</th>
+            <th style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.05)"></th>
+          </tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4780</td><td style="padding:11px 14px;font-size:13px">Liebherr R 9400</td><td style="padding:11px 14px;font-size:13px;color:#b9cacb">10–28 May 2026</td><td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">R52,000</td><td style="padding:11px 14px"><button class="btng" style="font-size:12px;padding:5px 10px">Invoice</button></td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4765</td><td style="padding:11px 14px;font-size:13px">Komatsu WA470</td><td style="padding:11px 14px;font-size:13px;color:#b9cacb">1–15 May 2026</td><td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">R13,300</td><td style="padding:11px 14px"><button class="btng" style="font-size:12px;padding:5px 10px">Invoice</button></td></tr>
+            <tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4749</td><td style="padding:11px 14px;font-size:13px">Atlas Copco FlexiROC</td><td style="padding:11px 14px;font-size:13px;color:#b9cacb">15 Apr–5 May</td><td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">R41,000</td><td style="padding:11px 14px"><button class="btng" style="font-size:12px;padding:5px 10px">Invoice</button></td></tr>
+            <tr><td style="padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4730</td><td style="padding:11px 14px;font-size:13px">JCB 3CX Backhoe</td><td style="padding:11px 14px;font-size:13px;color:#b9cacb">10–31 Mar 2026</td><td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">R9,800</td><td style="padding:11px 14px"><button class="btng" style="font-size:12px;padding:5px 10px">Invoice</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('my-rentals.html');
+
+document.querySelectorAll('#tabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tabs .tab-btn').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    ['active','upcoming','past'].forEach(t=>{ document.getElementById('tab-'+t).style.display = t===btn.dataset.tab?'':'none'; });
+  });
+});
+</script>
+</body></html>

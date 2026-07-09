@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EquipCore | User Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  .glass-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);}
+  .glass-float{background:rgba(255,255,255,0.08);backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,0.15);}
+  .glow-pulse{box-shadow:0 0 12px currentColor;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+</style>
+<script id="tailwind-config">
+tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","background":"#111317","primary":"#dbfcff","primary-container":"#00f0ff","on-primary-container":"#006970","primary-fixed-dim":"#00dbe9","secondary-container":"#7000ff","on-secondary-container":"#ddcdff","surface-container":"#1e2024","surface-container-lowest":"#0c0e12","surface-container-high":"#282a2e","surface-container-highest":"#333539","on-surface":"#e2e2e8","on-surface-variant":"#b9cacb","tertiary-fixed-dim":"#ffb4a2","on-tertiary-container":"#b42800","error":"#ffb4ab","secondary":"#d1bcff","outline":"#849495","surface-variant":"#333539"},fontFamily:{"body-md":["Inter"],"headline-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-sm":["JetBrains Mono"],"display-lg":["Hanken Grotesk"]},fontSize:{"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"600"}]},spacing:{"max-width":"1440px","base":"8px","margin-mobile":"16px","gutter":"24px","margin-desktop":"48px"}}}}
+</script>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<nav class="fixed left-0 top-0 h-full flex flex-col py-base bg-surface-container-lowest/50 backdrop-blur-2xl h-screen w-64 rounded-r-xl border-r border-white/5 shadow-2xl hidden md:flex z-50">
+  <div class="px-6 py-8"><a href="index.html"><h1 class="font-headline-lg text-headline-lg text-primary tracking-tighter">EquipCore Ops</h1></a><p class="font-label-sm text-label-sm text-on-surface-variant opacity-70">Admin Portal</p></div>
+  <div class="flex-1 flex flex-col gap-1 mt-4">
+    <a href="user-dashboard.html" class="bg-secondary-container text-on-secondary-container rounded-lg mx-2 my-1 flex items-center gap-3 px-4 py-3 hover:translate-x-1 transition-transform"><span class="material-symbols-outlined">dashboard</span><span class="font-label-sm text-label-sm">Dashboard</span></a>
+    <a href="catalog.html" class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg mx-2 my-1 flex items-center gap-3 px-4 py-3 transition-all"><span class="material-symbols-outlined">inventory_2</span><span class="font-label-sm text-label-sm">Equipment</span></a>
+    <a href="calculator.html" class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg mx-2 my-1 flex items-center gap-3 px-4 py-3 transition-all"><span class="material-symbols-outlined">calculate</span><span class="font-label-sm text-label-sm">Calculator</span></a>
+    <a href="user-dashboard.html" class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg mx-2 my-1 flex items-center gap-3 px-4 py-3 transition-all"><span class="material-symbols-outlined">location_on</span><span class="font-label-sm text-label-sm">Live Tracking</span></a>
+    <a href="admin-rentals.html" class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg mx-2 my-1 flex items-center gap-3 px-4 py-3 transition-all"><span class="material-symbols-outlined">receipt_long</span><span class="font-label-sm text-label-sm">Rentals</span></a>
+    <a href="admin-orgs.html" class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg mx-2 my-1 flex items-center gap-3 px-4 py-3 transition-all"><span class="material-symbols-outlined">group</span><span class="font-label-sm text-label-sm">Users</span></a>
+  </div>
+  <div class="px-4 py-6 mt-auto border-t border-white/5">
+    <div class="flex items-center gap-3 text-on-surface-variant opacity-50 px-4 py-2 cursor-not-allowed"><span class="material-symbols-outlined text-[20px]">shield</span><span class="font-label-sm text-label-sm">View-Only Mode</span></div>
+    <a href="#" class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg flex items-center gap-3 px-4 py-3 transition-all mt-2"><span class="material-symbols-outlined">settings</span><span class="font-label-sm text-label-sm">Settings</span></a>
+    <a href="login.html" class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg flex items-center gap-3 px-4 py-3 transition-all"><span class="material-symbols-outlined">logout</span><span class="font-label-sm text-label-sm">Sign Out</span></a>
+  </div>
+</nav>
+<header class="sticky top-0 z-50 flex justify-between items-center w-full px-margin-desktop h-16 bg-surface-container/30 backdrop-blur-lg border-b border-white/10 md:pl-72">
+  <div class="flex items-center gap-4">
+    <span class="font-display-lg text-[24px] font-bold text-primary">EquipCore</span>
+    <div class="h-6 w-[1px] bg-white/10 mx-2"></div>
+    <div class="hidden lg:flex items-center gap-6">
+      <span class="font-label-sm text-label-sm text-primary font-bold border-b-2 border-primary cursor-default">Dashboard</span>
+      <a href="catalog.html" class="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface">Fleet Explorer</a>
+      <a href="admin-rentals.html" class="font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface">Reports</a>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="bg-surface-variant/20 rounded-full px-4 py-1.5 flex items-center gap-2 border border-white/5">
+      <span class="material-symbols-outlined text-primary text-[18px]">search</span>
+      <input id="dashSearch" class="bg-transparent border-none focus:ring-0 text-body-md text-on-surface placeholder:text-on-surface-variant/50 w-48 font-body-md" placeholder="Search fleet..." type="text"/>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="p-2 text-on-surface-variant hover:bg-surface-variant/20 transition-colors rounded-full relative">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border border-surface"></span>
+      </button>
+      <button class="p-2 text-on-surface-variant hover:bg-surface-variant/20 transition-colors rounded-full"><span class="material-symbols-outlined">shield</span></button>
+      <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center ml-2 border border-white/20"><span class="material-symbols-outlined text-on-secondary-container text-[20px]">account_circle</span></div>
+    </div>
+  </div>
+</header>
+<main class="md:ml-64 px-margin-mobile md:px-margin-desktop py-gutter">
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+    <div>
+      <h2 class="font-headline-lg text-headline-lg text-primary mb-2">Operations Overview</h2>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 bg-tertiary-container/10 border border-tertiary-container/20 rounded-full px-3 py-1">
+          <span class="w-2 h-2 rounded-full bg-on-tertiary-container glow-pulse animate-pulse"></span>
+          <span class="font-label-sm text-label-sm text-on-tertiary-container uppercase tracking-widest">Live System Status</span>
+        </div>
+        <span class="text-on-surface-variant font-body-md opacity-60">Last updated: Today, 14:45</span>
+      </div>
+    </div>
+    <div class="flex gap-3 opacity-40 grayscale pointer-events-none">
+      <button class="px-6 py-2.5 bg-surface-variant/40 rounded-lg flex items-center gap-2 border border-white/5 font-label-sm text-label-sm"><span class="material-symbols-outlined text-[18px]">add</span>Provision New Unit</button>
+      <button class="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-label-sm text-label-sm font-bold">Generate Report</button>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+    <div class="md:col-span-8 glass-card rounded-xl p-8 flex flex-col justify-between overflow-hidden relative">
+      <div class="relative z-10">
+        <div class="flex items-center gap-2 mb-8"><span class="material-symbols-outlined text-primary">payments</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Daily Expenditure</span></div>
+        <div class="flex items-baseline gap-4">
+          <h3 class="font-display-lg text-display-lg text-primary">R 84,250.00</h3>
+          <span class="font-label-sm text-label-sm text-on-primary-container bg-primary-container/20 px-2 py-0.5 rounded flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">trending_up</span>12% vs Yesterday</span>
+        </div>
+        <div class="mt-8 grid grid-cols-3 gap-8">
+          <div><p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Fleet Fuel Cost</p><p class="font-headline-lg text-[20px] text-on-surface">R 12,400</p></div>
+          <div><p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Lease Amortization</p><p class="font-headline-lg text-[20px] text-on-surface">R 62,850</p></div>
+          <div><p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Maintenance Buffer</p><p class="font-headline-lg text-[20px] text-on-surface">R 9,000</p></div>
+        </div>
+      </div>
+      <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-primary/5 blur-[120px] rounded-full"></div>
+    </div>
+    <div class="md:col-span-4 glass-card rounded-xl p-8 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-8"><span class="material-symbols-outlined text-secondary">local_shipping</span><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Active Fleet</span></div>
+        <div class="flex items-baseline gap-2"><h3 class="font-display-lg text-display-lg text-secondary">12</h3><span class="font-headline-lg text-headline-lg text-on-surface-variant opacity-40">/ 15 Units</span></div>
+      </div>
+      <div class="space-y-4">
+        <div class="flex justify-between items-center text-label-sm font-label-sm"><span class="text-on-surface-variant">Utilization Rate</span><span class="text-secondary">80%</span></div>
+        <div class="w-full bg-surface-variant h-1.5 rounded-full overflow-hidden"><div class="bg-secondary h-full" style="width:80%"></div></div>
+        <div class="flex gap-2 pt-4">
+          <div class="flex -space-x-2">
+            <div class="w-8 h-8 rounded-full border border-surface bg-surface-container-high flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">electric_car</span></div>
+            <div class="w-8 h-8 rounded-full border border-surface bg-surface-container-high flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">electric_bolt</span></div>
+            <div class="w-8 h-8 rounded-full border border-surface bg-surface-container-high flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">precision_manufacturing</span></div>
+          </div>
+          <span class="font-label-sm text-label-sm text-on-surface-variant self-center ml-2">+9 more</span>
+        </div>
+      </div>
+    </div>
+    <!-- Map -->
+    <div class="md:col-span-12 lg:col-span-9 glass-card rounded-xl overflow-hidden flex flex-col min-h-[500px]">
+      <div class="p-6 border-b border-white/5 flex justify-between items-center">
+        <div class="flex items-center gap-3"><span class="material-symbols-outlined text-primary">map</span><h4 class="font-headline-lg text-[20px]">Live Fleet Tracking</h4></div>
+        <div class="flex gap-2 items-center">
+          <span class="flex items-center gap-1.5 text-primary font-label-sm text-label-sm"><span class="w-2 h-2 rounded-full bg-primary-fixed-dim animate-pulse inline-block"></span>12 Active</span>
+          <button id="mapSatToggle" class="bg-surface-variant/40 px-3 py-1 rounded-lg font-label-sm text-label-sm text-on-surface-variant hover:bg-white/10 transition-colors">Satellite</button>
+        </div>
+      </div>
+      <div id="userFleetMap" class="flex-1 min-h-[400px]"></div>
+    </div>
+    <!-- Activity + Contract -->
+    <div class="md:col-span-12 lg:col-span-3 flex flex-col gap-gutter">
+      <div class="glass-card rounded-xl p-6 flex-1">
+        <h4 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-6 border-b border-white/5 pb-2">Recent Logs</h4>
+        <div class="space-y-6">
+          <div class="flex gap-4"><div class="flex flex-col items-center"><div class="w-2 h-2 rounded-full bg-primary mb-1"></div><div class="w-[1px] flex-1 bg-white/10"></div></div><div><p class="text-[13px] text-on-surface-variant">14:22</p><p class="text-body-md text-on-surface">Unit EC-094 departed Depot A</p></div></div>
+          <div class="flex gap-4"><div class="flex flex-col items-center"><div class="w-2 h-2 rounded-full bg-error mb-1"></div><div class="w-[1px] flex-1 bg-white/10"></div></div><div><p class="text-[13px] text-on-surface-variant">13:10</p><p class="text-body-md text-on-surface">Maintenance scheduled: EC-112</p></div></div>
+          <div class="flex gap-4"><div class="flex flex-col items-center"><div class="w-2 h-2 rounded-full bg-secondary mb-1"></div><div class="w-[1px] flex-1 bg-white/10"></div></div><div><p class="text-[13px] text-on-surface-variant">11:05</p><p class="text-body-md text-on-surface">New telemetry node active</p></div></div>
+          <div class="flex gap-4"><div class="flex flex-col items-center"><div class="w-2 h-2 rounded-full bg-surface-variant/50 mb-1"></div></div><div><p class="text-[13px] text-on-surface-variant">09:00</p><p class="text-body-md text-on-surface">Daily expenditure report generated</p></div></div>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-6 bg-secondary-container/5">
+        <h4 class="font-label-sm text-label-sm text-secondary uppercase tracking-widest mb-4">Contract Health</h4>
+        <div class="flex items-center gap-4"><span class="material-symbols-outlined text-[32px] text-secondary">verified_user</span><div><p class="font-headline-lg text-[18px]">94% Optimized</p><p class="text-[13px] text-on-surface-variant">SLA compliance met</p></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'/>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+<script src="firebase-config.js"></script>
+<script src="transitions.js"></script>
+<script>
+mapboxgl.accessToken = (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.mapboxToken) || '';
+const uMap = new mapboxgl.Map({
+  container: 'userFleetMap',
+  style: 'mapbox://styles/mapbox/dark-v11',
+  center: [28.0473, -26.2041], zoom: 9
+});
+uMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+const units = [
+  { id:'EC-094', label:'In Transit — Midrand',     coords:[28.1281,-25.9987], c:'#00f0ff', pulse:true },
+  { id:'EC-112', label:'Maintenance Alert',         coords:[28.0473,-26.2041], c:'#ffb4ab', pulse:true },
+  { id:'EC-077', label:'On Site — Sandton',         coords:[28.0567,-26.1076], c:'#00f0ff', pulse:false },
+  { id:'EC-033', label:'Off-duty — Pretoria',       coords:[28.1846,-25.7479], c:'#849495', pulse:false },
+  { id:'EC-201', label:'In Transit — Rustenburg',  coords:[27.2424,-25.6677], c:'#00f0ff', pulse:true },
+  { id:'EC-088', label:'On Site — Johannesburg S', coords:[28.0200,-26.2500], c:'#00f0ff', pulse:false },
+];
+
+uMap.on('load', () => {
+  units.forEach(u => {
+    const el = document.createElement('div');
+    el.style.cssText = `width:13px;height:13px;border-radius:50%;background:${u.c};border:2px solid rgba(255,255,255,0.5);box-shadow:0 0 12px ${u.c};cursor:pointer;${u.pulse?'animation:pulse 2s ease infinite':''}`;
+    new mapboxgl.Marker(el).setLngLat(u.coords)
+      .setPopup(new mapboxgl.Popup({offset:14,closeButton:false})
+        .setHTML(`<div style="background:#1e2024;padding:9px 13px;border-radius:9px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#e2e2e8;border:1px solid rgba(0,240,255,0.18)"><b style="color:#00f0ff">Unit ${u.id}</b><br>${u.label}</div>`))
+      .addTo(uMap);
+  });
+});
+
+let isSat = false;
+document.getElementById('mapSatToggle').addEventListener('click', () => {
+  isSat = !isSat;
+  uMap.setStyle(isSat ? 'mapbox://styles/mapbox/satellite-streets-v12' : 'mapbox://styles/mapbox/dark-v11');
+});
+</script>
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden bg-surface-container-high/80 backdrop-blur-lg border-t border-white/10 rounded-t-xl shadow-lg">
+  <a href="user-dashboard.html" class="flex flex-col items-center justify-center text-primary-fixed-dim font-bold"><span class="material-symbols-outlined">home</span><span class="font-label-sm text-label-sm">Home</span></a>
+  <a href="admin-rentals.html" class="flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">local_shipping</span><span class="font-label-sm text-label-sm">Fleet</span></a>
+  <a href="calculator.html" class="flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">payments</span><span class="font-label-sm text-label-sm">Calculator</span></a>
+  <a href="user-dashboard.html" class="flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">person</span><span class="font-label-sm text-label-sm">Profile</span></a>
+</nav>
+</body></html>

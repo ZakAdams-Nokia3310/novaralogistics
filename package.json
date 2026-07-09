@@ -1,0 +1,38 @@
+{
+  "name": "equipcore",
+  "version": "1.0.0",
+  "description": "EquipCore — Fleet & Equipment Manager",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "lint": "eslint *.js --ignore-pattern node_modules/ --ignore-pattern src/",
+    "lint:fix": "eslint *.js --fix --ignore-pattern node_modules/ --ignore-pattern src/",
+    "audit:security": "npm audit --audit-level=moderate",
+    "prepare": "husky install 2>/dev/null || true"
+  },
+  "keywords": [
+    "fleet",
+    "equipment",
+    "rental",
+    "logistics"
+  ],
+  "author": "Novara Terra Industrials",
+  "license": "MIT",
+  "dependencies": {
+    "@dataconnect/generated": "file:src/dataconnect-generated",
+    "firebase": "12.14.0"
+  },
+  "devDependencies": {
+    "eslint": "8.57.0",
+    "eslint-plugin-security": "2.1.1",
+    "husky": "9.1.6",
+    "lint-staged": "15.2.10"
+  },
+  "lint-staged": {
+    "*.js": ["eslint --max-warnings=0"]
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

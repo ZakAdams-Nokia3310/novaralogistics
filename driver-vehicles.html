@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EquipCore Ops - Vehicle Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Hanken+Grotesk:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' rel='stylesheet'/>
+<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+<style>
+  .glass-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);}
+  .glass-float{background:rgba(255,255,255,0.08);backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,0.15);}
+  .cyan-glow{box-shadow:0 0 15px rgba(0,219,233,0.3);}
+  .pulse-dot{animation:pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+</style>
+<script id="tailwind-config">
+tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","background":"#111317","primary":"#dbfcff","primary-container":"#00f0ff","on-primary-container":"#006970","primary-fixed-dim":"#00dbe9","secondary-container":"#7000ff","on-secondary-container":"#ddcdff","surface-container":"#1e2024","surface-container-lowest":"#0c0e12","surface-container-high":"#282a2e","on-surface":"#e2e2e8","on-surface-variant":"#b9cacb","tertiary-fixed-dim":"#ffb4a2","tertiary-container":"#ffcec2","error":"#ffb4ab","error-container":"#93000a","secondary":"#d1bcff","outline":"#849495"},fontFamily:{"body-md":["Inter"],"headline-lg":["Hanken Grotesk"],"label-sm":["JetBrains Mono"],"display-lg":["Hanken Grotesk"]},fontSize:{"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}]},spacing:{"max-width":"1440px","base":"8px","margin-mobile":"16px","gutter":"24px","margin-desktop":"48px"}}}}
+</script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden">
+<aside class="fixed left-0 top-0 h-full flex flex-col py-base bg-surface-container-lowest/50 backdrop-blur-2xl h-screen w-64 rounded-r-xl border-r border-white/5 shadow-2xl z-50 hidden md:flex">
+  <div class="px-6 py-8"><a href="index.html"><h1 class="font-headline-lg text-headline-lg text-primary tracking-tighter">EquipCore Ops</h1></a><p class="font-label-sm text-label-sm text-on-surface-variant opacity-60">Admin Portal</p></div>
+  <nav class="flex-1 px-2 space-y-1">
+    <a href="dashboard.html" class="text-on-surface-variant hover:text-on-surface mx-2 my-1 flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-lg transition-all hover:translate-x-1"><span class="material-symbols-outlined">dashboard</span><span class="font-label-sm text-label-sm">Dashboard</span></a>
+    <a href="driver-vehicles.html" class="bg-secondary-container text-on-secondary-container rounded-lg mx-2 my-1 flex items-center gap-3 px-4 py-3 transition-all"><span class="material-symbols-outlined">inventory_2</span><span class="font-label-sm text-label-sm">Equipment</span></a>
+    <a href="calculator.html" class="text-on-surface-variant hover:text-on-surface mx-2 my-1 flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-lg transition-all hover:translate-x-1"><span class="material-symbols-outlined">calculate</span><span class="font-label-sm text-label-sm">Calculator</span></a>
+    <a href="user-dashboard.html" class="text-on-surface-variant hover:text-on-surface mx-2 my-1 flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-lg transition-all hover:translate-x-1"><span class="material-symbols-outlined">location_on</span><span class="font-label-sm text-label-sm">Live Tracking</span></a>
+    <a href="admin-rentals.html" class="text-on-surface-variant hover:text-on-surface mx-2 my-1 flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-lg transition-all hover:translate-x-1"><span class="material-symbols-outlined">receipt_long</span><span class="font-label-sm text-label-sm">Rentals</span></a>
+    <a href="admin-orgs.html" class="text-on-surface-variant hover:text-on-surface mx-2 my-1 flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-lg transition-all hover:translate-x-1"><span class="material-symbols-outlined">group</span><span class="font-label-sm text-label-sm">Users</span></a>
+  </nav>
+  <div class="px-4 py-6 border-t border-white/5">
+    <a href="calculator.html" class="w-full bg-primary-container text-on-primary-container font-label-sm text-label-sm py-3 rounded-lg font-bold hover:brightness-110 transition-all cyan-glow block text-center">New Quote</a>
+    <div class="mt-4 space-y-1">
+      <a href="#" class="text-on-surface-variant hover:text-on-surface flex items-center gap-3 px-4 py-2 text-sm"><span class="material-symbols-outlined">settings</span><span>Settings</span></a>
+      <a href="login.html" class="text-on-surface-variant hover:text-on-surface flex items-center gap-3 px-4 py-2 text-sm"><span class="material-symbols-outlined">logout</span><span>Sign Out</span></a>
+    </div>
+  </div>
+</aside>
+<main class="md:ml-64 min-h-screen pb-20 md:pb-8">
+  <header class="sticky top-0 z-40 flex justify-between items-center w-full px-margin-desktop h-16 bg-surface-container/30 backdrop-blur-lg border-b border-white/10">
+    <div class="flex items-center gap-4"><span class="font-headline-lg text-headline-lg font-bold text-primary">Fleet Telemetry</span></div>
+    <div class="flex items-center gap-6">
+      <div class="hidden lg:flex items-center bg-surface-variant/20 rounded-full px-4 py-1.5 border border-white/5">
+        <span class="material-symbols-outlined text-primary text-sm mr-2">search</span>
+        <input id="fleetSearch" class="bg-transparent border-none focus:ring-0 text-body-md text-on-surface placeholder:text-on-surface-variant/50 w-64" placeholder="Search fleet..." type="text"/>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+        <button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">shield</button>
+        <a href="user-dashboard.html" class="h-8 w-8 rounded-full overflow-hidden border border-primary/30 bg-surface-container flex items-center justify-center"><span class="material-symbols-outlined text-primary text-sm">account_circle</span></a>
+      </div>
+    </div>
+  </header>
+  <div class="px-margin-desktop py-8 max-w-max-width mx-auto">
+    <!-- Hero Section: Current Assignment -->
+    <section class="mb-10">
+      <div class="relative overflow-hidden rounded-2xl glass-card h-[400px] flex flex-col md:flex-row items-stretch border-white/10">
+        <div class="absolute inset-0 z-0 bg-gradient-to-r from-background via-background/60 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-surface via-surface/40 to-transparent z-[1]"></div>
+        <div class="absolute inset-0 flex items-center justify-end pr-8 opacity-20">
+          <span class="text-[200px]">🚛</span>
+        </div>
+        <div class="relative z-10 p-10 flex flex-col justify-between w-full md:w-1/2">
+          <div>
+            <div class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary-fixed-dim font-label-sm text-label-sm mb-4">
+              <span class="material-symbols-outlined text-sm mr-2 pulse-dot" style="font-variation-settings:'FILL' 1">circle</span>LIVE ASSIGNMENT
+            </div>
+            <h2 class="font-display-lg text-display-lg text-primary leading-tight">Volvo FH16 <br/><span class="text-on-surface-variant opacity-70">Plate: EC-7749-X</span></h2>
+          </div>
+          <div class="grid grid-cols-2 gap-6 mt-8">
+            <div class="glass-float p-4 rounded-xl border-white/5"><p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Time Remaining</p><p class="font-headline-lg text-headline-lg text-primary">4h 12m</p></div>
+            <div class="glass-float p-4 rounded-xl border-white/5"><p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Cargo Temp</p><p class="font-headline-lg text-headline-lg text-tertiary-fixed-dim">-18.4°C</p></div>
+          </div>
+        </div>
+        <div class="relative z-10 w-full md:w-1/2 p-10 flex flex-col justify-end">
+          <div class="space-y-6">
+            <div class="space-y-2">
+              <div class="flex justify-between font-label-sm text-label-sm"><span class="text-on-surface-variant">Fuel Level</span><span id="fuelPct" class="text-on-surface">64%</span></div>
+              <div class="w-full bg-surface-container-high rounded-full h-1.5 overflow-hidden"><div id="fuelBar" class="bg-primary h-full cyan-glow" style="width:64%"></div></div>
+            </div>
+            <div class="space-y-2">
+              <div class="flex justify-between font-label-sm text-label-sm"><span class="text-on-surface-variant">Battery Health</span><span class="text-on-surface">92%</span></div>
+              <div class="w-full bg-surface-container-high rounded-full h-1.5 overflow-hidden"><div class="bg-primary-fixed-dim h-full" style="width:92%"></div></div>
+            </div>
+            <div class="pt-4">
+              <a href="#metrics" class="flex items-center gap-2 text-primary font-label-sm text-label-sm hover:translate-x-1 transition-transform">VIEW FULL DIAGNOSTICS <span class="material-symbols-outlined">arrow_forward</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Metrics -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-10" id="metrics">
+      <div class="glass-card p-6 rounded-xl border-white/5 hover:border-primary/20 transition-all">
+        <div class="flex justify-between items-start mb-4"><div class="p-2 rounded-lg bg-surface-container-high text-primary"><span class="material-symbols-outlined">speed</span></div><span class="text-primary-fixed-dim font-label-sm text-label-sm">+2.4%</span></div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Avg Speed</p>
+        <p class="font-headline-lg text-headline-lg text-on-surface">84.2 <span class="text-body-md text-on-surface-variant">km/h</span></p>
+      </div>
+      <div class="glass-card p-6 rounded-xl border-white/5 hover:border-primary/20 transition-all">
+        <div class="flex justify-between items-start mb-4"><div class="p-2 rounded-lg bg-surface-container-high text-primary"><span class="material-symbols-outlined">route</span></div></div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Distance</p>
+        <p class="font-headline-lg text-headline-lg text-on-surface">1,248 <span class="text-body-md text-on-surface-variant">km</span></p>
+      </div>
+      <div class="glass-card p-6 rounded-xl border-white/5 hover:border-primary/20 transition-all">
+        <div class="flex justify-between items-start mb-4"><div class="p-2 rounded-lg bg-surface-container-high text-primary"><span class="material-symbols-outlined">payments</span></div></div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Trip Cost</p>
+        <p class="font-headline-lg text-headline-lg text-on-surface">R 12,450</p>
+      </div>
+      <div class="glass-card p-6 rounded-xl border-white/5 border-error/20 bg-error-container/5">
+        <div class="flex justify-between items-start mb-4"><div class="p-2 rounded-lg bg-error-container/20 text-error"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">warning</span></div></div>
+        <p class="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Active Alerts</p>
+        <p class="font-headline-lg text-headline-lg text-error">02</p>
+      </div>
+    </section>
+    <!-- Map & Support -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+      <div class="lg:col-span-2 glass-card rounded-2xl overflow-hidden min-h-[400px] flex flex-col">
+        <div class="p-6 border-b border-white/5 flex justify-between items-center">
+          <div class="flex items-center gap-3"><span class="material-symbols-outlined text-primary">near_me</span><h3 class="font-headline-lg text-2xl text-on-surface">Live Route Tracking</h3></div>
+          <div class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-primary-fixed-dim pulse-dot"></span><span class="font-label-sm text-label-sm text-primary">Connected</span></div>
+        </div>
+        <div id="routeMap" class="flex-1 min-h-[300px]"></div>
+      </div>
+      <div class="glass-card rounded-2xl p-8 flex flex-col justify-between border-primary/10">
+        <div>
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-12 w-12 rounded-xl bg-error-container/20 flex items-center justify-center text-error border border-error/20"><span class="material-symbols-outlined text-3xl">support_agent</span></div>
+            <h3 class="font-headline-lg text-2xl text-on-surface">Critical Support</h3>
+          </div>
+          <p class="text-on-surface-variant mb-8 leading-relaxed">Immediate 24/7 technical dispatch and roadside assistance.</p>
+          <div class="space-y-4 mb-8">
+            <div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-high/50 border border-white/5"><span class="material-symbols-outlined text-primary">phone_in_talk</span><div><p class="font-label-sm text-label-sm text-on-surface-variant">Hotline</p><p class="text-on-surface font-semibold">+27 11 000 9988</p></div></div>
+            <div class="flex items-center gap-4 p-4 rounded-xl bg-surface-container-high/50 border border-white/5"><span class="material-symbols-outlined text-primary">chat_bubble</span><div><p class="font-label-sm text-label-sm text-on-surface-variant">Live Dispatch</p><p class="text-on-surface font-semibold">Ready (Avg 15s wait)</p></div></div>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <button onclick="alert('Roadside assistance requested. ETA: 25 minutes.')" class="w-full bg-primary text-on-primary font-bold py-4 rounded-xl flex items-center justify-center gap-2 cyan-glow hover:brightness-110 transition-all">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">emergency_share</span>REQUEST ROADSIDE ASSIST
+          </button>
+          <button onclick="alert('Failure report submitted. Reference: #MF-' + Math.floor(Math.random()*9000+1000))" class="w-full border border-white/10 text-on-surface py-4 rounded-xl hover:bg-white/5 transition-all">REPORT MECHANICAL FAILURE</button>
+        </div>
+      </div>
+    </div>
+    <!-- Fuel Logger -->
+    <div class="mt-8 glass-card rounded-xl p-6">
+      <h3 class="font-headline-lg text-xl mb-6">Log Fuel Entry</h3>
+      <form id="fuelForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div class="flex flex-col gap-2">
+          <label class="font-label-sm text-label-sm text-on-surface-variant uppercase">Vehicle</label>
+          <select class="bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-3 text-on-surface focus:border-primary-fixed-dim outline-none">
+            <option>Volvo FH16 — EC-7749-X</option>
+            <option>Cat 390F Excavator</option>
+            <option>MAN TGS Flatbed</option>
+          </select>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="font-label-sm text-label-sm text-on-surface-variant uppercase">Litres Added</label>
+          <input id="fuelLitres" type="number" min="0" max="1000" placeholder="0 L" class="bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-3 text-on-surface focus:border-primary-fixed-dim outline-none"/>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="font-label-sm text-label-sm text-on-surface-variant uppercase">Odometer (km)</label>
+          <input type="number" placeholder="km" class="bg-surface-container-lowest border border-white/10 rounded-xl px-4 py-3 text-on-surface focus:border-primary-fixed-dim outline-none"/>
+        </div>
+        <button type="submit" class="bg-primary-container text-on-primary-container font-bold py-3 rounded-xl hover:brightness-110 transition-all">Save Entry</button>
+      </form>
+    </div>
+  </div>
+</main>
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden bg-surface-container-high/80 backdrop-blur-lg border-t border-white/10 rounded-t-xl shadow-lg">
+  <a href="dashboard.html" class="flex flex-col items-center justify-center text-primary-fixed-dim font-bold"><span class="material-symbols-outlined">home</span><span class="font-label-sm text-label-sm">Home</span></a>
+  <a href="driver-vehicles.html" class="flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">local_shipping</span><span class="font-label-sm text-label-sm">Fleet</span></a>
+  <a href="calculator.html" class="flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">payments</span><span class="font-label-sm text-label-sm">Calculator</span></a>
+  <a href="user-dashboard.html" class="flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">person</span><span class="font-label-sm text-label-sm">Profile</span></a>
+</nav>
+<script>
+  // Leaflet route map
+  const rMap = L.map('routeMap', {zoomControl:false, attributionControl:false}).setView([-26.0,27.8], 8);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {subdomains:'abcd', maxZoom:20}).addTo(rMap);
+  L.control.zoom({position:'topright'}).addTo(rMap);
+
+  const route = [[-26.2041,28.0473],[-25.95,27.9],[-25.78,27.6],[-25.6677,27.2424]];
+  L.polyline(route, {color:'#00f0ff', weight:3, opacity:0.8, dashArray:'6 4'}).addTo(rMap);
+
+  const posIcon = L.divIcon({html:'<div style="width:18px;height:18px;border-radius:50%;background:#00f0ff;border:3px solid white;box-shadow:0 0 18px rgba(0,240,255,.8);"></div>',iconSize:[18,18],iconAnchor:[9,9],className:''});
+  L.marker([-25.95,27.9],{icon:posIcon}).addTo(rMap).bindPopup('<b>EC-7749-X</b><br>Volvo FH16<br>84 km/h · Fuel 64%');
+
+  const destIcon = L.divIcon({html:'<div style="width:12px;height:12px;border-radius:50%;background:#ffb4a2;border:2px solid white;box-shadow:0 0 10px rgba(255,180,162,.6);"></div>',iconSize:[12,12],iconAnchor:[6,6],className:''});
+  L.marker([-25.6677,27.2424],{icon:destIcon}).addTo(rMap);
+
+  document.getElementById('fuelForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const litres = document.getElementById('fuelLitres').value;
+    if (litres) {
+      const newPct = Math.min(100, 64 + Math.round((litres / 200) * 100));
+      document.getElementById('fuelPct').textContent = newPct + '%';
+      document.getElementById('fuelBar').style.width = newPct + '%';
+      alert('Fuel entry saved: ' + litres + 'L added.');
+      e.target.reset();
+    }
+  });
+</script>
+<script src="transitions.js"></script>
+</body></html>

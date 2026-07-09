@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(firebase deploy *)",
+      "Bash(firebase dataconnect:deploy)",
+      "mcp__higgsfield__models_explore"
+    ]
+  }
+}

@@ -1,0 +1,781 @@
+# EquipCore — Data Connect Queries
+
+# ─── Vehicles ─────────────────────────────────────────────────────────────────
+
+query ListAllVehicles @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicles(orderBy: { updatedAt: DESC }) {
+    id
+    organisation {
+      id
+      name
+    }
+    make
+    model
+    year
+    type
+    regPlate
+    km
+    serviceIntervalKm
+    nextServiceKm
+    status
+    imageUrl
+    createdAt
+    updatedAt
+  }
+}
+
+query GetVehicleById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle(id: $id) {
+    id
+    make
+    model
+    year
+    type
+    regPlate
+    km
+    serviceIntervalKm
+    nextServiceKm
+    status
+    imageUrl
+    createdAt
+    updatedAt
+  }
+}
+
+query ListVehiclesByStatus($status: VehicleStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicles(where: { status: { eq: $status } }, orderBy: { make: ASC }) {
+    id
+    make
+    model
+    year
+    type
+    regPlate
+    km
+    status
+    imageUrl
+  }
+}
+
+query ListVehiclesByType($type: VehicleType!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicles(where: { type: { eq: $type } }, orderBy: { make: ASC }) {
+    id
+    make
+    model
+    year
+    type
+    regPlate
+    status
+    imageUrl
+  }
+}
+
+# ─── Rentals ──────────────────────────────────────────────────────────────────
+
+query ListAllRentals @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rentals(orderBy: { updatedAt: DESC }) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    equipmentName
+    clientName
+    organisation {
+      id
+      name
+    }
+    startDate
+    returnDate
+    valueZar
+    status
+    notes
+    createdAt
+    updatedAt
+  }
+}
+
+query GetRentalById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rental(id: $id) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+      type
+      imageUrl
+    }
+    equipmentName
+    clientName
+    organisation {
+      id
+      name
+      contactEmail
+    }
+    startDate
+    returnDate
+    valueZar
+    status
+    notes
+    createdAt
+    updatedAt
+  }
+}
+
+query ListRentalsByStatus($status: RentalStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rentals(
+    where: { status: { eq: $status } }
+    orderBy: { startDate: DESC }
+  ) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    equipmentName
+    clientName
+    organisation {
+      id
+      name
+    }
+    startDate
+    returnDate
+    valueZar
+    status
+  }
+}
+
+query ListRentalsByOrg($organisationId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rentals(
+    where: { organisationId: { eq: $organisationId } }
+    orderBy: { startDate: DESC }
+  ) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    equipmentName
+    startDate
+    returnDate
+    valueZar
+    status
+  }
+}
+
+# ─── Organisations ────────────────────────────────────────────────────────────
+
+query ListAllOrganisations @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  organisations(orderBy: { name: ASC }) {
+    id
+    name
+    sector
+    regId
+    contactEmail
+    domain
+    logoUrl
+    status
+    createdAt
+    updatedAt
+  }
+}
+
+query GetOrganisationById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  organisation(id: $id) {
+    id
+    name
+    sector
+    regId
+    contactEmail
+    domain
+    logoUrl
+    status
+    createdAt
+    updatedAt
+  }
+}
+
+query ListOrganisationsByStatus($status: OrgStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  organisations(
+    where: { status: { eq: $status } }
+    orderBy: { name: ASC }
+  ) {
+    id
+    name
+    sector
+    contactEmail
+    status
+  }
+}
+
+# ─── Organisation Requests ────────────────────────────────────────────────────
+
+query ListAllOrgRequests @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  orgRequests(orderBy: { submittedAt: DESC }) {
+    id
+    orgName
+    sector
+    regId
+    contactName
+    contactEmail
+    domain
+    status
+    adminNotes
+    resultingOrg {
+      id
+      name
+    }
+    submittedAt
+    updatedAt
+  }
+}
+
+query GetOrgRequestById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  orgRequest(id: $id) {
+    id
+    orgName
+    sector
+    regId
+    contactName
+    contactEmail
+    domain
+    status
+    adminNotes
+    resultingOrg { id name }
+    submittedAt
+    updatedAt
+  }
+}
+
+query ListOrgRequestsByStatus($status: OrgRequestStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  orgRequests(
+    where: { status: { eq: $status } }
+    orderBy: { submittedAt: DESC }
+  ) {
+    id
+    orgName
+    contactName
+    contactEmail
+    status
+    submittedAt
+  }
+}
+
+# ─── Users ────────────────────────────────────────────────────────────────────
+
+query ListAllUsers @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  users(orderBy: { name: ASC }) {
+    id
+    name
+    email
+    role
+    organisation {
+      id
+      name
+    }
+    status
+    avatarUrl
+    bio
+    position
+    department
+    phone
+    createdAt
+    updatedAt
+  }
+}
+
+query GetUserById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  user(id: $id) {
+    id
+    name
+    email
+    role
+    organisation {
+      id
+      name
+    }
+    status
+    avatarUrl
+    createdAt
+    updatedAt
+  }
+}
+
+query ListUsersByOrg($organisationId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  users(
+    where: { organisationId: { eq: $organisationId } }
+    orderBy: { name: ASC }
+  ) {
+    id
+    name
+    email
+    role
+    status
+  }
+}
+
+query GetUserByEmail($email: String!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  users(where: { email: { eq: $email } }, limit: 1) {
+    id
+    name
+    email
+    role
+    organisation { id name }
+    status
+    avatarUrl
+    bio
+    position
+    department
+    phone
+    createdAt
+  }
+}
+
+query ListUsersByRole($role: UserRole!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  users(
+    where: { role: { eq: $role } }
+    orderBy: { name: ASC }
+  ) {
+    id
+    name
+    email
+    role
+    status
+    avatarUrl
+  }
+}
+
+# ─── Maintenance ──────────────────────────────────────────────────────────────
+
+query ListAllMaintenanceQueries @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQueries(orderBy: { updatedAt: DESC }) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    vehicleLabel
+    loggedByName
+    loggedByUser {
+      id
+      name
+    }
+    type
+    description
+    priority
+    status
+    resolvedAt
+    updatedAt
+  }
+}
+
+query GetMaintenanceById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQuery(id: $id) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+      type
+    }
+    vehicleLabel
+    loggedByName
+    loggedByUser {
+      id
+      name
+      email
+    }
+    type
+    description
+    priority
+    status
+    resolvedAt
+    updatedAt
+  }
+}
+
+query ListMaintenanceByVehicle($vehicleId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQueries(
+    where: { vehicleId: { eq: $vehicleId } }
+    orderBy: { updatedAt: DESC }
+  ) {
+    id
+    type
+    description
+    priority
+    status
+    loggedByName
+    createdAt
+    resolvedAt
+  }
+}
+
+query ListMaintenanceByStatus($status: MaintenanceStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQueries(
+    where: { status: { eq: $status } }
+    orderBy: { priority: DESC }
+  ) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    type
+    description
+    priority
+    status
+    createdAt
+  }
+}
+
+query ListMaintenanceByPriority($priority: MaintenancePriority!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  maintenanceQueries(
+    where: {
+      _and: [
+        { priority: { eq: $priority } }
+        { status: { ne: RESOLVED } }
+      ]
+    }
+    orderBy: { updatedAt: DESC }
+  ) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    type
+    description
+    priority
+    status
+    createdAt
+  }
+}
+
+# ─── Rental Applications ──────────────────────────────────────────────────────
+
+query ListAllRentalApplications @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rentalApplications(orderBy: { submittedAt: DESC }) {
+    id
+    firstName
+    lastName
+    email
+    phone
+    equipmentName
+    vehicle {
+      id
+      make
+      model
+    }
+    startDate
+    endDate
+    status
+    submittedAt
+    updatedAt
+  }
+}
+
+query GetRentalApplicationById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rentalApplication(id: $id) {
+    id
+    applicantUser {
+      id
+      name
+      email
+    }
+    firstName
+    lastName
+    idNumber
+    dateOfBirth
+    email
+    phone
+    address
+    city
+    province
+    postalCode
+    employmentStatus
+    employerName
+    monthlyIncome
+    yearsEmployed
+    bank
+    accountType
+    outstandingCredit
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    equipmentName
+    startDate
+    endDate
+    deliveryAddress
+    purpose
+    rentalNotes
+    status
+    submittedAt
+    updatedAt
+  }
+}
+
+query ListRentalApplicationsByStatus($status: ApplicationStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  rentalApplications(
+    where: { status: { eq: $status } }
+    orderBy: { submittedAt: DESC }
+  ) {
+    id
+    firstName
+    lastName
+    email
+    equipmentName
+    startDate
+    endDate
+    status
+    submittedAt
+  }
+}
+
+# ─── Audit Logs ───────────────────────────────────────────────────────────────
+
+query ListAuditLogs($limit: Int) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  auditLogs(orderBy: { createdAt: DESC }, limit: $limit) {
+    id
+    user { id name }
+    userName
+    userRole
+    action
+    details
+    page
+    ipAddress
+    createdAt
+  }
+}
+
+query ListAuditLogsByAction($action: String!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  auditLogs(
+    where: { action: { eq: $action } }
+    orderBy: { createdAt: DESC }
+  ) {
+    id
+    userName
+    userRole
+    action
+    details
+    page
+    createdAt
+  }
+}
+
+query ListAuditLogsByUser($userId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  auditLogs(
+    where: { userId: { eq: $userId } }
+    orderBy: { createdAt: DESC }
+  ) {
+    id
+    userName
+    userRole
+    action
+    details
+    page
+    createdAt
+  }
+}
+
+# ─── Catalog ──────────────────────────────────────────────────────────────────
+
+query ListAllCatalogItems @auth(level: PUBLIC, insecureReason: "Catalog is publicly visible.") {
+  catalogItems(orderBy: { name: ASC }) {
+    id
+    name
+    subtitle
+    category
+    description
+    specs
+    dailyRate
+    status
+    imageUrl
+  }
+}
+
+query ListCatalogItemsByCategory($category: CatalogCategory!) @auth(level: PUBLIC, insecureReason: "Catalog is publicly visible.") {
+  catalogItems(
+    where: { category: { eq: $category } }
+    orderBy: { name: ASC }
+  ) {
+    id
+    name
+    category
+    description
+    dailyRate
+    specs
+    status
+    imageUrl
+  }
+}
+
+query GetCatalogItemById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Catalog is publicly visible.") {
+  catalogItem(id: $id) {
+    id
+    name
+    subtitle
+    category
+    description
+    specs
+    dailyRate
+    status
+    availableFrom
+    imageUrl
+    createdAt
+    updatedAt
+  }
+}
+
+query ListAvailableCatalogItems @auth(level: PUBLIC, insecureReason: "Catalog is publicly visible.") {
+  catalogItems(
+    where: { status: { eq: AVAILABLE } }
+    orderBy: { category: ASC }
+  ) {
+    id
+    name
+    subtitle
+    category
+    description
+    specs
+    dailyRate
+    imageUrl
+  }
+}
+
+# ─── Vehicle Images ───────────────────────────────────────────────────────────
+
+query ListVehicleImages($vehicleId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicleImages(
+    where: { vehicleId: { eq: $vehicleId } }
+    orderBy: { sortOrder: ASC }
+  ) {
+    id
+    imageUrl
+    caption
+    sortOrder
+    uploadedAt
+  }
+}
+
+# ─── Catalog Images ───────────────────────────────────────────────────────────
+
+query ListCatalogImages($catalogItemId: UUID!) @auth(level: PUBLIC, insecureReason: "Catalog is publicly visible.") {
+  catalogImages(
+    where: { catalogItemId: { eq: $catalogItemId } }
+    orderBy: { sortOrder: ASC }
+  ) {
+    id
+    imageUrl
+    caption
+    sortOrder
+    uploadedAt
+  }
+}
+
+# ─── Waitlist ─────────────────────────────────────────────────────────────────
+
+query ListAllWaitlistEntries @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  waitlistEntries(orderBy: { submittedAt: DESC }) {
+    id
+    catalogItem { id name }
+    user { id name email }
+    name
+    email
+    phone
+    status
+    submittedAt
+    notifiedAt
+  }
+}
+
+query ListWaitlistByItem($catalogItemId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  waitlistEntries(
+    where: { catalogItemId: { eq: $catalogItemId } }
+    orderBy: { submittedAt: ASC }
+  ) {
+    id
+    name
+    email
+    phone
+    status
+    submittedAt
+    notifiedAt
+  }
+}
+
+query ListWaitlistByStatus($status: WaitlistStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  waitlistEntries(
+    where: { status: { eq: $status } }
+    orderBy: { submittedAt: ASC }
+  ) {
+    id
+    catalogItem { id name }
+    name
+    email
+    status
+    submittedAt
+  }
+}
+
+# ─── Contact Inquiries ────────────────────────────────────────────────────────
+
+query ListAllContactInquiries @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  contactInquiries(orderBy: { submittedAt: DESC }) {
+    id
+    referenceId
+    name
+    email
+    subject
+    message
+    status
+    repliedBy { id name }
+    repliedAt
+    submittedAt
+  }
+}
+
+query GetContactInquiryById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  contactInquiry(id: $id) {
+    id
+    referenceId
+    name
+    email
+    subject
+    message
+    status
+    repliedBy { id name email }
+    repliedAt
+    submittedAt
+  }
+}
+
+query ListContactInquiriesByStatus($status: InquiryStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  contactInquiries(
+    where: { status: { eq: $status } }
+    orderBy: { submittedAt: DESC }
+  ) {
+    id
+    referenceId
+    name
+    email
+    subject
+    status
+    submittedAt
+  }
+}

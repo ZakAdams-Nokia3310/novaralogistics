@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// Novara Terra Industrials — Firestore Security Rules
+// Current architecture uses Firebase Data Connect (PostgreSQL), not Firestore.
+// These rules deny all access as a safety net in case Firestore is inadvertently
+// enabled or accessed. When the app migrates to Firestore, replace these rules
+// with role-specific, field-validated rules before enabling any collection.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Deny everything by default ───────────────────────────────────────────
+    // No collection or document is readable or writable from the client.
+    // All data access must go through the Data Connect service using the
+    // @auth directives defined in dataconnect/schema/schema.gql.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+  }
+}

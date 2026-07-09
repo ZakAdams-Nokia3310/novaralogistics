@@ -1,0 +1,87 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ── Deny everything by default ──────────────────────────────────────────
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // Role stored in Firebase Auth custom claims after migration to real Auth.
+      // Until then this path remains locked to service-account-only access.
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isImageFile() {
+      return request.resource.contentType.matches('image/(jpeg|jpg|png|webp|gif|svg\\+xml)');
+    }
+
+    function isUnder5MB() {
+      return request.resource.size <= 5 * 1024 * 1024;
+    }
+
+    function isValidImageUpload() {
+      return isImageFile() && isUnder5MB();
+    }
+
+    // ── User profile photos — users/upload/{userId}/profile.{ext} ───────────
+    // Each user can upload and read their own profile photo.
+    // Admins can read any profile photo.
+    match /users/upload/{userId}/{fileName} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) && isValidImageUpload();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // ── Vehicle / fleet images — vehicles/{vehicleId}/{fileName} ────────────
+    // Only admins can upload or modify vehicle images.
+    // Authenticated users can read vehicle images (needed to display fleet pages).
+    match /vehicles/{vehicleId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // ── Organisation logos — orgs/{orgId}/{fileName} ────────────────────────
+    // Only admins can upload org logos.
+    // Any signed-in user can read them.
+    match /orgs/{orgId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin() && isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // ── Catalog item images — catalog/{itemId}/{fileName} ───────────────────
+    // Public read (catalog is publicly visible).
+    // Admin write only.
+    match /catalog/{itemId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // ── Rental application documents — applications/{appId}/{fileName} ───────
+    // Only the applicant and admins can read application documents.
+    // Applicants can upload supporting documents (PDF/images, 5 MB max).
+    match /applications/{appId}/{fileName} {
+      allow read: if isAdmin();
+      allow write: if isSignedIn()
+        && (request.resource.contentType.matches('image/(jpeg|jpg|png|webp)')
+            || request.resource.contentType == 'application/pdf')
+        && isUnder5MB();
+      allow delete: if isAdmin();
+    }
+
+  }
+}

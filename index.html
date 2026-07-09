@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EquipCore — Fleet & Equipment Manager</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes slide-up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes intro-rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+  #ec-intro{transition:opacity 1.4s cubic-bezier(0.4,0,0.2,1),visibility 1.4s}
+
+  /* Scroll-reveal system */
+  .sr{opacity:0;transform:translateY(48px);transition:opacity 0.8s cubic-bezier(0.4,0,0.2,1),transform 0.8s cubic-bezier(0.4,0,0.2,1)}
+  .sr.from-left{transform:translateX(-52px) translateY(0)}
+  .sr.from-right{transform:translateX(52px) translateY(0)}
+  .sr.scale-in{transform:scale(0.9) translateY(24px)}
+  .sr.visible{opacity:1;transform:none}
+  .sr.sd1{transition-delay:0.08s}.sr.sd2{transition-delay:0.18s}.sr.sd3{transition-delay:0.28s}.sr.sd4{transition-delay:0.38s}
+  .sr-line{width:0;height:1px;background:linear-gradient(90deg,#00f0ff,transparent);transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+  .sr-line.visible{width:100%}
+
+  /* Icon pulse effect */
+  @keyframes icon-glow{0%,100%{box-shadow:0 0 0 0 rgba(0,240,255,0)}50%{box-shadow:0 0 24px 4px rgba(0,240,255,0.15)}}
+  .icon-glow.visible{animation:icon-glow 2.4s ease-in-out infinite}
+
+  .animate-float{animation:float 4s ease-in-out infinite;}
+  .animate-slide-up{animation:slide-up 0.7s cubic-bezier(0.4,0,0.2,1) both;}
+  .delay-1{animation-delay:0.1s;}.delay-2{animation-delay:0.25s;}.delay-3{animation-delay:0.4s;}.delay-4{animation-delay:0.55s;}
+  .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);}
+  .glow-cyan{box-shadow:0 0 40px rgba(0,240,255,0.3);}
+  .text-gradient{background:linear-gradient(135deg,#00f0ff 0%,#7df4ff 50%,#e2e2e8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+  /* Step connector line */
+  .step-line{position:absolute;top:28px;left:50%;width:100%;height:1px;background:linear-gradient(90deg,rgba(0,240,255,0.3),rgba(0,240,255,0.05))}
+</style>
+<script>
+  tailwind.config={darkMode:"class",theme:{extend:{colors:{
+    "primary":"#dbfcff","primary-container":"#00f0ff","on-primary-container":"#006970",
+    "primary-fixed-dim":"#00dbe9","secondary-container":"#7000ff","on-secondary-container":"#ddcdff",
+    "surface":"#111317","background":"#111317","surface-container":"#1e2024",
+    "surface-container-lowest":"#0c0e12","surface-container-high":"#282a2e",
+    "on-surface":"#e2e2e8","on-surface-variant":"#b9cacb","tertiary-fixed-dim":"#ffb4a2",
+    "outline":"#849495","surface-variant":"#333539"
+  },fontFamily:{
+    "display":["Hanken Grotesk"],"body":["Inter"],"mono":["JetBrains Mono"]
+  },spacing:{
+    "desktop":"48px","gutter":"24px"
+  }}}}
+</script>
+</head>
+<body class="bg-[#080a0e] text-on-surface overflow-x-hidden">
+
+<!-- ═══════════ INTRO SPLASH ═══════════ -->
+<div id="ec-intro" style="position:fixed;inset:0;z-index:1000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden">
+  <video id="ec-intro-vid" autoplay muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.7;filter:brightness(0.55) saturate(0.85)">
+    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3F3a4QhSJAaJAIbLMhLHPVYFt1B/hf_20260621_020642_2528967a-7322-4941-9904-cc3b7438dc55.mp4" type="video/mp4"/>
+  </video>
+  <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,10,14,0.15) 0%,rgba(8,10,14,0.25) 45%,rgba(8,10,14,0.88) 80%,#080a0e 100%);z-index:1"></div>
+  <div style="position:relative;z-index:2;text-align:center;padding:0 28px;animation:intro-rise 1.1s cubic-bezier(0.4,0,0.2,1) both;animation-delay:0.3s">
+    <div style="font-size:38px;margin-bottom:18px">⚡</div>
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-size:clamp(34px,5.5vw,78px);font-weight:800;color:#fff;line-height:1.05;letter-spacing:-0.02em;text-shadow:0 4px 40px rgba(0,0,0,0.9);margin-bottom:20px">
+      Bringing the World<br/>
+      <span style="background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">of Logistics to You.</span>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(0,240,255,0.65);letter-spacing:0.28em;text-transform:uppercase;margin-bottom:52px">
+      EquipCore &mdash; Fleet &amp; Equipment Manager
+    </div>
+    <div style="width:220px;height:1px;background:rgba(255,255,255,0.1);border-radius:1px;overflow:hidden;margin:0 auto 24px">
+      <div id="ec-intro-bar" style="width:0%;height:100%;background:linear-gradient(90deg,#00f0ff,#7df4ff);border-radius:1px;transition:width 8s linear"></div>
+    </div>
+    <button id="ec-skip-btn" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.28);background:none;border:none;cursor:pointer;letter-spacing:0.18em;text-transform:uppercase;transition:color 0.2s" onmouseover="this.style.color='rgba(255,255,255,0.65)'" onmouseout="this.style.color='rgba(255,255,255,0.28)'">Skip intro →</button>
+  </div>
+</div>
+<script>
+(function(){
+  document.body.style.overflow='hidden';var dismissed=false;
+  function dismiss(){if(dismissed)return;dismissed=true;var intro=document.getElementById('ec-intro');intro.style.opacity='0';intro.style.visibility='hidden';setTimeout(function(){intro.remove();document.body.style.overflow='';},1400);}
+  window.addEventListener('load',function(){var bar=document.getElementById('ec-intro-bar');if(bar)requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width='100%';});});});
+  var vid=document.getElementById('ec-intro-vid');if(vid)vid.addEventListener('ended',dismiss);
+  setTimeout(dismiss,9000);
+  document.getElementById('ec-skip-btn').addEventListener('click',dismiss);
+})();
+</script>
+
+<!-- ═══════════ BACKGROUND ═══════════ -->
+<div class="fixed inset-0 pointer-events-none">
+  <canvas id="ec-bg-canvas" class="absolute inset-0 w-full h-full"></canvas>
+  <div class="absolute inset-0" style="background:radial-gradient(ellipse at 50% 0%,rgba(0,240,255,0.10) 0%,transparent 60%),radial-gradient(ellipse at 100% 100%,rgba(112,0,255,0.07) 0%,transparent 50%),linear-gradient(to bottom,rgba(8,10,14,0.3) 0%,rgba(8,10,14,0.95) 60%,#080a0e 100%)"></div>
+</div>
+<script>
+(function(){
+  const c=document.getElementById('ec-bg-canvas'),ctx=c.getContext('2d');let W,H,pts=[];const N=72,D=160;
+  function resize(){W=c.width=c.offsetWidth||window.innerWidth;H=c.height=c.offsetHeight||window.innerHeight;}
+  function mkPt(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*1.2+.4,pulse:Math.random()*Math.PI*2};}
+  resize();for(let i=0;i<N;i++)pts.push(mkPt());window.addEventListener('resize',resize);
+  var _raf;
+  function draw(){if(document.hidden){_raf=requestAnimationFrame(draw);return;}ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++){const p=pts[i];p.x+=p.vx;p.y+=p.vy;p.pulse+=.018;if(p.x<-10)p.x=W+10;if(p.x>W+10)p.x=-10;if(p.y<-10)p.y=H+10;if(p.y>H+10)p.y=-10;const pulse=.55+.45*Math.sin(p.pulse);ctx.beginPath();ctx.arc(p.x,p.y,p.r*pulse,0,Math.PI*2);ctx.fillStyle=`rgba(0,240,255,${0.28*pulse})`;ctx.fill();for(let j=i+1;j<pts.length;j++){const q=pts[j],dx=p.x-q.x,dy=p.y-q.y,d2=dx*dx+dy*dy;if(d2<D*D){const dist=Math.sqrt(d2);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle=`rgba(0,240,255,${.055*(1-dist/D)})`;ctx.lineWidth=.6;ctx.stroke();}}}requestAnimationFrame(draw);}
+  draw();
+})();
+</script>
+
+<!-- ═══════════ NAVBAR ═══════════ -->
+<nav class="relative z-10 flex justify-between items-center px-desktop py-5 max-w-[1440px] mx-auto">
+  <div class="flex items-center gap-3">
+    <span class="text-2xl animate-float">⚡</span>
+    <span class="font-display text-xl font-bold text-gradient tracking-tight">EquipCore</span>
+  </div>
+  <div class="hidden md:flex items-center gap-8">
+    <a href="marketplace.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase">Marketplace</a>
+    <a href="catalog.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase">Catalog</a>
+    <a href="calculator.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase">Calculator</a>
+    <a href="about.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase">About</a>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="login.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase hidden md:inline">Sign In</a>
+    <a href="signup.html" class="font-mono text-[12px] font-bold bg-primary-container text-on-primary-container px-5 py-2.5 rounded-lg hover:brightness-110 transition-all active:scale-95 glow-cyan">
+      Sign Up Free →
+    </a>
+  </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<main class="relative z-10 min-h-[90vh] flex flex-col items-center justify-center text-center px-6 pt-16 pb-32 max-w-[1440px] mx-auto">
+
+  <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-10 animate-slide-up">
+    <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse inline-block"></span>
+    <span class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase">Powering Africa's Industrial Backbone</span>
+  </div>
+
+  <h1 class="font-display font-extrabold leading-[1.05] tracking-tight mb-6 animate-slide-up delay-1"
+      style="font-size:clamp(42px,7vw,90px)">
+    <span class="text-gradient">Bringing the World</span><br/>
+    <span class="text-on-surface opacity-90">of Logistics to You.</span>
+  </h1>
+
+  <!-- Animated ticker -->
+  <div class="overflow-hidden mb-6 animate-slide-up delay-2" style="height:1.8em">
+    <div id="ec-ticker" class="font-mono text-[13px] text-primary-fixed-dim tracking-widest uppercase">
+      <span id="ec-t0">⚡ Real-Time Fleet Tracking</span>
+      <span id="ec-t1" style="display:none">⚡ Smart Rental Management</span>
+      <span id="ec-t2" style="display:none">⚡ Global Equipment Marketplace</span>
+    </div>
+  </div>
+  <script>(function(){const s=[document.getElementById('ec-t0'),document.getElementById('ec-t1'),document.getElementById('ec-t2')];let i=0;setInterval(function(){s[i].style.display='none';i=(i+1)%s.length;s[i].style.display='block';},3000);})();</script>
+
+  <p class="text-on-surface-variant text-lg max-w-xl leading-relaxed mb-12 animate-slide-up delay-2">
+    From South Africa's mines to global ports — real-time fleet intelligence,
+    smart equipment rentals, and an industrial marketplace built for scale.
+  </p>
+
+  <div class="flex flex-col sm:flex-row items-center gap-4 mb-20 animate-slide-up delay-3">
+    <a href="signup.html" class="font-display font-bold text-lg bg-primary-container text-on-primary-container px-10 py-4 rounded-xl hover:brightness-110 transition-all active:scale-95 glow-cyan">
+      Sign Up Free
+    </a>
+    <a href="marketplace.html" class="font-display font-bold text-lg glass text-on-surface px-10 py-4 rounded-xl hover:bg-white/10 transition-all border-white/10">
+      Browse Fleet
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-3xl">
+    <div class="glass rounded-xl p-6 text-center sr sd1">
+      <div class="font-display text-3xl font-bold text-primary-container mb-1" data-count="4821">0</div>
+      <div class="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Fleet Assets</div>
+    </div>
+    <div class="glass rounded-xl p-6 text-center sr sd2">
+      <div class="font-display text-3xl font-bold text-primary-container mb-1" data-count="142">0</div>
+      <div class="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Organisations</div>
+    </div>
+    <div class="glass rounded-xl p-6 text-center sr sd3">
+      <div class="font-display text-3xl font-bold text-primary-container mb-1" data-count="94" data-suffix="%">0%</div>
+      <div class="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Utilization</div>
+    </div>
+    <div class="glass rounded-xl p-6 text-center sr sd4">
+      <div class="font-display text-3xl font-bold text-primary-container mb-1">24/7</div>
+      <div class="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Monitoring</div>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section class="relative z-10 py-28 px-desktop max-w-[1440px] mx-auto">
+  <div class="sr-line sr mb-16"></div>
+  <div class="text-center mb-20 sr">
+    <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">How It Works</p>
+    <h2 class="font-display font-bold text-on-surface" style="font-size:clamp(28px,4vw,48px)">Three steps to move your fleet</h2>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+    <!-- Step 1 -->
+    <div class="text-center relative sr sd1">
+      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-6 icon-glow sr">
+        <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">search</span>
+      </div>
+      <div class="font-mono text-[10px] text-primary-container tracking-widest mb-2">STEP 01</div>
+      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Browse Equipment</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed max-w-xs mx-auto">Explore our verified fleet of heavy trucks, excavators, drill rigs, and more — all with transparent specs and pricing.</p>
+    </div>
+    <!-- Step 2 -->
+    <div class="text-center relative sr sd2">
+      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-6 icon-glow sr">
+        <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">description</span>
+      </div>
+      <div class="font-mono text-[10px] text-primary-container tracking-widest mb-2">STEP 02</div>
+      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Apply to Rent</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed max-w-xs mx-auto">Submit a rental application in minutes. Choose your dates, optional services, and get instant cost estimates with our calculator.</p>
+    </div>
+    <!-- Step 3 -->
+    <div class="text-center relative sr sd3">
+      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-6 icon-glow sr">
+        <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">monitoring</span>
+      </div>
+      <div class="font-mono text-[10px] text-primary-container tracking-widest mb-2">STEP 03</div>
+      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Manage & Track</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed max-w-xs mx-auto">Monitor your active rentals, track fleet in real-time, and manage everything from a single personalised dashboard.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FEATURE STRIP ═══════════ -->
+<section class="relative z-10 border-t border-white/5 py-28 px-desktop max-w-[1440px] mx-auto">
+  <div class="sr-line sr mb-16"></div>
+  <div class="text-center mb-16 sr">
+    <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Platform</p>
+    <h2 class="font-display font-bold text-on-surface mb-3" style="font-size:clamp(28px,4vw,48px)">Everything your fleet needs</h2>
+    <p class="text-on-surface-variant max-w-xl mx-auto">One platform for every stage of industrial equipment lifecycle.</p>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <a href="dashboard.html" class="glass rounded-2xl p-8 hover:border-primary-container/30 transition-all hover:-translate-y-1 group sr sd1 scale-in">
+      <div class="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center mb-5 group-hover:bg-primary-container/20 transition-colors">
+        <span class="material-symbols-outlined text-primary-fixed-dim">sensors</span>
+      </div>
+      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Live Fleet Tracking</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed">Real-time GPS telemetry, fuel monitoring, and status updates across your entire fleet.</p>
+    </a>
+    <a href="marketplace.html" class="glass rounded-2xl p-8 hover:border-primary-container/30 transition-all hover:-translate-y-1 group sr sd2 scale-in">
+      <div class="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center mb-5 group-hover:bg-primary-container/20 transition-colors">
+        <span class="material-symbols-outlined text-primary-fixed-dim">storefront</span>
+      </div>
+      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Global Marketplace</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed">Rent premium equipment from verified providers. Transparent pricing, verified specs.</p>
+    </a>
+    <a href="calculator.html" class="glass rounded-2xl p-8 hover:border-primary-container/30 transition-all hover:-translate-y-1 group sr sd3 scale-in">
+      <div class="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center mb-5 group-hover:bg-primary-container/20 transition-colors">
+        <span class="material-symbols-outlined text-primary-fixed-dim">calculate</span>
+      </div>
+      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Rent Calculator</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed">Precise cost modelling with optional services, VAT, and volume discounts built in.</p>
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════ PLATFORM HIGHLIGHTS ═══════════ -->
+<section class="relative z-10 py-28 px-desktop max-w-[1440px] mx-auto">
+  <div class="sr-line sr mb-16"></div>
+
+  <!-- Highlight 1: Dashboard -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-28">
+    <div class="sr from-left">
+      <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Dashboard</p>
+      <h3 class="font-display font-bold text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px)">Your fleet command centre</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed mb-6">See every vehicle, every rental, every metric — all in one real-time dashboard tailored to your role. Admins, operators, and drivers each get exactly what they need.</p>
+      <div class="flex flex-wrap gap-3">
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">GPS Tracking</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Rental Status</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Maintenance Alerts</span>
+      </div>
+    </div>
+    <div class="sr from-right">
+      <div class="glass rounded-2xl p-1 overflow-hidden">
+        <div class="rounded-xl overflow-hidden relative h-64 bg-surface-container flex items-center justify-center">
+          <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(0,240,255,0.05),rgba(112,0,255,0.03))"></div>
+          <div class="relative text-center p-6">
+            <span class="material-symbols-outlined text-primary-container mb-3" style="font-size:56px;opacity:0.7">dashboard</span>
+            <div class="grid grid-cols-3 gap-3 mt-4">
+              <div class="glass rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">Active</div><div class="font-display font-bold text-primary-container text-lg">23</div></div>
+              <div class="glass rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">On Rent</div><div class="font-display font-bold text-primary-container text-lg">18</div></div>
+              <div class="glass rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">Alerts</div><div class="font-display font-bold text-tertiary-fixed-dim text-lg">3</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Highlight 2: Marketplace -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-28">
+    <div class="order-2 md:order-1 sr from-left">
+      <div class="glass rounded-2xl p-1 overflow-hidden">
+        <div class="rounded-xl overflow-hidden relative h-64 bg-surface-container flex items-center justify-center">
+          <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(112,0,255,0.05),rgba(0,240,255,0.03))"></div>
+          <div class="relative text-center p-6">
+            <span class="material-symbols-outlined text-primary-container mb-3" style="font-size:56px;opacity:0.7">storefront</span>
+            <div class="space-y-2 mt-4 text-left max-w-[260px] mx-auto">
+              <div class="glass rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">verified</span><span class="font-mono text-[11px] text-on-surface-variant">Verified Providers</span></div>
+              <div class="glass rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">payments</span><span class="font-mono text-[11px] text-on-surface-variant">Transparent Pricing</span></div>
+              <div class="glass rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">inventory_2</span><span class="font-mono text-[11px] text-on-surface-variant">400+ Equipment Listings</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="order-1 md:order-2 sr from-right">
+      <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Marketplace</p>
+      <h3 class="font-display font-bold text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px)">Rent the right equipment, instantly</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed mb-6">Browse hundreds of verified listings from trusted providers across South Africa. Compare specs, check availability, and apply to rent — all without a phone call.</p>
+      <div class="flex flex-wrap gap-3">
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Heavy Trucks</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Excavators</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Drill Rigs</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Cranes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Highlight 3: Smart Rentals -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+    <div class="sr from-left">
+      <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Rental Management</p>
+      <h3 class="font-display font-bold text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px)">Manage every rental, end to end</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed mb-6">From application to return — track your rentals in real-time, get status notifications, and never miss a return date. Integrated cost estimation keeps budgets in check.</p>
+      <div class="flex flex-wrap gap-3">
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Application Tracking</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Cost Estimates</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Return Management</span>
+      </div>
+    </div>
+    <div class="sr from-right">
+      <div class="glass rounded-2xl p-1 overflow-hidden">
+        <div class="rounded-xl overflow-hidden relative h-64 bg-surface-container flex items-center justify-center">
+          <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(0,240,255,0.05),rgba(255,180,162,0.03))"></div>
+          <div class="relative text-center p-6 w-full">
+            <span class="material-symbols-outlined text-primary-container mb-3" style="font-size:56px;opacity:0.7">assignment</span>
+            <div class="mt-4 space-y-2 max-w-[280px] mx-auto">
+              <div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-green-400"></span><span class="font-mono text-[11px] text-on-surface-variant flex-1">Cat 390F Excavator</span><span class="font-mono text-[10px] text-green-400">Active</span></div>
+              <div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-yellow-400"></span><span class="font-mono text-[11px] text-on-surface-variant flex-1">Volvo A40G Truck</span><span class="font-mono text-[10px] text-yellow-400">Pending</span></div>
+              <div class="flex items-center gap-3"><span class="w-2 h-2 rounded-full bg-primary-container"></span><span class="font-mono text-[11px] text-on-surface-variant flex-1">Sandvik DD421 Drill</span><span class="font-mono text-[10px] text-primary-container">Active</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ INDUSTRIES ═══════════ -->
+<section class="relative z-10 border-t border-white/5 py-28 px-desktop max-w-[1440px] mx-auto">
+  <div class="sr-line sr mb-16"></div>
+  <div class="text-center mb-16 sr">
+    <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Industries</p>
+    <h2 class="font-display font-bold text-on-surface mb-3" style="font-size:clamp(28px,4vw,48px)">Built for industrial scale</h2>
+    <p class="text-on-surface-variant max-w-xl mx-auto">From deep mines to open roads — EquipCore powers operations across every heavy industry.</p>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
+    <div class="glass rounded-2xl p-6 text-center hover:border-primary-container/20 transition-all group sr sd1 scale-in">
+      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-container/15 transition-colors icon-glow sr">
+        <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">precision_manufacturing</span>
+      </div>
+      <h4 class="font-display font-bold text-on-surface mb-1 text-sm">Mining</h4>
+      <p class="text-on-surface-variant text-[12px] leading-relaxed">Drill rigs, excavators, haul trucks</p>
+    </div>
+    <div class="glass rounded-2xl p-6 text-center hover:border-primary-container/20 transition-all group sr sd2 scale-in">
+      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-container/15 transition-colors icon-glow sr">
+        <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">construction</span>
+      </div>
+      <h4 class="font-display font-bold text-on-surface mb-1 text-sm">Construction</h4>
+      <p class="text-on-surface-variant text-[12px] leading-relaxed">Loaders, cranes, backhoes</p>
+    </div>
+    <div class="glass rounded-2xl p-6 text-center hover:border-primary-container/20 transition-all group sr sd3 scale-in">
+      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-container/15 transition-colors icon-glow sr">
+        <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">local_shipping</span>
+      </div>
+      <h4 class="font-display font-bold text-on-surface mb-1 text-sm">Logistics</h4>
+      <p class="text-on-surface-variant text-[12px] leading-relaxed">Heavy haulers, freight, tankers</p>
+    </div>
+    <div class="glass rounded-2xl p-6 text-center hover:border-primary-container/20 transition-all group sr sd4 scale-in">
+      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-container/15 transition-colors icon-glow sr">
+        <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">bolt</span>
+      </div>
+      <h4 class="font-display font-bold text-on-surface mb-1 text-sm">Energy</h4>
+      <p class="text-on-surface-variant text-[12px] leading-relaxed">Generators, utility vehicles</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ VEHICLE SHOWCASE ═══════════ -->
+<section class="relative z-10 py-12 pb-28 px-desktop max-w-[1440px] mx-auto">
+  <div class="sr-line sr mb-10"></div>
+  <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase text-center mb-8 sr">Featured Fleet</p>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <a href="catalog.html" class="relative rounded-2xl overflow-hidden h-56 group sr sd1">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv8e87iP2w_pHeQcW7esQSy6rjuuzXoliWo98ZkWquL6R0NH4Wt64g10-CEaMYh-ErLyiif_9SWsCi-be1XiCdLZkyB-gRd18LqFi005Twx_ZVbvSAesU6ZrpShpx61tTo3W1U8cBqCEYYtI3bSFTzgMM5gH2tB3QpkUFAaz3wImYaRMJlburfRXIHZYDZoVoXZviouUPktBzQx2UklNr9bjAoR2u_3hI7-Ba06LkWZBdJ3Vz1YJkfe80rjiD3De49_iR9BGneReY" alt="Volvo FH16" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+      <div class="absolute bottom-4 left-4"><p class="font-display font-bold text-white">Volvo FH16 Globetrotter</p><p class="font-mono text-[11px] text-primary-fixed-dim">R4,200/day</p></div>
+    </a>
+    <a href="catalog.html" class="relative rounded-2xl overflow-hidden h-56 group sr sd2">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvjBh4G6uFhvFE7zGhLGVK_LfyO1n_pJWncpqsRMSKAU_7NZLlqLR6zwSRawgQ6QMNb21cdXuxXF-7laAXMHx4efih_N9wXGraW9q_I0AkUr_B-EJvaYRIWUwS0TDgpL5qYluKnb3Isqkkiiyw3PMQywZIHRIF1bmUHqSXA5Vg0Uk0biPqwV2yLb7xPD8v5t4ByxG9fI3_L0N9YUeP8LgseDLL0MIRtCDA78mrOrjsAarzBLHZNXtkgAS__EyBAVC9DqZ2OIKpwRE" alt="EX-350 Excavator" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+      <div class="absolute bottom-4 left-4"><p class="font-display font-bold text-white">EX-350 Crawler</p><p class="font-mono text-[11px] text-primary-fixed-dim">R5,800/day</p></div>
+    </a>
+    <a href="catalog.html" class="relative rounded-2xl overflow-hidden h-56 group sr sd3">
+      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdE2hCW5w2ij9u0n1ow2t5elpRp1Mbj3wDGIvJDwLfM0OVkDC7dwpdHhpZD0nZ70no8JAVxJ6HZs84JXziytiGiBWNmLFx3Qc-cWt6qAnt7FNNujYtVfB1hdxk3dXLJMlSHjAkY-XkCUnBXWuv-JdxrX3FdKCoWnG1HKStyXtBvm8HsO1wgNo6nBhN5GN9pSraR9Y2oUFbBhaeZI7sT1dMs1buHld872mq5n6ezGvPzlsGvQ9ArczrClq2unSaMPmSIubvGK3mhjQ" alt="HC-900 Crane" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+      <div class="absolute bottom-4 left-4"><p class="font-display font-bold text-white">HC-900 Heavy Lifter</p><p class="font-mono text-[11px] text-primary-fixed-dim">R18,500/day</p></div>
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════ CTA ═══════════ -->
+<section class="relative z-10 py-28 px-desktop max-w-[1440px] mx-auto">
+  <div class="sr-line sr mb-16"></div>
+  <div class="glass rounded-3xl p-12 md:p-20 text-center sr scale-in" style="border-color:rgba(0,240,255,0.08)">
+    <span class="text-4xl mb-6 inline-block">⚡</span>
+    <h2 class="font-display font-bold text-on-surface mb-4" style="font-size:clamp(28px,4vw,48px)">Ready to power your operations?</h2>
+    <p class="text-on-surface-variant max-w-lg mx-auto mb-10 leading-relaxed">Create your free account and get instant access to South Africa's largest industrial equipment marketplace.</p>
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a href="signup.html" class="font-display font-bold text-lg bg-primary-container text-on-primary-container px-10 py-4 rounded-xl hover:brightness-110 transition-all active:scale-95 glow-cyan">
+        Create Free Account
+      </a>
+      <a href="about.html" class="font-display font-bold text-lg glass text-on-surface px-10 py-4 rounded-xl hover:bg-white/10 transition-all">
+        Learn More
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="relative z-10 border-t border-white/5 px-desktop py-10 max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+  <div class="flex items-center gap-3">
+    <span class="text-xl">⚡</span>
+    <span class="font-display font-bold text-gradient">EquipCore</span>
+    <span class="text-on-surface-variant text-sm">by Novara Terra Industrials</span>
+  </div>
+  <div class="flex gap-6">
+    <a href="about.html" class="font-mono text-[11px] text-on-surface-variant hover:text-primary transition-colors uppercase tracking-wider">About</a>
+    <a href="contact.html" class="font-mono text-[11px] text-on-surface-variant hover:text-primary transition-colors uppercase tracking-wider">Contact</a>
+    <a href="login.html" class="font-mono text-[11px] text-on-surface-variant hover:text-primary transition-colors uppercase tracking-wider">Login</a>
+    <a href="signup.html" class="font-mono text-[11px] text-on-surface-variant hover:text-primary transition-colors uppercase tracking-wider">Sign Up</a>
+  </div>
+  <p class="font-mono text-[11px] text-on-surface-variant">&copy; 2026 Novara Terra Industrials</p>
+</footer>
+
+<!-- ═══════════ SCROLL REVEAL + COUNTERS ═══════════ -->
+<script>
+(function(){
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting)return;
+      e.target.classList.add('visible');
+      obs.unobserve(e.target);
+      var el=e.target.querySelector('[data-count]');
+      if(el){
+        var target=parseInt(el.getAttribute('data-count'),10);
+        var suffix=el.getAttribute('data-suffix')||'';
+        var sep=target>=1000;
+        var start=performance.now(),dur=1300;
+        function step(now){var t=Math.min((now-start)/dur,1);var ease=1-Math.pow(1-t,3);var val=Math.round(ease*target);el.textContent=sep?val.toLocaleString()+suffix:val+suffix;if(t<1)requestAnimationFrame(step);}
+        requestAnimationFrame(step);
+      }
+    });
+  },{threshold:0.15});
+  document.querySelectorAll('.sr').forEach(function(el){obs.observe(el);});
+})();
+</script>
+
+<script src="transitions.js"></script>
+<script src="cookie-consent.js"></script>
+</body></html>

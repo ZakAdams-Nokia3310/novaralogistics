@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin Overview — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'/>
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .sc{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:18px;transition:border-color .2s,background .2s;}
+  .sc:hover{border-color:rgba(0,240,255,.16);background:rgba(0,240,255,.025);}
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+  .tbl td{padding:12px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tbody tr:hover td{background:rgba(0,240,255,.02);}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  .bc{background:rgba(209,188,255,.1);color:#d1bcff;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:filter .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:background .18s;}
+  .btng:hover{background:rgba(255,255,255,.09);}
+  input,select{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:8px 11px;outline:none;transition:border-color .18s;}
+  input:focus,select:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+
+  /* ── Mapbox popup dark theme ───────────────────── */
+  .mapboxgl-popup-content{background:rgba(8,10,14,.96)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:10px!important;padding:10px 13px!important;font-family:'Inter',sans-serif!important;box-shadow:0 4px 24px rgba(0,0,0,.7)!important;}
+  .mapboxgl-popup-tip{display:none!important;}
+  .mapboxgl-ctrl-attrib{background:rgba(8,10,14,.55)!important;border-radius:4px!important;}
+  .mapboxgl-ctrl-attrib a{color:#849495!important;}
+  .ec-mp{display:flex;flex-direction:column;gap:3px;min-width:130px;}
+  .ec-mp-id{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;}
+  .ec-mp-name{font-size:13px;font-weight:600;color:#e2e2e8;}
+  .ec-mp-st{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;margin-top:1px;}
+
+  /* ── Mobile overrides (desktop CSS above is untouched) ─ */
+  @media(max-width:768px){
+    .dash-kpi{grid-template-columns:repeat(2,1fr)!important;gap:8px!important;}
+    .dash-main{grid-template-columns:1fr!important;gap:12px!important;}
+    #adminMap{height:220px!important;}
+    .dash-right-col{display:grid;grid-template-columns:1fr 1fr!important;gap:10px!important;}
+    .dash-quick-actions{display:none!important;}
+  }
+  @media(max-width:480px){
+    .dash-kpi{grid-template-columns:repeat(2,1fr)!important;}
+    .dash-right-col{grid-template-columns:1fr!important;}
+  }
+</style>
+</head>
+<body>
+
+<aside id="sidebar-root"></aside>
+<script>
+// Inline sidebar — no external script dependency, runs immediately on parse
+(function(){
+  var raw = sessionStorage.getItem('ec_session');
+  if(!raw) return;
+  var u = JSON.parse(raw);
+  if(!u) return;
+  var el = document.getElementById('sidebar-root');
+  if(!el) return;
+  var rc = u.role==='driver'?'#ffb4a2':'#00f0ff';
+  var init = (u.name||'?').split(' ').map(function(n){return n[0]||'';}).join('').slice(0,2).toUpperCase();
+  var NAV=[
+    {s:'Main'},
+    {href:'dashboard-admin.html',   icon:'dashboard',     label:'Overview'},
+    {href:'admin-rentals.html',     icon:'receipt_long',  label:'Rental Tracking'},
+    {href:'admin-orgs.html',        icon:'domain',        label:'Organisations'},
+    {href:'admin-fleet.html',       icon:'garage',        label:'Fleet'},
+    {href:'admin-maintenance.html', icon:'build',         label:'Maintenance'},
+    {s:'Tools'},
+    {href:'calculator.html',        icon:'calculate',     label:'Calculator'},
+    {href:'catalog.html',           icon:'inventory_2',   label:'Equipment Catalog'},
+    {href:'marketplace.html',       icon:'storefront',    label:'Marketplace'},
+    {s:'Links'},
+    {href:'about.html',             icon:'info',          label:'About'},
+    {href:'contact.html',           icon:'mail',          label:'Contact'},
+  ];
+  var cur = location.pathname.split('/').pop();
+  function ico(n){return '<span class="material-symbols-outlined" style="font-size:16px;flex-shrink:0;font-variation-settings:\'FILL\' 0,\'wght\' 400,\'GRAD\' 0,\'opsz\' 24">'+n+'</span>';}
+  var h='';
+  h+='<div style="padding:18px 15px 14px;border-bottom:1px solid rgba(255,255,255,.05)">'
+    +'<a href="index.html" style="display:flex;align-items:center;gap:9px;text-decoration:none">'
+    +'<span style="font-size:20px">&#9889;</span>'
+    +'<span style="font-family:\'Hanken Grotesk\',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">EquipCore</span>'
+    +'</a></div>';
+  h+='<div style="padding:9px 11px;border-bottom:1px solid rgba(255,255,255,.04)">'
+    +'<div style="background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:9px 10px;display:flex;align-items:center;gap:9px">'
+    +'<div style="width:30px;height:30px;border-radius:8px;background:rgba(0,240,255,.12);display:flex;align-items:center;justify-content:center;font-family:\'JetBrains Mono\',monospace;font-size:11px;font-weight:700;color:'+rc+';flex-shrink:0">'+init+'</div>'
+    +'<div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e2e2e8">'+(u.name||'Admin')+'</div>'
+    +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#849495">'+u.id+'</div></div>'
+    +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;background:rgba(0,240,255,.08);color:'+rc+';padding:2px 6px;border-radius:999px;border:1px solid rgba(0,240,255,.15);flex-shrink:0;letter-spacing:.06em">'+(u.role||'').toUpperCase()+'</span>'
+    +'</div></div>';
+  h+='<nav style="flex:1;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">';
+  var baseA='display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;text-decoration:none;transition:all .18s;border:1px solid transparent;';
+  NAV.forEach(function(item){
+    if(item.s){
+      h+='<div style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:#849495;text-transform:uppercase;letter-spacing:.18em;padding:10px 10px 4px;margin-top:4px">'+item.s+'</div>';
+    } else {
+      var active = cur===item.href;
+      var st = active ? baseA+'color:'+rc+';background:rgba(0,240,255,.08);border-color:rgba(0,240,255,.15);' : baseA+'color:#b9cacb;';
+      h+='<a href="'+item.href+'" style="'+st+'" onmouseover="if(!this.dataset.active)this.style.background=\'rgba(255,255,255,.05)\'" onmouseout="if(!this.dataset.active)this.style.background=\'transparent\'"'+(active?' data-active="1"':'')+'>'+ico(item.icon)+item.label+'</a>';
+    }
+  });
+  h+='</nav>';
+  h+='<div style="padding:9px 7px;border-top:1px solid rgba(255,255,255,.04)">'
+    +'<button onclick="sessionStorage.removeItem(\'ec_session\');location.href=\'login.html\';" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;background:none;border:none;cursor:pointer;width:100%;color:#849495" onmouseover="this.style.background=\'rgba(255,255,255,.05)\'" onmouseout="this.style.background=\'transparent\'">'+ico('logout')+'Sign Out</button>'
+    +'</div>';
+  el.innerHTML = h;
+})();
+</script>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Admin Dashboard</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495" id="orgLabel"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="alert('3 new applications\n• APP-001 pending\n• APP-002 pending\n• APP-003 low score')" style="position:relative;background:none;border:none;cursor:pointer;color:#849495;display:flex;align-items:center">
+        <span class="material-symbols-outlined ms" style="font-size:20px">notifications</span>
+        <span style="position:absolute;top:-1px;right:-1px;width:7px;height:7px;border-radius:50%;background:#ff6b6b;border:1.5px solid #080a0e"></span>
+      </button>
+      <a href="admin-rentals.html" class="btng" style="font-size:12px;padding:7px 12px"><span class="material-symbols-outlined ms" style="font-size:15px">receipt_long</span>Rentals</a>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Stat cards -->
+    <div class="dash-kpi" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+      <div class="sc">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:#00dbe9">local_shipping</span></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(0,212,170,.1);color:#00d4aa;padding:2px 6px;border-radius:999px">+3</span>
+        </div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:#00f0ff;margin-bottom:2px">24</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Active Rentals</div>
+      </div>
+      <div class="sc">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(209,188,255,.1);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:#d1bcff">payments</span></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(0,212,170,.1);color:#00d4aa;padding:2px 6px;border-radius:999px">+18%</span>
+        </div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:#d1bcff;margin-bottom:2px">R142k</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Monthly Revenue</div>
+      </div>
+      <div class="sc">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,217,61,.1);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:#ffd93d">engineering</span></div>
+        </div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:#ffd93d;margin-bottom:2px">87</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Fleet Units</div>
+      </div>
+      <div class="sc">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+          <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,107,107,.1);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:#ff6b6b">warning</span></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,107,107,.1);color:#ff6b6b;padding:2px 6px;border-radius:999px">Action</span>
+        </div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:#ff6b6b;margin-bottom:2px">5</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Overdue Returns</div>
+      </div>
+    </div>
+
+    <div class="dash-main" style="display:grid;grid-template-columns:1fr 290px;gap:14px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- Map -->
+        <div class="glass" style="border-radius:13px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Live Fleet Map</div>
+            <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff">
+              <span style="width:5px;height:5px;border-radius:50%;background:#00f0ff;animation:pulse 2s ease infinite;display:inline-block"></span>6 tracked
+            </div>
+          </div>
+          <div id="adminMap" style="height:260px"></div>
+        </div>
+
+        <!-- Active Rentals -->
+        <div class="glass" style="border-radius:13px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Active Rentals</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="rSearch" placeholder="Search…" style="width:150px;font-size:12px;padding:6px 10px"/>
+              <a href="admin-rentals.html" class="btng" style="font-size:12px;padding:6px 11px">View All</a>
+            </div>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>ID</th><th>Equipment</th><th>Client</th><th>Return</th><th>Status</th><th></th></tr></thead>
+            <tbody id="rBody">
+              <tr data-q="rnt-4821 cat 390f excavator ngozi mining 12 jun active"><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4821</td><td>Cat 390F Excavator</td><td>Ngozi Mining</td><td>12 Jun</td><td><span class="b ba">Active</span></td><td><button class="btng" style="font-size:11px;padding:4px 9px">View</button></td></tr>
+              <tr data-q="rnt-4819 komatsu wa470 atlas quarry 1 jun overdue"><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4819</td><td>Komatsu WA470</td><td>Atlas Quarry</td><td>1 Jun</td><td><span class="b bo">Overdue</span></td><td><button class="btng" style="font-size:11px;padding:4px 9px;color:#ff6b6b;border-color:rgba(255,107,107,.2)">Chase</button></td></tr>
+              <tr data-q="rnt-4815 sandvik dd421 cape minerals 20 jun active"><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4815</td><td>Sandvik DD421</td><td>Cape Minerals</td><td>20 Jun</td><td><span class="b ba">Active</span></td><td><button class="btng" style="font-size:11px;padding:4px 9px">View</button></td></tr>
+              <tr data-q="rnt-4810 volvo a40g stonewall 30 jun pending"><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4810</td><td>Volvo A40G Truck</td><td>Stonewall</td><td>30 Jun</td><td><span class="b bp">Pending</span></td><td><button class="btnp" style="font-size:11px;padding:4px 9px" onclick="this.closest('tr').querySelector('.b').className='b ba';this.parentNode.innerHTML='<span style=\'font-size:11px;color:#00d4aa;font-family:JetBrains Mono,monospace\'>&#x2713; Approved</span>'">Approve</button></td></tr>
+              <tr data-q="rnt-4802 liebherr r 9400 iron peak 28 may complete"><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4802</td><td>Liebherr R 9400</td><td>Iron Peak</td><td>28 May</td><td><span class="b bc">Complete</span></td><td><button class="btng" style="font-size:11px;padding:4px 9px">Invoice</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Rental Applications -->
+        <div class="glass" style="border-radius:13px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Rental Applications <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,217,61,.1);color:#ffd93d;padding:2px 7px;border-radius:999px;margin-left:6px">3 New</span></div>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Ref</th><th>Applicant</th><th>Equipment</th><th>Credit</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+              <tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">APP-001</td><td>John Dlamini</td><td>Cat 5t Forklift</td><td style="color:#00d4aa;font-weight:600">742 &#x2713;</td><td><span class="b bp">Review</span></td><td><div style="display:flex;gap:5px"><button class="btnp" style="font-size:11px;padding:4px 9px" onclick="appAction(this,'approve')">Approve</button><button class="btng" style="font-size:11px;padding:4px 9px" onclick="appAction(this,'decline')">Decline</button></div></td></tr>
+              <tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">APP-002</td><td>Sarah Nkosi</td><td>500kVA Generator</td><td style="color:#ffd93d;font-weight:600">610 ~</td><td><span class="b bp">Review</span></td><td><div style="display:flex;gap:5px"><button class="btnp" style="font-size:11px;padding:4px 9px" onclick="appAction(this,'approve')">Approve</button><button class="btng" style="font-size:11px;padding:4px 9px" onclick="appAction(this,'decline')">Decline</button></div></td></tr>
+              <tr><td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">APP-003</td><td>Thabo Molefe</td><td>Scania R500</td><td style="color:#ff6b6b;font-weight:600">480 &#x2717;</td><td><span class="b bo">Low Score</span></td><td><button class="btng" style="font-size:11px;padding:4px 9px" onclick="appAction(this,'decline')">Decline</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- Right panel -->
+      <div class="dash-right-col" style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- Fleet status -->
+        <div class="glass" style="border-radius:13px;padding:16px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:14px">Fleet Status</div>
+          <div style="margin-bottom:11px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span style="color:#849495">Available</span><span style="color:#00d4aa;font-weight:600">54</span></div>
+            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px"><div style="width:62%;height:100%;background:#00d4aa;border-radius:999px"></div></div>
+          </div>
+          <div style="margin-bottom:11px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span style="color:#849495">On Rent</span><span style="color:#00f0ff;font-weight:600">24</span></div>
+            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px"><div style="width:28%;height:100%;background:#00f0ff;border-radius:999px"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span style="color:#849495">Maintenance</span><span style="color:#ffd93d;font-weight:600">9</span></div>
+            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px"><div style="width:10%;height:100%;background:#ffd93d;border-radius:999px"></div></div>
+          </div>
+        </div>
+
+        <!-- Activity -->
+        <div class="glass" style="border-radius:13px;padding:16px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px">Activity</div>
+          <div id="actFeed"></div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="dash-quick-actions glass" style="border-radius:13px;padding:16px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <a href="admin-rentals.html" class="btng" style="justify-content:flex-start;font-size:12px;padding:8px 10px"><span class="material-symbols-outlined ms" style="font-size:15px">receipt_long</span>Rental Tracking</a>
+            <a href="admin-orgs.html" class="btng" style="justify-content:flex-start;font-size:12px;padding:8px 10px"><span class="material-symbols-outlined ms" style="font-size:15px">domain</span>Organisations</a>
+            <a href="admin-fleet.html" class="btng" style="justify-content:flex-start;font-size:12px;padding:8px 10px"><span class="material-symbols-outlined ms" style="font-size:15px">garage</span>Fleet Management</a>
+            <a href="admin-maintenance.html" class="btng" style="justify-content:flex-start;font-size:12px;padding:8px 10px"><span class="material-symbols-outlined ms" style="font-size:15px">build</span>Maintenance</a>
+            <a href="calculator.html" class="btng" style="justify-content:flex-start;font-size:12px;padding:8px 10px"><span class="material-symbols-outlined ms" style="font-size:15px">calculate</span>Calculator</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="firebase-config.js"></script>
+<script src="data.js"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('dashboard-admin.html');
+const user = EC_AUTH.require(['admin']);
+if (user) {
+  document.getElementById('orgLabel').textContent = user.org || 'EquipCore Ops';
+}
+
+// ── Mapbox GL JS interactive fleet map ─────────────────────────────────────
+mapboxgl.accessToken = (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.mapboxToken) || '';
+const map = new mapboxgl.Map({
+  container: 'adminMap',
+  style: 'mapbox://styles/mapbox/dark-v11',
+  center: [28.05, -26.15],
+  zoom: 6,
+  attributionControl: false,
+  logoPosition: 'bottom-left',
+});
+map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
+
+const FCOL = { active:'#00f0ff', idle:'#ffb4a2', offline:'#849495' };
+// Coordinates: [longitude, latitude] — Mapbox uses lng/lat order
+const fleet = [
+  { id:'#CAT-442-B', name:'Caterpillar 320 GC', c:[28.0473,-26.2041], s:'active'  },
+  { id:'#VOL-991-X', name:'Volvo A60H Hauler',   c:[27.2424,-25.6677], s:'active'  },
+  { id:'#JCB-121-R', name:'JCB 3CX Eco',         c:[30.9644,-29.8587], s:'idle'    },
+  { id:'#KOM-005-A', name:'Komatsu D475A',        c:[29.4480,-23.8997], s:'offline' },
+  { id:'#SCN-770-P', name:'Scania R500',          c:[28.1846,-25.7479], s:'active'  },
+  { id:'#EXC-330-M', name:'Cat 390F',             c:[28.0567,-26.1076], s:'active'  },
+];
+
+map.on('load', () => {
+  fleet.forEach(v => {
+    const col = FCOL[v.s];
+    const el = document.createElement('div');
+    el.style.cssText = `width:13px;height:13px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,.65);box-shadow:0 0 14px ${col},0 0 5px rgba(0,0,0,.9);cursor:pointer`;
+    new mapboxgl.Marker({ element: el })
+      .setLngLat(v.c)
+      .setPopup(
+        new mapboxgl.Popup({ offset: 14, closeButton: false, maxWidth: '200px' })
+          .setHTML(`<div class="ec-mp"><span class="ec-mp-id">${v.id}</span><span class="ec-mp-name">${v.name}</span><span class="ec-mp-st" style="color:${col}">${v.s.toUpperCase()}</span></div>`)
+      )
+      .addTo(map);
+  });
+});
+
+// Search
+document.getElementById('rSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('#rBody tr').forEach(r => { r.style.display = r.dataset.q.includes(q) ? '' : 'none'; });
+});
+
+// Activity feed
+const acts = [
+  {c:'#00f0ff', t:'Excavator #EXC-04 rented to Ngozi Mining',     ts:'2 hrs ago'},
+  {c:'#ff6b6b', t:'Loader WA470 return overdue by 3 days',         ts:'5 hrs ago'},
+  {c:'#d1bcff', t:'New org registered: Cape Minerals SA',           ts:'Yesterday'},
+  {c:'#ffd93d', t:'Drill Rig #DR-12 scheduled for service',         ts:'Yesterday'},
+  {c:'#00f0ff', t:'Invoice #INV-3821 paid — R18,400',          ts:'2 days ago'},
+];
+document.getElementById('actFeed').innerHTML = acts.map(a =>
+  `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+    <div style="width:6px;height:6px;border-radius:50%;background:${a.c};flex-shrink:0;margin-top:4px"></div>
+    <div><div style="font-size:12px;margin-bottom:2px">${a.t}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${a.ts}</div></div>
+  </div>`
+).join('');
+
+function appAction(btn, type) {
+  const tr = btn.closest('tr');
+  const s = tr.querySelector('.b');
+  if (type === 'approve') {
+    s.className = 'b ba';
+    btn.closest('td').innerHTML = '<span style="font-size:11px;color:#00d4aa;font-family:\'JetBrains Mono\',monospace">&#x2713; Approved</span>';
+  } else {
+    s.className = 'b bo';
+    btn.closest('td').innerHTML = '<span style="font-size:11px;color:#ff6b6b;font-family:\'JetBrains Mono\',monospace">&#x2717; Declined</span>';
+  }
+}
+
+const _pulseStyle = document.createElement('style');
+_pulseStyle.textContent = '@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}';
+document.head.appendChild(_pulseStyle);
+</script>
+</body></html>

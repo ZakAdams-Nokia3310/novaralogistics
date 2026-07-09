@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "novara-f985b-service"
+location: "us-east1"
+schemas:
+  - source: "./schema"
+    datasource:
+      postgresql:
+        database: "fdcdb"
+        cloudSql:
+          instanceId: "novara-f985b-instance"
+          schemaValidation: "NONE"
+connectorDirs: ["./connectors"]

@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Organisations — EquipCore Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+  .tbl td{padding:11px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tbody tr:hover td{background:rgba(0,240,255,.02);}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  .bc{background:rgba(209,188,255,.1);color:#d1bcff;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:filter .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:background .18s;}
+  .btng:hover{background:rgba(255,255,255,.09);}
+  .btnr{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,107,107,.08);color:#ff6b6b;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,107,107,.18);cursor:pointer;transition:background .18s;}
+  .btnr:hover{background:rgba(255,107,107,.14);}
+  input,select,textarea{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;width:100%;outline:none;transition:border-color .18s;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+  label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:5px;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;padding:8px 16px;border-radius:9px;border:1px solid rgba(255,255,255,.07);background:none;color:#849495;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:7px;}
+  .tab-btn.active{background:rgba(0,240,255,.09);color:#00f0ff;border-color:rgba(0,240,255,.2);}
+  .badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;}
+  .users-panel{overflow:hidden;transition:max-height .28s ease,opacity .28s ease;max-height:0;opacity:0;}
+  .users-panel.open{max-height:600px;opacity:1;}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(8,10,14,.85);backdrop-filter:blur(12px);z-index:900;align-items:center;justify-content:center;}
+  .modal-bg.show{display:flex;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .modal-bg.show .modal-card{animation:slideUp .22s ease both;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){
+    .body{padding:14px 12px!important}
+    .topbar{padding:0 14px!important;height:auto!important;min-height:56px;gap:6px}
+    #statsRow{grid-template-columns:repeat(2,1fr)!important}
+    .tab-btn{font-size:10px!important;padding:6px 10px!important;gap:5px}
+    .tbl th,.tbl td{padding:8px 10px!important;font-size:12px!important}
+    .modal-bg{align-items:flex-end!important}
+    .modal-bg .modal-card{border-radius:16px 16px 0 0!important;width:100%!important;max-width:100%!important;margin:0!important;max-height:88vh!important;overflow-y:auto!important}
+    .btnp,.btng,.btnr{min-height:42px}
+  }
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Organisation Management</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Access requests, approved orgs &amp; user accounts</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px" id="statsRow"></div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+      <button class="tab-btn active" id="tabRequests" onclick="switchTab('requests')">
+        <span class="material-symbols-outlined ms" style="font-size:15px">mark_email_unread</span>Access Requests
+        <span class="badge" id="pendingBadge" style="background:rgba(255,217,61,.18);color:#ffd93d">0</span>
+      </button>
+      <button class="tab-btn" id="tabOrgs" onclick="switchTab('orgs')">
+        <span class="material-symbols-outlined ms" style="font-size:15px">corporate_fare</span>Active Organisations
+        <span class="badge" id="orgsBadge" style="background:rgba(0,240,255,.12);color:#00f0ff">0</span>
+      </button>
+      <button class="tab-btn" id="tabUsers" onclick="switchTab('users')">
+        <span class="material-symbols-outlined ms" style="font-size:15px">manage_accounts</span>User Management
+        <span class="badge" id="usersBadge" style="background:rgba(0,212,170,.12);color:#00d4aa">0</span>
+      </button>
+    </div>
+
+    <!-- Tab: Access Requests -->
+    <div id="panelRequests">
+      <div class="glass" style="border-radius:13px;overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Pending Access Requests</div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">Review and approve new organisations before they can access the platform</span>
+        </div>
+        <div id="requestsTableWrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <table class="tbl" style="min-width:580px"><thead><tr><th>Organisation</th><th>Sector</th><th>Contact</th><th>Submitted</th><th>Status</th><th></th></tr></thead>
+          <tbody id="requestsBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Active Orgs -->
+    <div id="panelOrgs" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center">
+        <div style="position:relative;flex:1;max-width:320px">
+          <span class="material-symbols-outlined ms" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;color:#849495;pointer-events:none">search</span>
+          <input id="orgSearch" placeholder="Search organisations…" style="padding-left:33px;font-size:13px" oninput="renderOrgs()"/>
+        </div>
+      </div>
+      <div class="glass" style="border-radius:13px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="tbl" style="min-width:640px"><thead><tr><th>Organisation</th><th>Sector</th><th>Reg ID</th><th>Contact</th><th>Users</th><th>Since</th><th></th></tr></thead>
+        <tbody id="orgsBody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- Tab: User Management -->
+    <div id="panelUsers" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+        <div style="position:relative;flex:1;min-width:200px;max-width:300px">
+          <span class="material-symbols-outlined ms" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;color:#849495;pointer-events:none">search</span>
+          <input id="userSearch" placeholder="Search name or email…" style="padding-left:33px;font-size:13px" oninput="renderUsers()"/>
+        </div>
+        <select id="userRoleFilter" onchange="renderUsers()" style="width:150px">
+          <option value="all">All Roles</option>
+          <option value="admin">Admin</option>
+          <option value="user">User</option>
+          <option value="driver">Driver</option>
+        </select>
+        <button class="btnp" onclick="openAddUserStandalone()" style="font-size:12px;padding:7px 13px;margin-left:auto">
+          <span class="material-symbols-outlined ms" style="font-size:15px">person_add</span>Add User
+        </button>
+      </div>
+      <div class="glass" style="border-radius:13px;overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table class="tbl" style="min-width:620px">
+          <thead><tr>
+            <th>Name / Email</th>
+            <th>Role</th>
+            <th>Organisation</th>
+            <th>Status</th>
+            <th>Added</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-bg" id="addUserModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:440px;border-color:rgba(0,240,255,.14)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:#00f0ff">person_add</span>
+      </div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Add User</div>
+        <div style="font-size:12px;color:#849495" id="addUserOrgLabel">—</div>
+      </div>
+      <button onclick="closeAddUser()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:20px;line-height:1">×</button>
+    </div>
+    <form id="addUserForm" style="display:flex;flex-direction:column;gap:14px">
+      <div><label>Full Name</label><input id="auName" placeholder="Jane Smith" required/></div>
+      <div><label>Email Address</label><input id="auEmail" type="email" placeholder="jane@company.com" required/></div>
+      <div><label>Role</label>
+        <select id="auRole">
+          <option value="user">User — can browse &amp; apply for rentals</option>
+          <option value="driver">Driver — vehicle operator access</option>
+          <option value="admin">Admin — full management access</option>
+        </select>
+      </div>
+      <div>
+        <label>Organisation <span style="font-size:10px;color:#849495;text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
+        <select id="addUserOrgId">
+          <option value="">No Organisation</option>
+        </select>
+      </div>
+      <div id="auErr" style="display:none;padding:9px 12px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:8px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+      <button class="btnp" type="submit" style="width:100%;justify-content:center;padding:11px">Create User Account</button>
+    </form>
+  </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-bg" id="rejectModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:400px;border-color:rgba(255,107,107,.14)">
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;margin-bottom:6px">Decline Access Request</div>
+    <div style="font-size:13px;color:#849495;margin-bottom:18px">Provide a reason — this will be stored on the request record.</div>
+    <input type="hidden" id="rejectId"/>
+    <div style="margin-bottom:14px"><label>Reason (optional)</label><textarea id="rejectReason" rows="3" placeholder="e.g. Registration details could not be verified…" style="resize:vertical"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btng" style="flex:1;justify-content:center" onclick="closeReject()">Cancel</button>
+      <button class="btnr" style="flex:1;justify-content:center" onclick="confirmReject()">Confirm Decline</button>
+    </div>
+  </div>
+</div>
+
+<!-- Approve confirmation overlay -->
+<div class="modal-bg" id="approveOverlay">
+  <div class="modal-card glass" style="border-radius:16px;padding:36px;width:100%;max-width:400px;text-align:center;border-color:rgba(0,240,255,.18)">
+    <div style="width:54px;height:54px;border-radius:50%;background:rgba(0,240,255,.1);border:1px solid rgba(0,240,255,.22);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 22px rgba(0,240,255,.16)">
+      <span class="material-symbols-outlined ms" style="font-size:28px;color:#00f0ff;font-variation-settings:'FILL' 1,'wght' 700,'GRAD' 0,'opsz' 24">check_circle</span>
+    </div>
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:18px;margin-bottom:6px">Organisation Approved</div>
+    <div id="approveMsg" style="font-size:13px;color:#b9cacb;margin-bottom:22px;line-height:1.6"></div>
+    <button class="btnp" onclick="document.getElementById('approveOverlay').classList.remove('show');renderAll()" style="width:100%;justify-content:center;padding:11px">Continue</button>
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="firebase-config.js"></script>
+<script src="dc.js?v=2"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('admin-orgs.html');
+const _ecUser = EC_AUTH.require(['admin']);
+DC_DATA.setOrgScope(_ecUser.orgId);
+
+let expandedOrgId = null;
+let activeTab = 'requests';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('panelRequests').style.display = tab === 'requests' ? '' : 'none';
+  document.getElementById('panelOrgs').style.display     = tab === 'orgs'     ? '' : 'none';
+  document.getElementById('panelUsers').style.display    = tab === 'users'    ? '' : 'none';
+  document.getElementById('tabRequests').className = 'tab-btn' + (tab === 'requests' ? ' active' : '');
+  document.getElementById('tabOrgs').className     = 'tab-btn' + (tab === 'orgs'     ? ' active' : '');
+  document.getElementById('tabUsers').className    = 'tab-btn' + (tab === 'users'    ? ' active' : '');
+}
+
+function sectorTag(sector) {
+  const colors = {'Construction':'#00f0ff','Maritime Logistics':'#ffb4a2','Energy & Utilities':'#d1bcff','Agricultural':'#00d4aa','Mining & Extraction':'#ffd93d','Logistics':'#ffb4a2'};
+  const c = colors[sector] || '#849495';
+  return `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${c}18;color:${c};padding:3px 8px;border-radius:999px;border:1px solid ${c}28">${sector}</span>`;
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const reqs  = DC_DATA.getOrgRequests();
+  const orgs  = DC_DATA.getOrgs();
+  const users = DC_DATA.getUsers();
+  const pending = reqs.filter(r => r.status === 'pending').length;
+
+  document.getElementById('pendingBadge').textContent = pending;
+  document.getElementById('orgsBadge').textContent    = orgs.filter(o => o.status === 'active').length;
+  document.getElementById('usersBadge').textContent   = users.length;
+
+  const stats = [
+    { icon:'mark_email_unread', bg:'rgba(255,217,61,.1)', color:'#ffd93d', val:pending, label:'Pending Requests' },
+    { icon:'corporate_fare',    bg:'rgba(0,240,255,.1)',  color:'#00f0ff', val:orgs.filter(o=>o.status==='active').length, label:'Active Orgs' },
+    { icon:'group',             bg:'rgba(0,212,170,.1)',  color:'#00d4aa', val:users.length, label:'Total Users' },
+    { icon:'check_circle',      bg:'rgba(209,188,255,.1)',color:'#d1bcff', val:reqs.filter(r=>r.status==='approved').length, label:'Approved Total' },
+  ];
+  document.getElementById('statsRow').innerHTML = stats.map(s =>
+    `<div class="glass-lo" style="border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px">
+      <div style="width:36px;height:36px;border-radius:9px;background:${s.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:${s.color}">${s.icon}</span>
+      </div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:${s.color}">${s.val}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">${s.label}</div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+// ─── Requests ─────────────────────────────────────────────────────────────────
+function renderRequests() {
+  const reqs = DC_DATA.getOrgRequests();
+  const tbody = document.getElementById('requestsBody');
+  if (!reqs.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No access requests found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = reqs.map(r => {
+    const statusMap = { pending: '<span class="b bp">Pending Review</span>', approved: '<span class="b ba">Approved</span>', rejected: '<span class="b bo">Declined</span>' };
+    const actions = r.status === 'pending'
+      ? `<div style="display:flex;gap:6px">
+          <button class="btnp" style="font-size:11px;padding:5px 10px" onclick="approveRequest('${r.id}')">
+            <span class="material-symbols-outlined ms" style="font-size:13px">check</span>Approve
+          </button>
+          <button class="btnr" style="font-size:11px;padding:5px 10px" onclick="openReject('${r.id}')">
+            <span class="material-symbols-outlined ms" style="font-size:13px">close</span>Decline
+          </button>
+         </div>`
+      : `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${r.notes ? r.notes.slice(0,40) : '—'}</span>`;
+    return `<tr>
+      <td data-label="Organisation"><div style="font-weight:600">${r.orgName}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${r.regId}</div></td>
+      <td data-label="Sector">${sectorTag(r.sector)}</td>
+      <td data-label="Contact"><div style="font-size:13px">${r.contactName}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${r.contactEmail}</div></td>
+      <td data-label="Submitted" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${r.submittedAt}</td>
+      <td data-label="Status">${statusMap[r.status] || ''}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Orgs ─────────────────────────────────────────────────────────────────────
+function renderOrgs() {
+  const q = (document.getElementById('orgSearch')?.value || '').toLowerCase();
+  const orgs = DC_DATA.getOrgs().filter(o => !q || o.name.toLowerCase().includes(q) || o.sector.toLowerCase().includes(q));
+  const allUsers = DC_DATA.getUsers();
+  const tbody = document.getElementById('orgsBody');
+  if (!orgs.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No organisations found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = orgs.map(o => {
+    const userCount = allUsers.filter(u => u.orgId === o.id).length;
+    const init = o.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const isExpanded = expandedOrgId === o.id;
+    const usersHtml = buildUsersPanel(o, allUsers.filter(u => u.orgId === o.id));
+    return `<tr>
+      <td data-label="Organisation">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,240,255,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#00f0ff;flex-shrink:0">${init}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${o.name}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${o.id}</div>
+          </div>
+        </div>
+      </td>
+      <td data-label="Sector">${sectorTag(o.sector)}</td>
+      <td data-label="Reg ID" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${o.regId}</td>
+      <td data-label="Contact" style="font-size:12px;color:#849495">${o.contactEmail}</td>
+      <td data-label="Users">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#00f0ff;font-weight:600">${userCount}</span>
+        <span style="font-size:11px;color:#849495"> users</span>
+      </td>
+      <td data-label="Since" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${o.createdAt}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="toggleUsers('${o.id}')">
+            <span class="material-symbols-outlined ms" style="font-size:13px">${isExpanded ? 'expand_less' : 'group'}</span>
+            ${isExpanded ? 'Hide' : 'Users'}
+          </button>
+          ${o.status === 'active'
+            ? `<button class="btnr" style="font-size:11px;padding:5px 10px" onclick="suspendOrg('${o.id}')"><span class="material-symbols-outlined ms" style="font-size:13px">block</span>Suspend</button>`
+            : `<button class="btng" style="font-size:11px;padding:5px 10px;color:#00d4aa;border-color:rgba(0,212,170,.2)" onclick="reinstateOrg('${o.id}')"><span class="material-symbols-outlined ms" style="font-size:13px">check_circle</span>Reinstate</button>`}
+        </div>
+      </td>
+    </tr>
+    <tr id="usersRow-${o.id}" style="${isExpanded ? '' : 'display:none'}">
+      <td colspan="7" style="padding:0;background:rgba(0,0,0,.15)">
+        ${usersHtml}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function buildUsersPanel(org, users) {
+  const rows = users.length
+    ? users.map(u => {
+        const roleColors = { admin: '#00f0ff', user: '#00dbe9', driver: '#ffb4a2' };
+        const rc = roleColors[u.role] || '#849495';
+        const init = u.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+        return `<tr style="border-bottom:1px solid rgba(255,255,255,.03)">
+          <td style="padding:10px 16px;font-size:13px">
+            <div style="display:flex;align-items:center;gap:9px">
+              <div style="width:28px;height:28px;border-radius:7px;background:${rc}18;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${rc}">${init}</div>
+              <div>
+                <div style="font-weight:600">${u.name}</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.email}</div>
+              </div>
+            </div>
+          </td>
+          <td style="padding:10px 16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${rc}18;color:${rc};padding:3px 8px;border-radius:999px;border:1px solid ${rc}28">${u.role.toUpperCase()}</span></td>
+          <td style="padding:10px 16px"><span class="b ${u.status === 'active' ? 'ba' : 'bo'}">${u.status === 'active' ? 'Active' : 'Inactive'}</span></td>
+          <td style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.id}</td>
+          <td style="padding:10px 16px">
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              <button class="btng" style="font-size:11px;padding:4px 9px" onclick="DC_DATA.toggleUserStatus('${u.id}').then(renderAll)">
+                ${u.status === 'active' ? 'Deactivate' : 'Reactivate'}
+              </button>
+              <button class="btng" style="font-size:11px;padding:4px 9px" onclick="sendPasswordReset('${u.email}','${u.name.replace(/'/g,"\\'")}')">
+                <span class="material-symbols-outlined ms" style="font-size:12px">lock_reset</span>Reset Password
+              </button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="5" style="padding:18px 16px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px">No users in this organisation yet</td></tr>`;
+
+  return `<div style="padding:14px 16px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#849495">
+        Users in ${org.name}
+      </div>
+      <button class="btnp" style="font-size:11px;padding:6px 12px" onclick="openAddUser('${org.id}','${org.name.replace(/'/g,"\\'")}')">
+        <span class="material-symbols-outlined ms" style="font-size:13px">person_add</span>Add User
+      </button>
+    </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse;min-width:460px">
+      <thead><tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+        <th style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:6px 16px;text-align:left">Name / Email</th>
+        <th style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:6px 16px;text-align:left">Role</th>
+        <th style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:6px 16px;text-align:left">Status</th>
+        <th style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:6px 16px;text-align:left">ID</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// ─── All Users tab ────────────────────────────────────────────────────────────
+function renderUsers() {
+  const q          = (document.getElementById('userSearch')?.value || '').toLowerCase();
+  const roleFilter = document.getElementById('userRoleFilter')?.value || 'all';
+  const users = DC_DATA.getUsers().filter(u => {
+    if (roleFilter !== 'all' && u.role !== roleFilter) return false;
+    if (q && !`${u.name} ${u.email}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const tbody = document.getElementById('usersBody');
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No users found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const roleColors = { admin: '#00f0ff', user: '#00dbe9', driver: '#ffb4a2' };
+    const rc = roleColors[u.role] || '#849495';
+    return `<tr onclick="location.href='profile.html?id=${u.id}'" style="cursor:pointer" title="View profile">
+      <td data-label="Name">
+        <div style="font-weight:600">${u.name}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.email}</div>
+      </td>
+      <td data-label="Role">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${rc}18;color:${rc};padding:3px 8px;border-radius:999px;border:1px solid ${rc}28">${u.role.toUpperCase()}</span>
+      </td>
+      <td data-label="Organisation" style="font-size:12px;color:#849495">${u.orgName || '—'}</td>
+      <td data-label="Status"><span class="b ${u.status === 'active' ? 'ba' : 'bo'}">${u.status === 'active' ? 'Active' : 'Inactive'}</span></td>
+      <td data-label="Added" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.createdAt || '—'}</td>
+      <td>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" onclick="event.stopPropagation()">
+          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="location.href='profile.html?id=${u.id}'">
+            <span class="material-symbols-outlined ms" style="font-size:13px">edit</span>Edit
+          </button>
+          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="DC_DATA.toggleUserStatus('${u.id}').then(renderAll)">
+            ${u.status === 'active' ? 'Deactivate' : 'Reactivate'}
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Password reset via Firebase Auth REST API ────────────────────────────────
+async function sendPasswordReset(email, name) {
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${FIREBASE_CONFIG.apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestType: 'PASSWORD_RESET', email }),
+      }
+    );
+    const data = await res.json();
+    if (data.error) {
+      window.showToast?.('error', 'Could not send reset email. Check the account exists in Firebase Auth.');
+    } else {
+      window.showToast?.('success', `Password reset email sent to ${email}`);
+    }
+  } catch {
+    window.showToast?.('error', 'Network error. Could not send reset email.');
+  }
+}
+
+// ─── Add User modal ───────────────────────────────────────────────────────────
+function populateOrgSelect() {
+  const sel = document.getElementById('addUserOrgId');
+  const orgs = DC_DATA.getOrgs();
+  sel.innerHTML = '<option value="">No Organisation</option>' +
+    orgs.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+}
+
+function openAddUser(orgId, orgName) {
+  document.getElementById('addUserForm').reset();
+  document.getElementById('auErr').style.display = 'none';
+  document.getElementById('addUserOrgLabel').textContent = orgName || 'New User';
+  populateOrgSelect();
+  document.getElementById('addUserOrgId').value = orgId || '';
+  document.getElementById('addUserModal').classList.add('show');
+}
+
+function openAddUserStandalone() {
+  document.getElementById('addUserForm').reset();
+  document.getElementById('auErr').style.display = 'none';
+  document.getElementById('addUserOrgLabel').textContent = 'New User';
+  populateOrgSelect();
+  document.getElementById('addUserOrgId').value = '';
+  document.getElementById('addUserModal').classList.add('show');
+}
+
+function closeAddUser() {
+  document.getElementById('addUserModal').classList.remove('show');
+}
+
+document.getElementById('addUserForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name  = document.getElementById('auName').value.trim();
+  const email = document.getElementById('auEmail').value.trim().toLowerCase();
+  const role  = document.getElementById('auRole').value;
+  const orgId = document.getElementById('addUserOrgId').value || null;
+  const existing = DC_DATA.getUsers().find(u => u.email === email);
+  if (existing) {
+    const err = document.getElementById('auErr');
+    err.textContent = 'An account with this email already exists.';
+    err.style.display = 'block';
+    return;
+  }
+  await DC_DATA.addUser({ name, email, role, orgId });
+  closeAddUser();
+  renderAll();
+});
+
+// ─── Org actions ──────────────────────────────────────────────────────────────
+function toggleUsers(orgId) {
+  expandedOrgId = expandedOrgId === orgId ? null : orgId;
+  renderOrgs();
+}
+
+async function approveRequest(id) {
+  const req = DC_DATA.getOrgRequests().find(r => r.id === id);
+  const orgId = await DC_DATA.approveOrgRequest(id);
+  document.getElementById('approveMsg').textContent = `${req.orgName} has been approved and is now active on the platform. Their registration ID is ${orgId}.`;
+  document.getElementById('approveOverlay').classList.add('show');
+  renderAll();
+}
+
+function openReject(id) {
+  document.getElementById('rejectId').value = id;
+  document.getElementById('rejectReason').value = '';
+  document.getElementById('rejectModal').classList.add('show');
+}
+
+function closeReject() {
+  document.getElementById('rejectModal').classList.remove('show');
+}
+
+async function confirmReject() {
+  const id = document.getElementById('rejectId').value;
+  const reason = document.getElementById('rejectReason').value.trim();
+  await DC_DATA.rejectOrgRequest(id, reason || 'No reason provided');
+  closeReject();
+  renderAll();
+}
+
+async function suspendOrg(id) {
+  const org = DC_DATA.getOrgs().find(o => o.id === id);
+  if (!org) return;
+  if (!confirm(`Suspend ${org.name}? They will lose platform access until reinstated.`)) return;
+  await DC_DATA.suspendOrg(id);
+  renderAll();
+}
+
+async function reinstateOrg(id) {
+  await DC_DATA.reinstateOrg(id);
+  renderAll();
+}
+
+// ─── Render all ───────────────────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderRequests();
+  renderOrgs();
+  renderUsers();
+}
+
+DC_DATA.init().then(() => {
+  renderAll();
+  if (location.hash === '#users') switchTab('users');
+}).catch(err => {
+  console.error('[DC_DATA]', err);
+  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${err.message}</div>`);
+});
+</script>
+</body></html>

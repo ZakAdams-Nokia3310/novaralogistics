@@ -1,0 +1,163 @@
+# EquipCore — Seed Data (v2 — org-scoped)
+# Run each STEP in order in the Firebase Data Connect console → Operations tab.
+# Delete existing data first if re-seeding.
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 1 — Organisations (5 orgs)
+# ══════════════════════════════════════════════════════════════════════════════
+
+mutation SeedOrganisations {
+  org1: organisation_insert(data: {
+    id: "00000001-0000-0000-0000-000000000001"
+    name: "Vanguard Heavies Ltd."
+    sector: "Construction"
+    regId: "VH-9921-X"
+    contactEmail: "ops@vanguard.io"
+    domain: "vanguard.io"
+    status: ACTIVE
+  })
+  org2: organisation_insert(data: {
+    id: "00000001-0000-0000-0000-000000000002"
+    name: "Oceanic Rigging Corp"
+    sector: "Maritime Logistics"
+    regId: "ORC-5542-A"
+    contactEmail: "fleet@oceanic.com"
+    domain: "oceanic.com"
+    status: ACTIVE
+  })
+  org3: organisation_insert(data: {
+    id: "00000001-0000-0000-0000-000000000003"
+    name: "Aether Power Grid"
+    sector: "Energy & Utilities"
+    regId: "APG-8810-Z"
+    contactEmail: "grid@aether.org"
+    domain: "aether.org"
+    status: ACTIVE
+  })
+  org4: organisation_insert(data: {
+    id: "00000001-0000-0000-0000-000000000004"
+    name: "TerraForming Inc"
+    sector: "Agricultural"
+    regId: "TFI-0021-M"
+    contactEmail: "admin@terraform.co"
+    domain: "terraform.co"
+    status: ACTIVE
+  })
+  org5: organisation_insert(data: {
+    id: "00000001-0000-0000-0000-000000000005"
+    name: "Ironclad Logistics"
+    sector: "Logistics & Transport"
+    regId: "ICL-7703-L"
+    contactEmail: "ops@ironclad.co.za"
+    domain: "ironclad.co.za"
+    status: ACTIVE
+  })
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 2 — Users (super admin + 3 per org = 16 total)
+# ══════════════════════════════════════════════════════════════════════════════
+
+mutation SeedUsers {
+  u_super: user_insert(data: {
+    id: "00000002-0000-0000-0000-000000000001"
+    name: "Alex Carter"
+    email: "admin@equipcore.com"
+    role: ADMIN
+    status: ACTIVE
+    emailVerified: true
+    failedAttempts: 0
+  })
+
+  u1a: user_insert(data: { id: "00000002-0000-0000-0000-000000000010", name: "Sipho Ndlovu",     email: "admin@vanguard.io",     role: ADMIN,  organisationId: "00000001-0000-0000-0000-000000000001", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u1u: user_insert(data: { id: "00000002-0000-0000-0000-000000000011", name: "Lerato Molefe",    email: "user@vanguard.io",      role: USER,   organisationId: "00000001-0000-0000-0000-000000000001", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u1d: user_insert(data: { id: "00000002-0000-0000-0000-000000000012", name: "Thabo Kgosi",      email: "driver@vanguard.io",    role: DRIVER, organisationId: "00000001-0000-0000-0000-000000000001", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+
+  u2a: user_insert(data: { id: "00000002-0000-0000-0000-000000000020", name: "Morgan Blake",     email: "admin@oceanic.com",     role: ADMIN,  organisationId: "00000001-0000-0000-0000-000000000002", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u2u: user_insert(data: { id: "00000002-0000-0000-0000-000000000021", name: "Taylor Osei",      email: "user@oceanic.com",      role: USER,   organisationId: "00000001-0000-0000-0000-000000000002", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u2d: user_insert(data: { id: "00000002-0000-0000-0000-000000000022", name: "Casey Drummond",   email: "driver@oceanic.com",    role: DRIVER, organisationId: "00000001-0000-0000-0000-000000000002", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+
+  u3a: user_insert(data: { id: "00000002-0000-0000-0000-000000000030", name: "Zanele Mthembu",   email: "admin@aether.org",      role: ADMIN,  organisationId: "00000001-0000-0000-0000-000000000003", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u3u: user_insert(data: { id: "00000002-0000-0000-0000-000000000031", name: "Pieter van Wyk",   email: "user@aether.org",       role: USER,   organisationId: "00000001-0000-0000-0000-000000000003", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u3d: user_insert(data: { id: "00000002-0000-0000-0000-000000000032", name: "Mandla Zulu",      email: "driver@aether.org",     role: DRIVER, organisationId: "00000001-0000-0000-0000-000000000003", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+
+  u4a: user_insert(data: { id: "00000002-0000-0000-0000-000000000040", name: "Fatima Patel",     email: "admin@terraform.co",    role: ADMIN,  organisationId: "00000001-0000-0000-0000-000000000004", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u4u: user_insert(data: { id: "00000002-0000-0000-0000-000000000041", name: "David Botha",      email: "user@terraform.co",     role: USER,   organisationId: "00000001-0000-0000-0000-000000000004", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u4d: user_insert(data: { id: "00000002-0000-0000-0000-000000000042", name: "Nkosi Dlamini",    email: "driver@terraform.co",   role: DRIVER, organisationId: "00000001-0000-0000-0000-000000000004", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+
+  u5a: user_insert(data: { id: "00000002-0000-0000-0000-000000000050", name: "Bongani Dube",     email: "admin@ironclad.co.za",  role: ADMIN,  organisationId: "00000001-0000-0000-0000-000000000005", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u5u: user_insert(data: { id: "00000002-0000-0000-0000-000000000051", name: "Amahle Sithole",   email: "user@ironclad.co.za",   role: USER,   organisationId: "00000001-0000-0000-0000-000000000005", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+  u5d: user_insert(data: { id: "00000002-0000-0000-0000-000000000052", name: "Johan Pretorius",  email: "driver@ironclad.co.za", role: DRIVER, organisationId: "00000001-0000-0000-0000-000000000005", status: ACTIVE, emailVerified: true, failedAttempts: 0 })
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 3 — Vehicles (3-4 per org, all using valid VehicleType enum values)
+# ══════════════════════════════════════════════════════════════════════════════
+
+mutation SeedVehiclesOrg1 {
+  v1: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000001", organisationId: "00000001-0000-0000-0000-000000000001", make: "Caterpillar", model: "390F Excavator",  year: 2022, type: EXCAVATOR,          regPlate: "CAT-442-B", km: 42000,  serviceIntervalKm: 10000, nextServiceKm: 50000,  status: ON_RENT })
+  v2: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000002", organisationId: "00000001-0000-0000-0000-000000000001", make: "Volvo",        model: "A60H Hauler",    year: 2021, type: ARTICULATED_HAULER, regPlate: "VOL-991-X", km: 78500,  serviceIntervalKm: 15000, nextServiceKm: 80000,  status: AVAILABLE })
+  v3: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000003", organisationId: "00000001-0000-0000-0000-000000000001", make: "Komatsu",      model: "WA470 Loader",   year: 2023, type: WHEEL_LOADER,       regPlate: "KOM-005-A", km: 12000,  serviceIntervalKm: 10000, nextServiceKm: 20000,  status: ON_RENT })
+  v4: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000004", organisationId: "00000001-0000-0000-0000-000000000001", make: "Liebherr",     model: "LTM 1300 Crane", year: 2020, type: CRANE,              regPlate: "LIE-300-C", km: 31000,  serviceIntervalKm: 10000, nextServiceKm: 40000,  status: AVAILABLE })
+}
+
+mutation SeedVehiclesOrg2 {
+  v5: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000005", organisationId: "00000001-0000-0000-0000-000000000002", make: "Kalmar",   model: "DRF450 Reachstacker", year: 2021, type: CONTAINER_REACHSTACKER, regPlate: "KAL-450-R", km: 18000, serviceIntervalKm: 8000,  nextServiceKm: 24000,  status: AVAILABLE })
+  v6: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000006", organisationId: "00000001-0000-0000-0000-000000000002", make: "Sandvik",  model: "DD421 Drill Rig",     year: 2022, type: DRILL_RIG,              regPlate: "SDV-330-D", km: 55000, serviceIntervalKm: 10000, nextServiceKm: 60000,  status: ON_RENT })
+  v7: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000007", organisationId: "00000001-0000-0000-0000-000000000002", make: "Scania",   model: "R500 Heavy Truck",    year: 2022, type: HEAVY_TRUCK,            regPlate: "SCN-770-P", km: 97200, serviceIntervalKm: 20000, nextServiceKm: 100000, status: AVAILABLE })
+}
+
+mutation SeedVehiclesOrg3 {
+  v8:  vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000008", organisationId: "00000001-0000-0000-0000-000000000003", make: "Aggreko",     model: "500kVA Generator",  year: 2023, type: GENERATOR,  regPlate: "AGG-500-G", km: 0,     serviceIntervalKm: 5000,  nextServiceKm: 5000,  status: AVAILABLE })
+  v9:  vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000009", organisationId: "00000001-0000-0000-0000-000000000003", make: "Atlas Copco", model: "ROC F9C Drill",     year: 2021, type: DRILL_RIG,  regPlate: "ACO-808-F", km: 34000, serviceIntervalKm: 10000, nextServiceKm: 40000, status: ON_RENT })
+  v10: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000010", organisationId: "00000001-0000-0000-0000-000000000003", make: "Toyota",      model: "Land Cruiser 79",   year: 2024, type: VAN,        regPlate: "TLC-079-U", km: 5200,  serviceIntervalKm: 15000, nextServiceKm: 15000, status: AVAILABLE })
+}
+
+mutation SeedVehiclesOrg4 {
+  v11: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000011", organisationId: "00000001-0000-0000-0000-000000000004", make: "JCB",        model: "3CX Eco Backhoe",  year: 2023, type: BACKHOE_LOADER, regPlate: "JCB-121-R", km: 8000,  serviceIntervalKm: 5000,  nextServiceKm: 10000, status: MAINTENANCE })
+  v12: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000012", organisationId: "00000001-0000-0000-0000-000000000004", make: "John Deere", model: "WL56 Loader",      year: 2022, type: WHEEL_LOADER,   regPlate: "JDR-560-L", km: 22500, serviceIntervalKm: 10000, nextServiceKm: 30000, status: AVAILABLE })
+  v13: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000013", organisationId: "00000001-0000-0000-0000-000000000004", make: "Isuzu",      model: "FVZ 1400 Tipper",  year: 2021, type: HEAVY_TRUCK,    regPlate: "ISZ-140-T", km: 64000, serviceIntervalKm: 20000, nextServiceKm: 70000, status: ON_RENT })
+}
+
+mutation SeedVehiclesOrg5 {
+  v14: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000014", organisationId: "00000001-0000-0000-0000-000000000005", make: "Volvo",         model: "FH16 Globetrotter", year: 2023, type: HEAVY_TRUCK, regPlate: "VLV-160-H", km: 45000,  serviceIntervalKm: 25000, nextServiceKm: 50000,  status: AVAILABLE })
+  v15: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000015", organisationId: "00000001-0000-0000-0000-000000000005", make: "Mercedes-Benz", model: "Actros 2645",       year: 2022, type: HEAVY_TRUCK, regPlate: "MBZ-264-A", km: 112000, serviceIntervalKm: 25000, nextServiceKm: 125000, status: ON_RENT })
+  v16: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000016", organisationId: "00000001-0000-0000-0000-000000000005", make: "MAN",           model: "TGS 26.480",        year: 2023, type: HEAVY_TRUCK, regPlate: "MAN-480-S", km: 38000,  serviceIntervalKm: 20000, nextServiceKm: 40000,  status: AVAILABLE })
+  v17: vehicle_insert(data: { id: "00000003-0000-0000-0000-000000000017", organisationId: "00000001-0000-0000-0000-000000000005", make: "Toyota",        model: "Hino 500",          year: 2021, type: HEAVY_TRUCK, regPlate: "HIN-500-R", km: 88000,  serviceIntervalKm: 15000, nextServiceKm: 90000,  status: MAINTENANCE })
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 4 — Rentals
+# ══════════════════════════════════════════════════════════════════════════════
+
+mutation SeedRentals {
+  r1: rental_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000001", equipmentName: "Cat 390F Excavator",    clientName: "Ngozi Mining Co.",       organisationId: "00000001-0000-0000-0000-000000000001", startDate: "2026-05-28", returnDate: "2026-07-12", valueZar: 22400, status: ACTIVE })
+  r2: rental_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000003", equipmentName: "Komatsu WA470 Loader",  clientName: "Atlas Quarry Ltd",       organisationId: "00000001-0000-0000-0000-000000000001", startDate: "2026-05-20", returnDate: "2026-06-01", valueZar: 18900, status: OVERDUE })
+  r3: rental_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000006", equipmentName: "Sandvik DD421 Drill",   clientName: "Cape Minerals SA",       organisationId: "00000001-0000-0000-0000-000000000002", startDate: "2026-06-01", returnDate: "2026-07-20", valueZar: 34000, status: ACTIVE })
+  r4: rental_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000009", equipmentName: "Atlas Copco ROC F9C",   clientName: "Eskom Renewables",       organisationId: "00000001-0000-0000-0000-000000000003", startDate: "2026-06-03", returnDate: "2026-06-28", valueZar: 28600, status: ACTIVE })
+  r5: rental_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000013", equipmentName: "Isuzu FVZ 1400 Tipper", clientName: "Horizon Build Ltd",      organisationId: "00000001-0000-0000-0000-000000000004", startDate: "2026-06-05", returnDate: "2026-06-30", valueZar: 41200, status: ACTIVE })
+  r6: rental_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000015", equipmentName: "Mercedes Actros 2645",  clientName: "Shoprite Distribution",  organisationId: "00000001-0000-0000-0000-000000000005", startDate: "2026-06-01", returnDate: "2026-07-15", valueZar: 52000, status: ACTIVE })
+  r7: rental_insert(data: { equipmentName: "Volvo FH16 Globetrotter",         clientName: "TFG Logistics",            organisationId: "00000001-0000-0000-0000-000000000005", startDate: "2026-07-01", returnDate: "2026-07-20", valueZar: 31500, status: PENDING })
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 5 — Maintenance Queries
+# ══════════════════════════════════════════════════════════════════════════════
+
+mutation SeedMaintenance {
+  m1: maintenanceQuery_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000003", vehicleLabel: "Komatsu WA470 · KOM-005-A",       type: DRIVER_ISSUE, description: "Oil pressure warning light at start of shift.",                        priority: HIGH,     status: OPEN,        loggedByName: "Thabo Kgosi",      loggedByUserId: "00000002-0000-0000-0000-000000000012" })
+  m2: maintenanceQuery_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000001", vehicleLabel: "Cat 390F Excavator · CAT-442-B",   type: ROADSIDE,     description: "Engine overheating on N1 near Midrand. Tow required.",                priority: CRITICAL, status: IN_PROGRESS, loggedByName: "Lerato Molefe",    loggedByUserId: "00000002-0000-0000-0000-000000000011" })
+  m3: maintenanceQuery_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000007", vehicleLabel: "Scania R500 · SCN-770-P",           type: TYRES,        description: "Front left tyre tread below legal minimum.",                          priority: HIGH,     status: OPEN,        loggedByName: "Morgan Blake",     loggedByUserId: "00000002-0000-0000-0000-000000000020" })
+  m4: maintenanceQuery_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000011", vehicleLabel: "JCB 3CX Eco · JCB-121-R",           type: WINDSCREEN,   description: "Windscreen cracked from debris. Vehicle grounded.",                   priority: HIGH,     status: OPEN,        loggedByName: "Nkosi Dlamini",    loggedByUserId: "00000002-0000-0000-0000-000000000042" })
+  m5: maintenanceQuery_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000017", vehicleLabel: "Toyota Hino 500 · HIN-500-R",       type: SERVICE,      description: "Approaching 90,000km service. Full inspection needed.",               priority: MEDIUM,   status: OPEN,        loggedByName: "Bongani Dube",     loggedByUserId: "00000002-0000-0000-0000-000000000050" })
+  m6: maintenanceQuery_insert(data: { vehicleId: "00000003-0000-0000-0000-000000000015", vehicleLabel: "Mercedes Actros 2645 · MBZ-264-A",  type: GENERAL,      description: "AC compressor not functioning on long-haul route.",                   priority: LOW,      status: OPEN,        loggedByName: "Johan Pretorius",  loggedByUserId: "00000002-0000-0000-0000-000000000052" })
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STEP 6 — Org Requests (pending)
+# ══════════════════════════════════════════════════════════════════════════════
+
+mutation SeedOrgRequests {
+  req1: orgRequest_insert(data: { orgName: "Stonewall Construction", sector: "Construction",       regId: "REG-0081-SC", contactName: "Priya Naidoo",    contactEmail: "priya@stonewall.co.za",    domain: "stonewall.co.za",    status: PENDING })
+  req2: orgRequest_insert(data: { orgName: "Southern Bore Co.",      sector: "Mining & Extraction", regId: "REG-3310-SB", contactName: "Andile Khumalo",  contactEmail: "andile@southernbore.co.za", domain: "southernbore.co.za", status: PENDING })
+}

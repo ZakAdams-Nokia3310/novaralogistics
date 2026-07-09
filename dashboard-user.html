@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>My Dashboard — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.09);}
+  .glass-lo{background:rgba(255,255,255,0.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .sidebar{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,0.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,0.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,0.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .nl{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#b9cacb;text-decoration:none;transition:all .18s;background:none;border:none;cursor:pointer;width:100%;}
+  .nl:hover{color:#e2e2e8;background:rgba(255,255,255,.05);}
+  .nl.on{color:#00f0ff;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.14);}
+  .nl .ms{font-size:16px;}
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 13px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+  .tbl td{padding:11px 13px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tbody tr:hover td{background:rgba(0,240,255,.02);}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bc{background:rgba(209,188,255,.1);color:#d1bcff;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:9px 18px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:9px 14px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+  input{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:8px 11px;outline:none;transition:border-color .18s;}
+  input:focus{border-color:#00f0ff;}
+  .eq-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:13px;overflow:hidden;transition:transform .28s ease,border-color .28s ease;}
+  .eq-card:hover{transform:translateY(-4px);border-color:rgba(0,240,255,.2);}
+  @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div style="padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,0.05)">
+    <a href="index.html" style="display:flex;align-items:center;gap:8px;text-decoration:none">
+      <span style="font-size:19px">⚡</span>
+      <span class="grad" style="font-family:'Hanken Grotesk',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.03em">EquipCore</span>
+    </a>
+  </div>
+  <div style="padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04)">
+    <div class="glass-lo" style="border-radius:10px;padding:9px 10px;display:flex;align-items:center;gap:9px">
+      <div id="sh-avatar" style="width:30px;height:30px;border-radius:8px;background:rgba(0,240,255,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#00f0ff;flex-shrink:0">--</div>
+      <div style="min-width:0;flex:1"><div id="sh-name" style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">…</div><div id="sh-id" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">—</div></div>
+    </div>
+  </div>
+  <nav id="sh-nav" style="flex:1;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px"></nav>
+  <div style="padding:9px 7px;border-top:1px solid rgba(255,255,255,0.04)">
+    <button onclick="EC_AUTH.logout()" class="nl" style="color:#849495"><span class="material-symbols-outlined ms">logout</span>Sign Out</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">My Dashboard</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495" id="orgLabel">…</div>
+    </div>
+    <a href="apply-rental.html" class="btnp" style="font-size:12px;padding:7px 13px"><span class="material-symbols-outlined ms" style="font-size:15px">add</span>Apply to Rent</a>
+  </div>
+
+  <div class="body">
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px">
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:24px;font-weight:800;color:#00f0ff;margin-bottom:2px">3</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Active Rentals</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:24px;font-weight:800;color:#d1bcff;margin-bottom:2px">R84k</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Total Spent</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:24px;font-weight:800;margin-bottom:2px">12</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Saved Items</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:24px;font-weight:800;margin-bottom:2px">23</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Total Rentals</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 270px;gap:14px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- Current rentals -->
+        <div class="glass" style="border-radius:13px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Current Rentals</div>
+            <a href="my-rentals.html" class="btng" style="font-size:12px;padding:6px 10px">View All</a>
+          </div>
+          <div>
+            <div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center">
+              <div style="width:58px;height:52px;border-radius:9px;overflow:hidden;flex-shrink:0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl_y15epJuonz3E-t3iWCBJXshwATQKMAd06A5SevQDKLuVo0MiEssY_huGzaf0yHgpvUgLZev71AFf9ceEZesXTCr7zF0KXckYeigSrTpfdwrwHE_JNEXUVaeK7-s-qbMcrub3vhO5taAAoUP1ozQu9WEqlCdyOMVfRpSCGVAazKsXOQbn5Em3RFLahOER-1ATJ1c6a06jzVkopmDMEe76_iqgDDljlIveCaruhdlNQJCypZzUyV9Q7hh3Z-x94lsX4Jvk18WB-8" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;margin-bottom:2px">Cat 320 GC Excavator</div><div style="font-size:12px;color:#849495;margin-bottom:7px">Ends 12 Jun · Sandton Site</div><div style="height:3px;background:rgba(255,255,255,.06);border-radius:999px"><div style="width:65%;height:100%;background:#00f0ff;border-radius:999px"></div></div></div>
+              <div style="text-align:right;flex-shrink:0"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:14px">R22,400</div><span class="b ba">Active</span></div>
+            </div>
+            <div style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);align-items:center">
+              <div style="width:58px;height:52px;border-radius:9px;overflow:hidden;flex-shrink:0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeUtKz6a__P0G7rMBEJ5GxUBEsVjv41hJkCUJVLiDayl2PqH-WUP95NErXlfC9g2pbM6dkaWYK3OJ9XtqN1olhpQI2TMLSl3CI_4D-q8UR5aDXQrbfetvHMVphYgqllAowLW5yGUq1c3BtRNAq87o3vgcKZ8kJpM1xI-PNMjC_eM9ZUvoQ84tDrFbHj9WH06gqq74pSHlfIkjANgjdCHQpXOdwVWzY5XVROJLRe8x_XgKL5JkVDoa4X3oNtZdldYfpJmnte5mnpSg" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;margin-bottom:2px">Scania R500 Truck</div><div style="font-size:12px;color:#849495;margin-bottom:7px">Ends 5 Nov · Port Elizabeth</div><div style="height:3px;background:rgba(255,255,255,.06);border-radius:999px"><div style="width:20%;height:100%;background:#00f0ff;border-radius:999px"></div></div></div>
+              <div style="text-align:right;flex-shrink:0"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:14px">R8,200/d</div><span class="b ba">Active</span></div>
+            </div>
+            <div style="display:flex;gap:12px;padding:14px 16px;align-items:center">
+              <div style="width:58px;height:52px;border-radius:9px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:22px;color:#849495">local_shipping</span></div>
+              <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;margin-bottom:2px">Volvo A40G Haul Truck</div><div style="font-size:12px;color:#849495">Starts 5 Jun · Awaiting confirmation</div></div>
+              <div style="text-align:right;flex-shrink:0"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">R41,200</div><span class="b bp">Pending</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Available equipment -->
+        <div class="glass" style="border-radius:13px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Available Equipment</div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input id="eSearch" placeholder="Search…" style="width:130px;font-size:12px;padding:6px 10px"/>
+              <a href="catalog.html" class="btng" style="font-size:12px;padding:6px 10px">Full Catalog</a>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr)" id="eGrid">
+            <a href="apply-rental.html" style="text-decoration:none;color:inherit;padding:13px;border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;display:block" onmouseover="this.style.background='rgba(0,240,255,.025)'" onmouseout="this.style.background=''">
+              <div style="height:72px;border-radius:8px;overflow:hidden;margin-bottom:9px"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv8e87iP2w_pHeQcW7esQSy6rjuuzXoliWo98ZkWquL6R0NH4Wt64g10-CEaMYh-ErLyiif_9SWsCi-be1XiCdLZkyB-gRd18LqFi005Twx_ZVbvSAesU6ZrpShpx61tTo3W1U8cBqCEYYtI3bSFTzgMM5gH2tB3QpkUFAaz3wImYaRMJlburfRXIHZYDZoVoXZviouUPktBzQx2UklNr9bjAoR2u_3hI7-Ba06LkWZBdJ3Vz1YJkfe80rjiD3De49_iR9BGneReY" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:2px">Volvo FH16</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00dbe9">R4,200/day</div>
+            </a>
+            <a href="apply-rental.html" style="text-decoration:none;color:inherit;padding:13px;border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;display:block" onmouseover="this.style.background='rgba(0,240,255,.025)'" onmouseout="this.style.background=''">
+              <div style="height:72px;border-radius:8px;overflow:hidden;margin-bottom:9px"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvjBh4G6uFhvFE7zGhLGVK_LfyO1n_pJWncpqsRMSKAU_7NZLlqLR6zwSRawgQ6QMNb21cdXuxXF-7laAXMHx4efih_N9wXGraW9q_I0AkUr_B-EJvaYRIWUwS0TDgpL5qYluKnb3Isqkkiiyw3PMQywZIHRIF1bmUHqSXA5Vg0Uk0biPqwV2yLb7xPD8v5t4ByxG9fI3_L0N9YUeP8LgseDLL0MIRtCDA78mrOrjsAarzBLHZNXtkgAS__EyBAVC9DqZ2OIKpwRE" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:2px">EX-350 Crawler</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00dbe9">R5,800/day</div>
+            </a>
+            <a href="apply-rental.html" style="text-decoration:none;color:inherit;padding:13px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;display:block" onmouseover="this.style.background='rgba(0,240,255,.025)'" onmouseout="this.style.background=''">
+              <div style="height:72px;border-radius:8px;overflow:hidden;margin-bottom:9px"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdE2hCW5w2ij9u0n1ow2t5elpRp1Mbj3wDGIvJDwLfM0OVkDC7dwpdHhpZD0nZ70no8JAVxJ6HZs84JXziytiGiBWNmLFx3Qc-cWt6qAnt7FNNujYtVfB1hdxk3dXLJMlSHjAkY-XkCUnBXWuv-JdxrX3FdKCoWnG1HKStyXtBvm8HsO1wgNo6nBhN5GN9pSraR9Y2oUFbBhaeZI7sT1dMs1buHld872mq5n6ezGvPzlsGvQ9ArczrClq2unSaMPmSIubvGK3mhjQ" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:2px">HC-900 Lifter</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00dbe9">R18,500/day</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="glass" style="border-radius:13px;padding:15px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:11px">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <a href="apply-rental.html" class="btnp" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">add</span>Apply to Rent</a>
+            <a href="my-rentals.html"   class="btng" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">receipt_long</span>My Rentals</a>
+            <a href="catalog.html"      class="btng" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">inventory_2</span>Catalog</a>
+            <a href="calculator.html"   class="btng" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">calculate</span>Calculator</a>
+          </div>
+        </div>
+        <div class="glass" style="border-radius:13px;padding:15px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px">Account</div>
+          <div id="acctCard" style="font-size:13px;color:#b9cacb;line-height:1.9"></div>
+        </div>
+        <div class="glass" style="border-radius:13px;padding:15px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:11px">Notifications</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div style="display:flex;gap:8px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="width:6px;height:6px;border-radius:50%;background:#00f0ff;flex-shrink:0;margin-top:4px"></span><div style="font-size:13px">Rental #RNT-4821 confirmed<br><span style="font-size:11px;color:#849495">2 hours ago</span></div></div>
+            <div style="display:flex;gap:8px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="width:6px;height:6px;border-radius:50%;background:#d1bcff;flex-shrink:0;margin-top:4px"></span><div style="font-size:13px">Invoice #INV-3821 paid<br><span style="font-size:11px;color:#849495">Yesterday</span></div></div>
+            <div style="display:flex;gap:8px;padding:9px 0"><span style="width:6px;height:6px;border-radius:50%;background:#ffd93d;flex-shrink:0;margin-top:4px"></span><div style="font-size:13px">Cat 320 service due soon<br><span style="font-size:11px;color:#849495">2 days ago</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+const user = EC_AUTH.require(['user','admin']);
+if (user) {
+  document.getElementById('sh-name').textContent  = user.name;
+  document.getElementById('sh-id').textContent    = user.id;
+  document.getElementById('sh-avatar').textContent= user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('orgLabel').textContent  = user.org || 'Client Account';
+  document.getElementById('acctCard').innerHTML   = `<b>${user.name}</b><br><span style="color:#849495">${user.email}</span><br><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff">${user.id}</span><br>${user.org||'Independent'}`;
+  EC_SHELL.init([
+    {href:'dashboard-user.html', icon:'dashboard',   label:'Overview',  active:()=>true},
+    {href:'my-rentals.html',     icon:'receipt_long',label:'My Rentals'},
+    {href:'apply-rental.html',   icon:'add_circle',  label:'Apply to Rent'},
+    {href:'catalog.html',        icon:'inventory_2', label:'Catalog'},
+    {href:'marketplace.html',    icon:'storefront',  label:'Marketplace'},
+    {href:'calculator.html',     icon:'calculate',   label:'Calculator'},
+  ]);
+}
+document.getElementById('eSearch').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('#eGrid a').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(q)?'':'none';});
+});
+</script>
+</body></html>

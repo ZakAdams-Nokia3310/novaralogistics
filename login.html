@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Sign In — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);}
+  input{width:100%;padding:13px 14px 13px 44px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;}
+  input:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,0.3);}
+  input::placeholder{color:rgba(255,255,255,0.22);}
+  .btn-main{width:100%;padding:14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 0 30px rgba(0,240,255,0.18);}
+  .btn-main:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 36px rgba(0,240,255,0.28);}
+  .btn-main:disabled{opacity:.6;cursor:default;transform:none;}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  @keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  .anim{animation:up .5s cubic-bezier(0.4,0,0.2,1) both;}
+  .d1{animation-delay:.06s}.d2{animation-delay:.14s}.d3{animation-delay:.22s}.d4{animation-delay:.3s}
+</style>
+</head>
+<body>
+
+<div style="position:relative;z-index:2;width:100%;max-width:420px;padding:24px">
+
+  <!-- Logo -->
+  <div class="anim" style="text-align:center;margin-bottom:36px">
+    <a href="index.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:10px">
+      <span style="font-size:26px">⚡</span>
+      <span class="grad" style="font-family:'Hanken Grotesk',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.03em">EquipCore</span>
+    </a>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(0,240,255,0.5);letter-spacing:.22em;text-transform:uppercase;margin-top:6px">Fleet &amp; Equipment Manager</p>
+  </div>
+
+  <!-- Card -->
+  <div class="glass anim d1" style="border-radius:20px;padding:36px 32px">
+
+    <h2 class="d2 anim" style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;margin-bottom:5px">Welcome back</h2>
+    <p class="d2 anim" style="color:#b9cacb;font-size:13px;margin-bottom:28px">Your organisation is recognised from your work email.</p>
+
+    <form id="loginForm" novalidate>
+      <!-- Honeypot — must remain empty -->
+      <input type="text" name="username" id="hp_login" data-honeypot tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"/>
+      <!-- Email -->
+      <div style="margin-bottom:14px">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px">Email Address</label>
+        <div style="position:relative">
+          <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">alternate_email</span>
+          <input id="emailInput" type="email" placeholder="you@company.com" autocomplete="email" required/>
+        </div>
+        <!-- Org pill -->
+        <div id="orgPill" style="margin-top:8px;display:none;align-items:center;gap:7px">
+          <span class="material-symbols-outlined" style="font-size:14px;color:#00f0ff">domain</span>
+          <span id="orgText" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00f0ff"></span>
+          <span id="orgRole" style="font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:999px;border:1px solid"></span>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div style="margin-bottom:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+          <label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em">Password</label>
+          <a href="#" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00dbe9;text-decoration:none">Forgot?</a>
+        </div>
+        <div style="position:relative">
+          <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">lock</span>
+          <input id="pwdInput" type="password" placeholder="••••••••" autocomplete="current-password" style="padding-right:46px" required/>
+          <button type="button" id="togglePwd" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#849495;display:flex;align-items:center;padding:4px">
+            <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div id="errBox" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+
+      <button class="btn-main d3 anim" id="submitBtn" type="submit">Sign In</button>
+    </form>
+
+    <div style="margin-top:20px;text-align:center;font-size:13px;color:#849495">
+      No account? <a href="dashboard-guest.html" style="color:#00dbe9;text-decoration:none">Browse as guest →</a>
+    </div>
+  </div>
+
+  <!-- Status -->
+  <div class="anim d4" style="margin-top:20px;text-align:center;display:flex;align-items:center;justify-content:center;gap:7px">
+    <span style="width:6px;height:6px;border-radius:50%;background:#00d4aa;box-shadow:0 0 8px #00d4aa;display:inline-block"></span>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.22);letter-spacing:.12em">ALL SYSTEMS OPERATIONAL</span>
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+// Redirect if already logged in
+const _u = EC_AUTH.current();
+if (_u) location.href = EC_AUTH.dashFor(_u.role);
+
+// ── Lockout state on load ─────────────────────────────────────────────────
+const btn      = document.getElementById('submitBtn');
+const errBox   = document.getElementById('errBox');
+const loginForm = document.getElementById('loginForm');
+let _lockoutTimer = null;
+
+function updateLockoutUI() {
+  if (!EC_SECURITY.isLockedOut()) {
+    clearInterval(_lockoutTimer);
+    btn.textContent = 'Sign In'; btn.disabled = false;
+    errBox.style.display = 'none';
+    return;
+  }
+  const remaining = EC_SECURITY.lockoutRemainingMs();
+  const mins = Math.floor(remaining / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+  const pad  = n => String(n).padStart(2, '0');
+  errBox.innerHTML = `<span style="display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined" style="font-size:15px">lock_clock</span>Too many failed attempts — locked for ${pad(mins)}:${pad(secs)}</span>`;
+  errBox.style.display = 'block';
+  btn.textContent = 'Locked'; btn.disabled = true;
+}
+
+if (EC_SECURITY.isLockedOut()) {
+  updateLockoutUI();
+  _lockoutTimer = setInterval(() => {
+    if (!EC_SECURITY.isLockedOut()) { updateLockoutUI(); clearInterval(_lockoutTimer); }
+    else updateLockoutUI();
+  }, 1000);
+}
+
+// ── Org detection ─────────────────────────────────────────────────────────
+const emailInput = document.getElementById('emailInput');
+const orgPill    = document.getElementById('orgPill');
+const orgText    = document.getElementById('orgText');
+const orgRole    = document.getElementById('orgRole');
+
+let dt;
+emailInput.addEventListener('input', () => {
+  clearTimeout(dt);
+  const v = emailInput.value;
+  if (!v.includes('@') || !v.split('@')[1]?.includes('.')) {
+    orgPill.style.display = 'none'; return;
+  }
+  dt = setTimeout(() => {
+    const org = EC_AUTH.detectOrg(v);
+    const colors = {
+      admin:  ['rgba(0,240,255,0.1)',  '#00f0ff', 'rgba(0,240,255,0.2)'],
+      user:   ['rgba(0,240,255,0.08)', '#00dbe9', 'rgba(0,240,255,0.15)'],
+      driver: ['rgba(255,180,162,0.1)','#ffb4a2', 'rgba(255,180,162,0.2)'],
+      guest:  ['rgba(255,255,255,0.05)','#849495','rgba(255,255,255,0.1)'],
+    }[org.role] || ['rgba(255,255,255,0.05)','#849495','rgba(255,255,255,0.1)'];
+
+    orgText.textContent = org.name || 'No organisation — guest access';
+    orgRole.textContent = org.role.toUpperCase();
+    orgRole.style.background    = colors[0];
+    orgRole.style.color         = colors[1];
+    orgRole.style.borderColor   = colors[2];
+    orgPill.style.display = 'flex';
+    orgPill.style.opacity = '0';
+    requestAnimationFrame(() => { orgPill.style.transition='opacity .3s'; orgPill.style.opacity='1'; });
+  }, 350);
+});
+
+document.getElementById('togglePwd').addEventListener('click', () => {
+  const inp  = document.getElementById('pwdInput');
+  const icon = document.querySelector('#togglePwd .material-symbols-outlined');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  icon.textContent = inp.type === 'password' ? 'visibility' : 'visibility_off';
+});
+
+loginForm.addEventListener('submit', e => {
+  e.preventDefault();
+
+  // Honeypot check — bail silently if tripped
+  if (EC_SECURITY.isHoneypotTripped(loginForm)) return;
+
+  // Block if locked out
+  if (EC_SECURITY.isLockedOut()) { updateLockoutUI(); return; }
+
+  // Rate limit
+  if (!EC_SECURITY.checkRateLimit('login_submit')) {
+    showErr('Too many requests. Please slow down and try again.'); return;
+  }
+
+  const email = EC_SECURITY.sanitizeInput(emailInput.value, 'email');
+  const pwd   = document.getElementById('pwdInput').value;
+  if (!email || !pwd) { showErr('Please enter your email and password.'); return; }
+  if (!EC_SECURITY.isValidEmail(email)) { showErr('Please enter a valid email address.'); return; }
+
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+
+  setTimeout(() => {
+    try {
+      const user = EC_AUTH.login(email, pwd);
+      location.href = EC_AUTH.dashFor(user.role) + '?intro=1';
+    } catch (err) {
+      showErr(err.message || 'Sign-in failed.');
+      // Restart lockout timer if newly locked
+      if (EC_SECURITY.isLockedOut() && !_lockoutTimer) {
+        _lockoutTimer = setInterval(() => {
+          if (!EC_SECURITY.isLockedOut()) { updateLockoutUI(); clearInterval(_lockoutTimer); _lockoutTimer = null; }
+          else updateLockoutUI();
+        }, 1000);
+        updateLockoutUI();
+      }
+    }
+  }, 400);
+});
+
+function showErr(msg) {
+  errBox.textContent = msg; errBox.style.display = 'block';
+  loginForm.style.animation = 'shake .4s ease';
+  setTimeout(() => { loginForm.style.animation = ''; }, 400);
+  if (!EC_SECURITY.isLockedOut()) { btn.textContent = 'Sign In'; btn.disabled = false; }
+}
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>

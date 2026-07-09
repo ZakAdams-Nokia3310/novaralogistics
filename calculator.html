@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rent Calculator — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex-shrink:0;}
+  .body{padding:24px 26px;flex:1;}
+  label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px;}
+  input,select,textarea{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;padding:12px 14px;width:100%;outline:none;transition:border-color .18s;}
+  input:focus,select:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+  .btnp{display:inline-flex;align-items:center;gap:6px;padding:13px 24px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;border-radius:11px;border:none;cursor:pointer;width:100%;justify-content:center;transition:all .2s;box-shadow:0 0 24px rgba(0,240,255,.18);}
+  .btnp:hover{filter:brightness(1.08);}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:12px 20px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:14px;border-radius:11px;border:1px solid rgba(255,255,255,.08);cursor:pointer;width:100%;justify-content:center;transition:all .18s;text-decoration:none;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+  .step-num{width:28px;height:28px;border-radius:8px;background:rgba(0,240,255,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#00f0ff;flex-shrink:0;}
+  .eq-pick{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .2s,background .2s;}
+  .eq-pick:hover{border-color:rgba(0,240,255,.2);background:rgba(0,240,255,.03);}
+  .eq-pick.selected{border-color:rgba(0,240,255,.4);background:rgba(0,240,255,.06);box-shadow:0 0 16px rgba(0,240,255,.1);}
+  .opt-row{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;cursor:pointer;transition:background .18s;}
+  .opt-row:hover{background:rgba(255,255,255,.05);}
+  .opt-row input[type=checkbox]{width:16px;height:16px;accent-color:#00f0ff;flex-shrink:0;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:960px){.calc-grid{grid-template-columns:1fr !important}}
+  @media(max-width:960px){.calc-summary{position:relative !important;top:auto !important}}
+  @media(max-width:600px){.calc-inner-grid{grid-template-columns:1fr !important}}
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Rent Calculator</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Configure your rental — live pricing</div>
+    </div>
+    <a href="apply-rental.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;box-shadow:0 0 18px rgba(0,240,255,.15)">
+      <span class="material-symbols-outlined ms" style="font-size:15px">send</span>Apply Now
+    </a>
+  </div>
+
+  <div class="body">
+    <div class="calc-grid" style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+
+      <!-- Left: configurator -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+
+        <!-- Step 1: Equipment -->
+        <div class="glass" style="border-radius:14px;padding:22px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+            <div class="step-num">1</div>
+            <div><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px">Equipment Selection</div><div style="font-size:12px;color:#849495">Choose the asset you need</div></div>
+          </div>
+          <div style="position:relative;margin-bottom:16px">
+            <span class="material-symbols-outlined ms" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:17px;color:#849495;pointer-events:none">search</span>
+            <input id="eqSearch" placeholder="Search by name, ID, or capacity…" style="padding-left:38px"/>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="eqGrid">
+            <div class="eq-pick selected" data-name="Cat 5t Diesel Forklift" data-id="FORKLIFT-3000" data-rate="1250" onclick="selectEq(this)">
+              <div style="height:90px;overflow:hidden"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOO3HOhOvtuhBveDX1cajZmkAcygqExcROWiTkoukwYzwH47891WfW8UHyhrs_m5VVnGDVAXmd7wTd9dMpCUq7c_6jcVCGG7vldtFgQqPcX72nSgrjLpIRCoESbWYkawKxqEAVO2N3ymIntRrdZ-t8yGW1Y7-XErbyAghQcbtJ2ME7Np-qIAW28C23iV-B-UN1DyF005omAoD96c_ki4XACgazeaIj3s1L-toPd_YxXtUYpmWq4jujGxo4fjB400G6gVkX6NQm1do" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="padding:11px 13px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff;margin-bottom:3px">FORKLIFT-3000</div><div style="font-weight:600;font-size:13px;margin-bottom:2px">Cat 5t Diesel Forklift</div><div style="font-size:12px;color:#849495">R 1,250 <span style="color:#849495">/day</span></div></div>
+            </div>
+            <div class="eq-pick" data-name="500kVA Standby Generator" data-id="GENSET-500" data-rate="4800" onclick="selectEq(this)">
+              <div style="height:90px;overflow:hidden"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCILAJD0qHenQ4pg-B4zEVOtqAGhcU-YpyA0fA_Gep_94jih-Gp4fIXaA4V1ad27fJBFPOLxc9zeyASqSn2Fxug8ybWvXbERLp6vTSgbr0tHyiIvJcaOKxY6r66B77vUVDRqRo9T5qh_cywe2-arrqT-v-pGNqICJYgNTsWWcHyQO250Wo0ssSsbKIBMy1HKO9P-aL79-mkMpDRswhAOnATZyYbLgRlfPAa9Rt_R4uOfH4C4WTtKV8OItRUOf7YqenPC_8mIoEM9-0" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="padding:11px 13px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-bottom:3px">GENSET-500</div><div style="font-weight:600;font-size:13px;margin-bottom:2px">500kVA Generator</div><div style="font-size:12px;color:#849495">R 4,800 <span>/day</span></div></div>
+            </div>
+            <div class="eq-pick" data-name="Cat 320 GC Excavator" data-id="CAT-320-GC" data-rate="4850" onclick="selectEq(this)">
+              <div style="height:90px;overflow:hidden"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvjBh4G6uFhvFE7zGhLGVK_LfyO1n_pJWncpqsRMSKAU_7NZLlqLR6zwSRawgQ6QMNb21cdXuxXF-7laAXMHx4efih_N9wXGraW9q_I0AkUr_B-EJvaYRIWUwS0TDgpL5qYluKnb3Isqkkiiyw3PMQywZIHRIF1bmUHqSXA5Vg0Uk0biPqwV2yLb7xPD8v5t4ByxG9fI3_L0N9YUeP8LgseDLL0MIRtCDA78mrOrjsAarzBLHZNXtkgAS__EyBAVC9DqZ2OIKpwRE" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="padding:11px 13px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-bottom:3px">CAT-320-GC</div><div style="font-weight:600;font-size:13px;margin-bottom:2px">Cat 320 GC Excavator</div><div style="font-size:12px;color:#849495">R 4,850 <span>/day</span></div></div>
+            </div>
+            <div class="eq-pick" data-name="Volvo FH16 Truck" data-id="VOL-FH16" data-rate="7200" onclick="selectEq(this)">
+              <div style="height:90px;overflow:hidden"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv8e87iP2w_pHeQcW7esQSy6rjuuzXoliWo98ZkWquL6R0NH4Wt64g10-CEaMYh-ErLyiif_9SWsCi-be1XiCdLZkyB-gRd18LqFi005Twx_ZVbvSAesU6ZrpShpx61tTo3W1U8cBqCEYYtI3bSFTzgMM5gH2tB3QpkUFAaz3wImYaRMJlburfRXIHZYDZoVoXZviouUPktBzQx2UklNr9bjAoR2u_3hI7-Ba06LkWZBdJ3Vz1YJkfe80rjiD3De49_iR9BGneReY" style="width:100%;height:100%;object-fit:cover"/></div>
+              <div style="padding:11px 13px"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-bottom:3px">VOL-FH16</div><div style="font-weight:600;font-size:13px;margin-bottom:2px">Volvo FH16 Truck</div><div style="font-size:12px;color:#849495">R 7,200 <span>/day</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Dates -->
+        <div class="glass" style="border-radius:14px;padding:22px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+            <div class="step-num">2</div>
+            <div><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px">Rental Duration</div><div style="font-size:12px;color:#849495">Select start and end dates</div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div><label>Start Date</label>
+              <div style="position:relative"><span class="material-symbols-outlined ms" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:17px;color:#00f0ff;pointer-events:none">calendar_today</span>
+              <input id="startDate" type="date" style="padding-left:40px"/></div>
+            </div>
+            <div><label>End Date</label>
+              <div style="position:relative"><span class="material-symbols-outlined ms" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:17px;color:#00f0ff;pointer-events:none">event_busy</span>
+              <input id="endDate" type="date" style="padding-left:40px"/></div>
+            </div>
+          </div>
+          <div id="durationNote" style="display:none;margin-top:12px;padding:11px 14px;background:rgba(0,240,255,.05);border:1px solid rgba(0,240,255,.15);border-radius:10px;font-size:13px;display:flex;align-items:center;gap:8px">
+            <span class="material-symbols-outlined ms" style="font-size:17px;color:#00f0ff">info</span>
+            <span id="durationText"></span>
+          </div>
+        </div>
+
+        <!-- Step 3: Options -->
+        <div class="glass" style="border-radius:14px;padding:22px">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+            <div class="step-num">3</div>
+            <div><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px">Optional Services</div><div style="font-size:12px;color:#849495">Customise your rental package</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <label class="opt-row"><div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(255,180,162,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:18px;color:#ffb4a2">health_and_safety</span></div><div><div style="font-weight:600;font-size:13px">Damage Waiver</div><div style="font-size:12px;color:#849495">Protects against accidental on-site damage</div></div></div><div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">+ R120/day</span><input type="checkbox" id="opt_waiver" checked/></div></label>
+            <label class="opt-row"><div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(255,217,61,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:18px;color:#ffd93d">local_gas_station</span></div><div><div style="font-weight:600;font-size:13px">Fuel Pre-pay</div><div style="font-size:12px;color:#849495">Return empty at a fixed flat rate</div></div></div><div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">+ R850 flat</span><input type="checkbox" id="opt_fuel"/></div></label>
+            <label class="opt-row"><div style="display:flex;align-items:center;gap:12px"><div style="width:36px;height:36px;border-radius:9px;background:rgba(0,212,170,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:18px;color:#00d4aa">engineering</span></div><div><div style="font-weight:600;font-size:13px">On-site Technician</div><div style="font-size:12px;color:#849495">Dedicated support for the full duration</div></div></div><div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;white-space:nowrap">+ R1,500/day</span><input type="checkbox" id="opt_tech"/></div></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Summary (sticky) -->
+      <div class="calc-summary" style="position:sticky;top:76px;">
+        <div class="glass" style="border-radius:14px;padding:22px">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:16px">Rental Summary</div>
+
+          <div style="display:flex;flex-direction:column;gap:0" id="summaryLines">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px"><span style="color:#849495" id="eqLineLabel">Equipment</span><span id="eqLineVal">R 0</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px" id="waiverLine"><span style="color:#849495">Damage Waiver</span><span id="waiverVal">R 0</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;display:none" id="fuelLine"><span style="color:#849495">Fuel Pre-pay</span><span>R 850</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;display:none" id="techLine"><span style="color:#849495" id="techLabel">Technician</span><span id="techVal">R 0</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;color:#00dbe9" id="discountLine"><span>Volume Discount</span><span id="discountVal">– R 0</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px"><span style="color:#849495">Subtotal</span><span id="subtotalVal" style="font-weight:600">R 0</span></div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;color:#849495"><span>VAT (15%)</span><span id="vatVal">R 0</span></div>
+          </div>
+
+          <div style="height:1px;background:rgba(0,240,255,.15);margin:14px 0"></div>
+
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em">Total Payable</span>
+            <span style="font-family:'Hanken Grotesk',sans-serif;font-size:32px;font-weight:800;color:#00f0ff" id="grandTotal">R 0</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <button class="btnp" onclick="window.location.href='apply-rental.html'">
+              <span class="material-symbols-outlined ms" style="font-size:18px">arrow_forward</span>Proceed to Rental
+            </button>
+            <button class="btng" onclick="alert('Quote saved! Ref: QT-'+Math.floor(1000+Math.random()*9000))">
+              <span class="material-symbols-outlined ms" style="font-size:17px">save</span>Save Quote
+            </button>
+          </div>
+
+          <div style="margin-top:14px;padding:11px 13px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;display:flex;gap:8px">
+            <span class="material-symbols-outlined ms" style="font-size:16px;color:#849495;flex-shrink:0;margin-top:1px">verified</span>
+            <p style="font-size:12px;color:#849495;line-height:1.6">Quotes valid 48 hours. Subject to equipment availability at time of booking.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('calculator.html');
+
+// Defaults
+const today = new Date().toISOString().split('T')[0];
+const plus5  = new Date(Date.now()+5*86400000).toISOString().split('T')[0];
+document.getElementById('startDate').value = today;
+document.getElementById('endDate').value   = plus5;
+
+let selEq = { name:'Cat 5t Diesel Forklift', rate:1250 };
+let days  = 5;
+
+function selectEq(el) {
+  document.querySelectorAll('.eq-pick').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  selEq = { name: el.dataset.name, rate: parseFloat(el.dataset.rate) };
+  calc();
+}
+
+document.getElementById('eqSearch').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.eq-pick').forEach(c => { c.style.display = c.textContent.toLowerCase().includes(q)?'':'none'; });
+});
+
+['startDate','endDate'].forEach(id => {
+  document.getElementById(id).addEventListener('change', () => {
+    const s = new Date(document.getElementById('startDate').value);
+    const e = new Date(document.getElementById('endDate').value);
+    if (e > s) {
+      days = Math.round((e-s)/86400000);
+      const disc = days>=30?'15%':days>=7?'10%':'';
+      const note = document.getElementById('durationNote');
+      document.getElementById('durationText').textContent = `${days} day${days!==1?'s':''}${disc?' · Volume discount '+disc+' applied':''}`;
+      note.style.display = 'flex';
+    }
+    calc();
+  });
+});
+
+['opt_waiver','opt_fuel','opt_tech'].forEach(id => document.getElementById(id).addEventListener('change', calc));
+
+function fmt(n){ return 'R '+Math.round(n).toLocaleString('en-ZA'); }
+
+function calc() {
+  if (!days||days<=0) return;
+  const base    = selEq.rate * days;
+  const waiver  = document.getElementById('opt_waiver').checked ? 120*days : 0;
+  const fuel    = document.getElementById('opt_fuel').checked   ? 850 : 0;
+  const tech    = document.getElementById('opt_tech').checked   ? 1500*days : 0;
+  const discR   = days>=30?.15:days>=7?.10:0;
+  const disc    = base*discR;
+  const sub     = base+waiver+fuel+tech-disc;
+  const vat     = sub*.15;
+  const grand   = sub+vat;
+
+  document.getElementById('eqLineLabel').textContent = selEq.name+' ×'+days+'d';
+  document.getElementById('eqLineVal').textContent   = fmt(base);
+  document.getElementById('waiverVal').textContent   = fmt(waiver);
+  document.getElementById('fuelLine').style.display  = document.getElementById('opt_fuel').checked?'flex':'none';
+  document.getElementById('techLine').style.display  = document.getElementById('opt_tech').checked?'flex':'none';
+  document.getElementById('techVal').textContent     = fmt(tech);
+  document.getElementById('discountVal').textContent = '– '+fmt(disc);
+  document.getElementById('discountLine').style.display = disc>0?'flex':'none';
+  document.getElementById('subtotalVal').textContent = fmt(sub);
+  document.getElementById('vatVal').textContent      = fmt(vat);
+  document.getElementById('grandTotal').textContent  = fmt(grand);
+}
+calc();
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>

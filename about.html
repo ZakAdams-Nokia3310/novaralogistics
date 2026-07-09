@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>About — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex-shrink:0;}
+  .body{padding:0;flex:1;}
+  .section{padding:48px 40px;border-bottom:1px solid rgba(255,255,255,.05);}
+  .feat{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;transition:border-color .2s,transform .2s;}
+  .feat:hover{border-color:rgba(0,240,255,.18);transform:translateY(-3px);}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:768px){.section{padding:28px 18px !important}}
+  @media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr) !important}}
+  @media(max-width:600px){.feat-grid{grid-template-columns:1fr !important}}
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">About EquipCore</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Novara Terra Industrials</div>
+    </div>
+    <a href="contact.html" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);text-decoration:none;">
+      <span class="material-symbols-outlined ms" style="font-size:15px">mail</span>Contact Us
+    </a>
+  </div>
+
+  <div class="body">
+
+    <!-- Hero -->
+    <div class="section" style="position:relative;overflow:hidden;min-height:280px;display:flex;align-items:center">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(0,240,255,.06),transparent 55%),radial-gradient(ellipse at 30% 80%,rgba(112,0,255,.05),transparent 55%)"></div>
+      <div style="position:relative;z-index:1;max-width:680px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(0,240,255,.55);letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px">01 // Our Story</div>
+        <h1 style="font-family:'Hanken Grotesk',sans-serif;font-size:clamp(28px,4vw,48px);font-weight:900;letter-spacing:-.03em;line-height:1.05;margin-bottom:16px"><span class="grad">Precision. Scale.</span><br/>Africa's Fleet Platform.</h1>
+        <p style="font-size:16px;color:#b9cacb;line-height:1.75;max-width:560px">EquipCore was built by Novara Terra Industrials to solve a problem we lived every day — fragmented fleet data, opaque pricing, and no single source of truth for industrial equipment across Africa. We built the platform we wished existed.</p>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="section">
+      <div class="stat-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:800px">
+        <div class="glass-lo" style="border-radius:13px;padding:20px;text-align:center">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-size:32px;font-weight:800;color:#00f0ff;margin-bottom:5px">4,821</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em">Fleet Assets</div>
+        </div>
+        <div class="glass-lo" style="border-radius:13px;padding:20px;text-align:center">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-size:32px;font-weight:800;color:#00f0ff;margin-bottom:5px">142</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em">Organisations</div>
+        </div>
+        <div class="glass-lo" style="border-radius:13px;padding:20px;text-align:center">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-size:32px;font-weight:800;color:#00f0ff;margin-bottom:5px">94%</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em">Utilisation</div>
+        </div>
+        <div class="glass-lo" style="border-radius:13px;padding:20px;text-align:center">
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-size:32px;font-weight:800;color:#00f0ff;margin-bottom:5px">5+</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em">Years Active</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What we offer -->
+    <div class="section">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(0,240,255,.55);letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px">02 // What We Build</div>
+      <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:clamp(22px,3vw,36px);font-weight:800;letter-spacing:-.02em;margin-bottom:28px">Everything your fleet needs,<br/><span class="grad">on one platform.</span></h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;max-width:900px">
+        <div class="feat"><span class="material-symbols-outlined ms" style="font-size:24px;color:#00f0ff;margin-bottom:11px;display:block">sensors</span><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;margin-bottom:6px">Live Fleet Tracking</div><div style="font-size:13px;color:#849495;line-height:1.6">Real-time GPS, fuel levels, and diagnostics for every unit.</div></div>
+        <div class="feat"><span class="material-symbols-outlined ms" style="font-size:24px;color:#00f0ff;margin-bottom:11px;display:block">storefront</span><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;margin-bottom:6px">Global Marketplace</div><div style="font-size:13px;color:#849495;line-height:1.6">Rent from 142 verified providers. Transparent pricing.</div></div>
+        <div class="feat"><span class="material-symbols-outlined ms" style="font-size:24px;color:#00f0ff;margin-bottom:11px;display:block">calculate</span><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;margin-bottom:6px">Smart Calculator</div><div style="font-size:13px;color:#849495;line-height:1.6">Instant quotes with VAT, discounts, and optional services.</div></div>
+        <div class="feat"><span class="material-symbols-outlined ms" style="font-size:24px;color:#ffb4a2;margin-bottom:11px;display:block">emergency_share</span><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;margin-bottom:6px">Driver Portal</div><div style="font-size:13px;color:#849495;line-height:1.6">Roadside assistance, trip logs, and fuel tracking for drivers.</div></div>
+      </div>
+    </div>
+
+    <!-- Mission -->
+    <div class="section" style="background:rgba(0,240,255,.02)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(0,240,255,.55);letter-spacing:.2em;text-transform:uppercase;margin-bottom:14px">03 // Our Mission</div>
+      <blockquote style="font-family:'Hanken Grotesk',sans-serif;font-size:clamp(18px,2.5vw,28px);font-weight:700;font-style:italic;line-height:1.5;color:#e2e2e8;max-width:700px;padding-left:20px;border-left:3px solid rgba(0,240,255,.4)">
+        "To give every operator, driver, and decision-maker in Africa a single, honest view of their fleet — so they can focus on the work that matters."
+      </blockquote>
+      <p style="margin-top:16px;font-size:14px;color:#849495;font-style:italic">— Novara Terra Industrials, 2026</p>
+    </div>
+
+    <!-- CTA -->
+    <div class="section" style="text-align:center">
+      <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:clamp(22px,3vw,34px);font-weight:800;letter-spacing:-.02em;margin-bottom:12px">Ready to get started?</h2>
+      <p style="font-size:15px;color:#b9cacb;margin-bottom:24px">Your organisation is recognised automatically from your work email.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <a href="login.html" style="display:inline-flex;align-items:center;gap:7px;padding:13px 28px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border-radius:11px;text-decoration:none;box-shadow:0 0 24px rgba(0,240,255,.18)">⚡ Launch EquipCore</a>
+        <a href="contact.html" style="display:inline-flex;align-items:center;gap:7px;padding:13px 28px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;border-radius:11px;text-decoration:none;border:1px solid rgba(255,255,255,.09)">Contact Us →</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>buildSidebar('about.html');</script>
+<script src="cookie-consent.js"></script>
+</body></html>

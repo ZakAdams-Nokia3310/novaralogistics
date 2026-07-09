@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rental Tracking — EquipCore Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+  .tbl td{padding:12px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tbody tr:hover td{background:rgba(0,240,255,.02);}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  .bc{background:rgba(209,188,255,.1);color:#d1bcff;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:filter .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:background .18s;}
+  .btng:hover{background:rgba(255,255,255,.09);}
+  input,select,textarea{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:8px 11px;width:100%;outline:none;transition:border-color .18s;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+  textarea{resize:vertical;}
+  label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:5px;}
+  .btnr{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:rgba(255,107,107,.08);color:#ff6b6b;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,107,107,.18);cursor:pointer;transition:background .18s;}
+  .btnr:hover{background:rgba(255,107,107,.14);}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(8,10,14,.85);backdrop-filter:blur(12px);z-index:900;align-items:center;justify-content:center;}
+  .modal-bg.show{display:flex;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .modal-bg.show .modal-card{animation:slideUp .22s ease both;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){
+    .body{padding:14px 12px!important}
+    .topbar{padding:0 14px!important;height:auto!important;min-height:56px;flex-wrap:wrap;padding-top:10px!important;padding-bottom:10px!important;gap:6px}
+    #kpiRow{grid-template-columns:repeat(2,1fr)!important}
+    .tbl th,.tbl td{padding:8px 10px!important;font-size:12px!important}
+    .modal-bg{align-items:flex-end!important}
+    .modal-bg .modal-card{border-radius:16px 16px 0 0!important;width:100%!important;max-width:100%!important;margin:0!important;max-height:88vh!important;overflow-y:auto!important}
+    .btnp,.btng,.btnr{min-height:42px}
+  }
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Rental Tracking</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">All active, pending and overdue rentals — due-back countdowns live</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <a href="admin-fleet.html" class="btng" style="font-size:12px;padding:7px 12px">
+        <span class="material-symbols-outlined ms" style="font-size:15px">garage</span>Fleet
+      </a>
+      <button class="btnp" onclick="openAddRental()" style="font-size:12px;padding:7px 13px">
+        <span class="material-symbols-outlined ms" style="font-size:15px">add</span>Add Rental
+      </button>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- KPIs (rendered by JS) -->
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px" id="kpiRow"></div>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <div style="position:relative;flex:1;min-width:200px">
+        <span class="material-symbols-outlined ms" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:#849495;pointer-events:none">search</span>
+        <input id="rSearch" placeholder="Search rental ID, equipment, or client…" style="padding-left:36px;width:100%;" oninput="renderTable()"/>
+      </div>
+      <select id="rStatus" onchange="renderTable()" style="width:160px">
+        <option value="all">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="pending">Pending</option>
+        <option value="overdue">Overdue</option>
+        <option value="complete">Complete</option>
+      </select>
+      <select id="rDue" onchange="renderTable()" style="width:180px">
+        <option value="all">All Return Dates</option>
+        <option value="overdue">Overdue Now</option>
+        <option value="today">Due Today</option>
+        <option value="soon">Due Within 3 Days</option>
+        <option value="week">Due This Week</option>
+      </select>
+    </div>
+
+    <!-- Table -->
+    <div class="glass" style="border-radius:13px;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table class="tbl" id="rTable">
+          <thead><tr>
+            <th>Equipment</th>
+            <th>Client</th>
+            <th>Due Back</th>
+            <th>Value</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody id="rBody"></tbody>
+        </table>
+      </div>
+      <div style="padding:13px 16px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">Showing <span id="showing">0</span> rentals</span>
+        <span id="overdueAlert" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ff6b6b;display:none"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Rental Modal -->
+<div class="modal-bg" id="addRentalModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:520px;border-color:rgba(0,240,255,.14);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:#00f0ff">add_circle</span>
+      </div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Create Rental</div>
+        <div style="font-size:12px;color:#849495">Add a new rental to the tracking system</div>
+      </div>
+      <button onclick="closeAddRental()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:22px;line-height:1">×</button>
+    </div>
+    <form id="addRentalForm" style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label>Vehicle <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#849495">(optional)</span></label>
+        <select id="arVehicle" onchange="onArVehicleChange()">
+          <option value="">No specific vehicle</option>
+        </select>
+      </div>
+      <div><label>Equipment / Item Name</label><input id="arEquipment" placeholder="e.g. Cat 390F Excavator" required/></div>
+      <div><label>Client Name</label><input id="arClient" placeholder="e.g. Ngozi Mining Co." required/></div>
+      <div>
+        <label>Organisation <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#849495">(optional)</span></label>
+        <select id="arOrg">
+          <option value="">No organisation</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label>Start Date</label><input id="arStart" type="date" required/></div>
+        <div><label>Return Date</label><input id="arEnd" type="date" required/></div>
+      </div>
+      <div><label>Rental Value (ZAR)</label><input id="arValue" type="number" placeholder="0" min="0" step="100" required/></div>
+      <div>
+        <label>Notes <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#849495">(optional)</span></label>
+        <textarea id="arNotes" rows="3" placeholder="Any additional notes about this rental…"></textarea>
+      </div>
+      <div id="arErr" style="display:none;padding:9px 12px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:8px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+      <button class="btnp" type="submit" style="width:100%;justify-content:center;padding:11px">
+        <span class="material-symbols-outlined ms" style="font-size:16px">add</span>Create Rental
+      </button>
+    </form>
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="firebase-config.js"></script>
+<script src="dc.js?v=2"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('admin-rentals.html');
+const _ecUser = EC_AUTH.require(['admin']);
+DC_DATA.setOrgScope(_ecUser.orgId);
+
+function today() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function daysLeft(dateStr) {
+  const d = new Date(dateStr);
+  d.setHours(0,0,0,0);
+  return Math.ceil((d - today()) / (1000*60*60*24));
+}
+
+function fmtDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+}
+
+function returnCell(rental) {
+  if (rental.status === 'complete') return `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">Returned</span>`;
+  const days = daysLeft(rental.returnDate);
+  if (days < 0)  return `<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ff6b6b;font-weight:700">${Math.abs(days)}d overdue</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${fmtDate(rental.returnDate)}</div>`;
+  if (days === 0) return `<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ff6b6b;font-weight:700">Due today</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${fmtDate(rental.returnDate)}</div>`;
+  if (days <= 3)  return `<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ffd93d;font-weight:600">In ${days}d</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${fmtDate(rental.returnDate)}</div>`;
+  return `<div style="font-family:'JetBrains Mono',monospace;font-size:11px">${fmtDate(rental.returnDate)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">in ${days}d</div>`;
+}
+
+function statusBadge(s) {
+  if (s === 'active')   return `<span class="b ba">Active</span>`;
+  if (s === 'pending')  return `<span class="b bp">Pending</span>`;
+  if (s === 'overdue')  return `<span class="b bo">Overdue</span>`;
+  if (s === 'complete') return `<span class="b bc">Complete</span>`;
+  return `<span class="b">${s}</span>`;
+}
+
+function actionCell(rental) {
+  const id = rental.id;
+  if (rental.status === 'pending') return `
+    <div style="display:flex;gap:5px">
+      <button class="btnp" style="font-size:11px;padding:4px 8px" onclick="approveRental('${id}')">Approve</button>
+      <button class="btng" style="font-size:11px;padding:4px 8px">View</button>
+    </div>`;
+  if (rental.status === 'overdue' || (rental.status === 'active' && daysLeft(rental.returnDate) < 0)) return `
+    <div style="display:flex;gap:5px">
+      <button class="btng" style="font-size:11px;padding:4px 8px">View</button>
+      <button class="btng" style="font-size:11px;padding:4px 8px;color:#ff6b6b;border-color:rgba(255,107,107,.2)" onclick="chaseRental('${id}','${rental.client}')">Chase</button>
+    </div>`;
+  if (rental.status === 'complete') return `
+    <div style="display:flex;gap:5px">
+      <button class="btng" style="font-size:11px;padding:4px 8px">View</button>
+      <button class="btng" style="font-size:11px;padding:4px 8px">Invoice</button>
+    </div>`;
+  return `
+    <div style="display:flex;gap:5px">
+      <button class="btng" style="font-size:11px;padding:4px 8px">View</button>
+      <button class="btng" style="font-size:11px;padding:4px 8px" onclick="markReturned('${id}')">Returned</button>
+    </div>`;
+}
+
+async function approveRental(id) {
+  await DC_DATA.updateRentalStatus(id, 'active');
+  renderAll();
+}
+
+async function markReturned(id) {
+  await DC_DATA.updateRentalStatus(id, 'complete');
+  renderAll();
+}
+
+function chaseRental(id, client) {
+  alert(`Overdue notice logged for ${client}.\n\nIn a live system this would trigger an automated email/SMS.`);
+}
+
+function renderKPIs() {
+  const rentals = DC_DATA.getRentals();
+  const active   = rentals.filter(r => r.status === 'active').length;
+  const pending  = rentals.filter(r => r.status === 'pending').length;
+  const overdue  = rentals.filter(r => r.status === 'overdue' || (r.status === 'active' && daysLeft(r.returnDate) < 0)).length;
+  const dueSoon  = rentals.filter(r => ['active','pending'].includes(r.status) && daysLeft(r.returnDate) >= 0 && daysLeft(r.returnDate) <= 3).length;
+  const revenue  = rentals.filter(r => r.status !== 'complete').reduce((s, r) => s + (r.value||0), 0);
+  [
+    { icon:'check_circle',  bg:'rgba(0,212,170,.1)',  color:'#00d4aa', val:active,                      label:'Active' },
+    { icon:'schedule',      bg:'rgba(255,217,61,.1)', color:'#ffd93d', val:pending,                     label:'Pending' },
+    { icon:'warning',       bg:'rgba(255,107,107,.1)',color:'#ff6b6b', val:overdue,                     label:'Overdue' },
+    { icon:'alarm',         bg:'rgba(255,180,162,.1)',color:'#ffb4a2', val:dueSoon,                     label:'Due ≤ 3 Days' },
+    { icon:'payments',      bg:'rgba(209,188,255,.1)',color:'#d1bcff', val:'R'+Math.round(revenue/1000)+'k', label:'Active Value' },
+  ].map(c => `<div class="glass-lo" style="border-radius:12px;padding:16px;display:flex;align-items:center;gap:10px">
+    <div style="width:32px;height:32px;border-radius:8px;background:${c.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <span class="material-symbols-outlined ms" style="font-size:16px;color:${c.color}">${c.icon}</span>
+    </div>
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:${c.color}">${c.val}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">${c.label}</div>
+    </div>
+  </div>`).forEach((html, i) => {
+    document.getElementById('kpiRow').children[i] ? null : null;
+  });
+  document.getElementById('kpiRow').innerHTML = [
+    { icon:'check_circle',  bg:'rgba(0,212,170,.1)',  color:'#00d4aa', val:active,                      label:'Active' },
+    { icon:'schedule',      bg:'rgba(255,217,61,.1)', color:'#ffd93d', val:pending,                     label:'Pending' },
+    { icon:'warning',       bg:'rgba(255,107,107,.1)',color:'#ff6b6b', val:overdue,                     label:'Overdue' },
+    { icon:'alarm',         bg:'rgba(255,180,162,.1)',color:'#ffb4a2', val:dueSoon,                     label:'Due ≤ 3 Days' },
+    { icon:'payments',      bg:'rgba(209,188,255,.1)',color:'#d1bcff', val:'R'+Math.round(revenue/1000)+'k', label:'Active Value' },
+  ].map(c => `<div class="glass-lo" style="border-radius:12px;padding:16px;display:flex;align-items:center;gap:10px">
+    <div style="width:32px;height:32px;border-radius:8px;background:${c.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <span class="material-symbols-outlined ms" style="font-size:16px;color:${c.color}">${c.icon}</span>
+    </div>
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:${c.color}">${c.val}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">${c.label}</div>
+    </div>
+  </div>`).join('');
+}
+
+function renderTable() {
+  const q   = (document.getElementById('rSearch').value || '').toLowerCase();
+  const sf  = document.getElementById('rStatus').value;
+  const df  = document.getElementById('rDue').value;
+
+  const rentals = DC_DATA.getRentals().filter(r => {
+    if (sf !== 'all' && r.status !== sf) return false;
+    if (df !== 'all') {
+      const days = daysLeft(r.returnDate);
+      if (df === 'overdue' && days >= 0) return false;
+      if (df === 'today'   && days !== 0) return false;
+      if (df === 'soon'    && (days < 0 || days > 3)) return false;
+      if (df === 'week'    && (days < 0 || days > 7)) return false;
+    }
+    if (q && !`${r.id} ${r.equipment} ${r.client}`.toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a, b) => {
+    // Sort: overdue first, then by return date ascending
+    const da = daysLeft(a.returnDate), db = daysLeft(b.returnDate);
+    return da - db;
+  });
+
+  const overdueCount = rentals.filter(r => daysLeft(r.returnDate) < 0 && r.status !== 'complete').length;
+  const alert = document.getElementById('overdueAlert');
+  if (overdueCount > 0) {
+    alert.style.display = '';
+    alert.textContent   = `⚠ ${overdueCount} overdue rental${overdueCount > 1 ? 's' : ''} require attention`;
+  } else {
+    alert.style.display = 'none';
+  }
+
+  document.getElementById('showing').textContent = rentals.length;
+  const tbody = document.getElementById('rBody');
+  if (!rentals.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No rentals match your filters</td></tr>`;
+    return;
+  }
+
+  const isOverdueRow = r => (r.status === 'overdue' || (r.status === 'active' && daysLeft(r.returnDate) < 0));
+
+  tbody.innerHTML = rentals.map(r => {
+    const rowBg = isOverdueRow(r) ? 'background:rgba(255,107,107,.025)' : '';
+    return `<tr style="${rowBg}">
+      <td data-label="Equipment" style="font-weight:600">${r.equipment}</td>
+      <td data-label="Client" style="font-size:12px;color:#b9cacb">${r.client}</td>
+      <td data-label="Due Back">${returnCell(r)}</td>
+      <td data-label="Value" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#00f0ff;font-weight:600">R${(r.value||0).toLocaleString()}</td>
+      <td data-label="Status">${statusBadge(r.status)}</td>
+      <td>${actionCell(r)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Add Rental ───────────────────────────────────────────────────────────────
+
+function openAddRental() {
+  document.getElementById('addRentalForm').reset();
+  document.getElementById('arErr').style.display = 'none';
+
+  const vSel = document.getElementById('arVehicle');
+  vSel.innerHTML = '<option value="">No specific vehicle</option>';
+  DC_DATA.getVehicles().filter(v => v.status === 'available').forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.id;
+    opt.dataset.name = `${v.make} ${v.model}`;
+    opt.textContent = `${v.make} ${v.model} (${v.regPlate})`;
+    vSel.appendChild(opt);
+  });
+
+  const oSel = document.getElementById('arOrg');
+  oSel.innerHTML = '<option value="">No organisation</option>';
+  DC_DATA.getOrgs().filter(o => o.status === 'active').forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o.id;
+    opt.textContent = o.name;
+    oSel.appendChild(opt);
+  });
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const nextWeek = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+  document.getElementById('arStart').value = todayStr;
+  document.getElementById('arEnd').value   = nextWeek;
+
+  document.getElementById('addRentalModal').classList.add('show');
+}
+
+function closeAddRental() { document.getElementById('addRentalModal').classList.remove('show'); }
+
+function onArVehicleChange() {
+  const sel = document.getElementById('arVehicle');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt.value && opt.dataset.name) {
+    document.getElementById('arEquipment').value = opt.dataset.name;
+  }
+}
+
+document.getElementById('addRentalForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const vehicleId  = document.getElementById('arVehicle').value || null;
+  const equipment  = document.getElementById('arEquipment').value.trim();
+  const client     = document.getElementById('arClient').value.trim();
+  const org        = document.getElementById('arOrg').value || null;
+  const startDate  = document.getElementById('arStart').value;
+  const returnDate = document.getElementById('arEnd').value;
+  const value      = +document.getElementById('arValue').value;
+  const notes      = document.getElementById('arNotes').value.trim();
+
+  if (new Date(returnDate) <= new Date(startDate)) {
+    const err = document.getElementById('arErr');
+    err.textContent = 'Return date must be after start date.';
+    err.style.display = 'block';
+    return;
+  }
+
+  await DC_DATA.addRental({ vehicleId, equipment, client, org, startDate, returnDate, value, status: 'pending', notes: notes || null });
+  closeAddRental();
+  renderAll();
+});
+
+function renderAll() { renderKPIs(); renderTable(); }
+DC_DATA.init().then(renderAll).catch(err => {
+  console.error('[DC_DATA]', err);
+  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${err.message}</div>`);
+});
+</script>
+</body></html>

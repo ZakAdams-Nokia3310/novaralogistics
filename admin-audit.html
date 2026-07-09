@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Audit Logs — EquipCore Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;background:#080a0e;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
+  .tbl td{padding:10px 14px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:top;}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tbody tr:hover td{background:rgba(0,240,255,.02);}
+  .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.04em;}
+  .badge-login{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .badge-logout{background:rgba(132,148,149,.12);color:#849495;}
+  .badge-failed{background:rgba(255,107,107,.12);color:#ff6b6b;}
+  .badge-lockout{background:rgba(255,107,107,.2);color:#ff4444;}
+  .badge-warn{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .badge-action{background:rgba(0,240,255,.1);color:#00f0ff;}
+  .badge-rate{background:rgba(255,120,0,.12);color:#ff7800;}
+  .badge-default{background:rgba(255,255,255,.06);color:#b9cacb;}
+  .inp{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:8px 12px;outline:none;}
+  .inp:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,.2);}
+  select.inp option{background:#1e2024;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;border-radius:8px;border:none;cursor:pointer;transition:filter .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btnd{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:rgba(255,107,107,.1);color:#ff6b6b;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12px;border-radius:8px;border:1px solid rgba(255,107,107,.2);cursor:pointer;transition:all .18s;}
+  .btnd:hover{background:rgba(255,107,107,.18);}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .empty{text-align:center;padding:60px 20px;color:#849495;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+</style>
+</head>
+<body>
+
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="material-symbols-outlined ms" style="color:#00f0ff;font-size:20px">policy</span>
+      <span style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Audit Logs</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="logCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495"></span>
+      <button class="btnd" onclick="confirmClear()">
+        <span class="material-symbols-outlined ms" style="font-size:14px">delete_sweep</span> Clear Logs
+      </button>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Filters -->
+    <div class="glass" style="border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+      <input id="searchInput" class="inp" type="search" placeholder="Search user, action, page…" style="min-width:220px;flex:1"/>
+      <select id="actionFilter" class="inp" style="min-width:180px">
+        <option value="">All Actions</option>
+        <option value="LOGIN_SUCCESS">Login Success</option>
+        <option value="LOGIN_FAILED">Login Failed</option>
+        <option value="LOGIN_LOCKOUT">Login Lockout</option>
+        <option value="LOGIN_FAILED_LOCKED">Failed While Locked</option>
+        <option value="LOGOUT">Logout</option>
+        <option value="UNAUTHORIZED_ACCESS_ATTEMPT">Unauthorized Access</option>
+        <option value="SESSION_EXPIRED_REDIRECT">Session Expired</option>
+        <option value="RATE_LIMIT_EXCEEDED">Rate Limit Exceeded</option>
+        <option value="RENTAL_CREATED">Rental Created</option>
+        <option value="RENTAL_STATUS_CHANGED">Rental Status Changed</option>
+        <option value="VEHICLE_STATUS_CHANGED">Vehicle Status Changed</option>
+        <option value="MAINTENANCE_CREATED">Maintenance Created</option>
+        <option value="MAINTENANCE_RESOLVED">Maintenance Resolved</option>
+        <option value="ORG_APPROVED">Org Approved</option>
+        <option value="ORG_REJECTED">Org Rejected</option>
+      </select>
+      <select id="roleFilter" class="inp">
+        <option value="">All Roles</option>
+        <option value="admin">Admin</option>
+        <option value="user">User</option>
+        <option value="driver">Driver</option>
+        <option value="anonymous">Anonymous</option>
+      </select>
+      <button class="btnp" onclick="renderLogs()">
+        <span class="material-symbols-outlined ms" style="font-size:14px">refresh</span> Refresh
+      </button>
+    </div>
+
+    <!-- Table -->
+    <div class="glass" style="border-radius:14px;overflow:hidden">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>User</th>
+            <th>Role</th>
+            <th>Action</th>
+            <th>Page</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="logBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty" style="display:none">
+        <span class="material-symbols-outlined ms" style="font-size:36px;display:block;margin-bottom:8px;color:#849495">policy</span>
+        No audit log entries found.
+      </div>
+    </div>
+
+    <div id="pagination" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
+      <span id="pageInfo" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495"></span>
+      <div style="display:flex;gap:6px">
+        <button id="prevBtn" class="btnp" onclick="changePage(-1)" style="padding:6px 12px">
+          <span class="material-symbols-outlined ms" style="font-size:14px">chevron_left</span>
+        </button>
+        <button id="nextBtn" class="btnp" onclick="changePage(1)" style="padding:6px 12px">
+          <span class="material-symbols-outlined ms" style="font-size:14px">chevron_right</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+const user = EC_AUTH.require(['admin']);
+buildSidebar('admin-audit.html');
+
+const PAGE_SIZE = 50;
+let currentPage = 0;
+let filteredLogs = [];
+
+function badgeClass(action) {
+  if (!action) return 'badge-default';
+  if (action === 'LOGIN_SUCCESS')               return 'badge-login';
+  if (action === 'LOGOUT')                      return 'badge-logout';
+  if (action.includes('FAILED'))                return 'badge-failed';
+  if (action.includes('LOCKOUT'))               return 'badge-lockout';
+  if (action.includes('UNAUTHORIZED') || action.includes('EXPIRED')) return 'badge-warn';
+  if (action.includes('RATE_LIMIT'))            return 'badge-rate';
+  return 'badge-action';
+}
+
+function fmtTs(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-ZA', { day:'2-digit', month:'short', year:'numeric' })
+    + ' ' + d.toLocaleTimeString('en-ZA', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+}
+
+function fmtDetails(details) {
+  if (!details || typeof details !== 'object') return '—';
+  const entries = Object.entries(details);
+  if (!entries.length) return '—';
+  return entries.map(([k, v]) => {
+    const val = Array.isArray(v) ? v.join(', ') : String(v);
+    return `<span style="color:#849495">${EC_SECURITY.sanitizeHtml(k)}:</span> <span style="color:#e2e2e8">${EC_SECURITY.sanitizeHtml(val)}</span>`;
+  }).join(' &nbsp;·&nbsp; ');
+}
+
+function renderLogs() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const actionF = document.getElementById('actionFilter').value;
+  const roleF   = document.getElementById('roleFilter').value;
+  const all     = EC_SECURITY.getAuditLogs();
+
+  filteredLogs = all.filter(e => {
+    if (actionF && e.action !== actionF) return false;
+    if (roleF   && e.userRole !== roleF) return false;
+    if (search) {
+      const hay = [e.userName, e.userRole, e.action, e.page, JSON.stringify(e.details || {})].join(' ').toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('logCount').textContent = `${filteredLogs.length} entr${filteredLogs.length !== 1 ? 'ies' : 'y'}`;
+  currentPage = 0;
+  renderPage();
+}
+
+function renderPage() {
+  const start  = currentPage * PAGE_SIZE;
+  const slice  = filteredLogs.slice(start, start + PAGE_SIZE);
+  const tbody  = document.getElementById('logBody');
+  const empty  = document.getElementById('emptyState');
+  const pgInfo = document.getElementById('pageInfo');
+  const prevB  = document.getElementById('prevBtn');
+  const nextB  = document.getElementById('nextBtn');
+
+  if (!filteredLogs.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    pgInfo.textContent = '';
+    prevB.disabled = nextB.disabled = true;
+    return;
+  }
+
+  empty.style.display = 'none';
+  tbody.innerHTML = slice.map(e => `
+    <tr>
+      <td class="mono" style="font-size:11px;white-space:nowrap;color:#849495">${fmtTs(e.ts)}</td>
+      <td>
+        <div style="font-size:12px;font-weight:600">${EC_SECURITY.sanitizeHtml(e.userName || '—')}</div>
+        ${e.userId ? `<div class="mono" style="font-size:10px;color:#849495">id:${EC_SECURITY.sanitizeHtml(String(e.userId))}</div>` : ''}
+      </td>
+      <td><span class="mono" style="font-size:10px;color:#849495">${EC_SECURITY.sanitizeHtml(e.userRole || '—')}</span></td>
+      <td><span class="badge ${badgeClass(e.action)}">${EC_SECURITY.sanitizeHtml(e.action || '—')}</span></td>
+      <td class="mono" style="font-size:10px;color:#849495">${EC_SECURITY.sanitizeHtml(e.page || '—')}</td>
+      <td style="font-size:11px;max-width:320px;white-space:normal">${fmtDetails(e.details)}</td>
+    </tr>
+  `).join('');
+
+  const total = filteredLogs.length;
+  const pages = Math.ceil(total / PAGE_SIZE);
+  pgInfo.textContent  = `Page ${currentPage + 1} of ${pages} — ${total} entr${total !== 1 ? 'ies' : 'y'}`;
+  prevB.disabled = currentPage === 0;
+  nextB.disabled = currentPage >= pages - 1;
+}
+
+function changePage(dir) {
+  const pages = Math.ceil(filteredLogs.length / PAGE_SIZE);
+  currentPage = Math.max(0, Math.min(pages - 1, currentPage + dir));
+  renderPage();
+}
+
+function confirmClear() {
+  if (!confirm('Delete all audit logs? This cannot be undone.')) return;
+  EC_SECURITY.audit('AUDIT_LOGS_CLEARED', { clearedBy: user.name });
+  EC_SECURITY.clearAuditLogs();
+  renderLogs();
+}
+
+// Wire up live filter inputs
+['searchInput','actionFilter','roleFilter'].forEach(id => {
+  document.getElementById(id).addEventListener('input', renderLogs);
+});
+
+renderLogs();
+</script>
+</body></html>

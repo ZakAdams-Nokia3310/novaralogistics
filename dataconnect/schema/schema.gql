@@ -1,0 +1,402 @@
+# EquipCore — Firebase Data Connect Schema
+# Backend: Cloud SQL (PostgreSQL) via Firebase Data Connect
+# Images and documents live in Firebase Storage; only the download URL is stored here.
+
+# ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  USER
+  DRIVER
+  GUEST
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum OrgStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum OrgRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VehicleType {
+  EXCAVATOR
+  ARTICULATED_HAULER
+  WHEEL_LOADER
+  HEAVY_TRUCK
+  BACKHOE_LOADER
+  DRILL_RIG
+  CRANE
+  FORKLIFT
+  GENERATOR
+  HIGH_REACH_TRUCK
+  CONTAINER_REACHSTACKER
+  VAN
+  OTHER
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ON_RENT
+  MAINTENANCE
+  RETIRED
+}
+
+enum MaintenanceType {
+  DRIVER_ISSUE
+  ROADSIDE
+  TYRES
+  WINDSCREEN
+  SERVICE
+  GENERAL
+}
+
+enum MaintenancePriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum RentalStatus {
+  PENDING
+  ACTIVE
+  OVERDUE
+  COMPLETE
+  CANCELLED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum EmploymentStatus {
+  FULL_TIME_EMPLOYED
+  SELF_EMPLOYED
+  BUSINESS_OWNER
+  CONTRACTOR
+}
+
+enum BankName {
+  ABSA
+  FNB
+  STANDARD_BANK
+  NEDBANK
+  CAPITEC
+  INVESTEC
+  AFRICAN_BANK
+  OTHER
+}
+
+enum AccountType {
+  CHEQUE
+  SAVINGS
+  BUSINESS
+}
+
+enum RentalPurpose {
+  MINING_EXTRACTION
+  CONSTRUCTION
+  LOGISTICS_TRANSPORT
+  WAREHOUSE_OPERATIONS
+  ENERGY_POWER
+  OTHER
+}
+
+enum CatalogCategory {
+  TRUCK
+  EXCAVATOR
+  CRANE
+  FORKLIFT
+  GENERATOR
+  DRILL_RIG
+  WHEEL_LOADER
+  ARTICULATED_HAULER
+  BACKHOE_LOADER
+  OTHER
+}
+
+enum SaProvince {
+  GAUTENG
+  WESTERN_CAPE
+  KWAZULU_NATAL
+  EASTERN_CAPE
+  MPUMALANGA
+  LIMPOPO
+  NORTH_WEST
+  NORTHERN_CAPE
+  FREE_STATE
+}
+
+enum InquiryStatus {
+  NEW
+  READ
+  REPLIED
+}
+
+enum WaitlistStatus {
+  PENDING
+  NOTIFIED
+  EXPIRED
+}
+
+# ─── Organisation ─────────────────────────────────────────────────────────────
+
+type Organisation @table(name: "organisations") {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String! @col(dataType: "varchar(200)")
+  sector: String! @col(dataType: "varchar(100)")
+  regId: String! @col(dataType: "varchar(50)") @unique
+  contactEmail: String! @col(dataType: "varchar(200)")
+  domain: String! @col(dataType: "varchar(200)") @unique
+  logoUrl: String
+  status: OrgStatus! @default(value: ACTIVE)
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── OrgRequest ───────────────────────────────────────────────────────────────
+
+type OrgRequest @table(name: "org_requests") {
+  id: UUID! @default(expr: "uuidV4()")
+  orgName: String! @col(dataType: "varchar(200)")
+  sector: String! @col(dataType: "varchar(100)")
+  regId: String! @col(dataType: "varchar(50)")
+  contactName: String! @col(dataType: "varchar(200)")
+  contactEmail: String! @col(dataType: "varchar(200)")
+  domain: String! @col(dataType: "varchar(200)")
+  status: OrgRequestStatus! @default(value: PENDING)
+  adminNotes: String @col(dataType: "text")
+  resultingOrg: Organisation
+  submittedAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── User ─────────────────────────────────────────────────────────────────────
+
+type User @table(name: "users") {
+  id: UUID! @default(expr: "uuidV4()")
+  firebaseUid: String @col(dataType: "varchar(128)") @unique
+  name: String! @col(dataType: "varchar(200)")
+  email: String! @col(dataType: "varchar(200)") @unique
+  role: UserRole! @default(value: USER)
+  organisation: Organisation
+  status: UserStatus! @default(value: ACTIVE)
+  avatarUrl: String
+  bio: String @col(dataType: "text")
+  position: String @col(dataType: "varchar(200)")
+  department: String @col(dataType: "varchar(200)")
+  phone: String @col(dataType: "varchar(30)")
+  emailVerified: Boolean! @default(value: false)
+  lastLoginAt: Timestamp
+  failedAttempts: Int! @default(value: 0)
+  lockedUntil: Timestamp
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── Vehicle ──────────────────────────────────────────────────────────────────
+
+type Vehicle @table(name: "vehicles") {
+  id: UUID! @default(expr: "uuidV4()")
+  organisation: Organisation
+  make: String! @col(dataType: "varchar(100)")
+  model: String! @col(dataType: "varchar(200)")
+  year: Int!
+  type: VehicleType!
+  regPlate: String! @col(dataType: "varchar(20)") @unique
+  description: String @col(dataType: "text")
+  km: Int! @default(value: 0)
+  serviceIntervalKm: Int!
+  nextServiceKm: Int!
+  status: VehicleStatus! @default(value: AVAILABLE)
+  imageUrl: String
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── VehicleImage ─────────────────────────────────────────────────────────────
+
+type VehicleImage @table(name: "vehicle_images") {
+  id: UUID! @default(expr: "uuidV4()")
+  vehicle: Vehicle!
+  imageUrl: String!
+  caption: String @col(dataType: "varchar(300)")
+  sortOrder: Int! @default(value: 0)
+  uploadedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── MaintenanceQuery ─────────────────────────────────────────────────────────
+
+type MaintenanceQuery @table(name: "maintenance_queries") {
+  id: UUID! @default(expr: "uuidV4()")
+  vehicle: Vehicle!
+  vehicleLabel: String! @col(dataType: "varchar(300)")
+  type: MaintenanceType!
+  description: String! @col(dataType: "text")
+  priority: MaintenancePriority! @default(value: MEDIUM)
+  status: MaintenanceStatus! @default(value: OPEN)
+  loggedByName: String! @col(dataType: "varchar(200)")
+  loggedByUser: User
+  issueImageUrl: String
+  resolvedBy: User
+  resolutionNotes: String @col(dataType: "text")
+  resolvedAt: Timestamp
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── Rental ───────────────────────────────────────────────────────────────────
+
+type Rental @table(name: "rentals") {
+  id: UUID! @default(expr: "uuidV4()")
+  vehicle: Vehicle
+  equipmentName: String! @col(dataType: "varchar(200)")
+  clientName: String! @col(dataType: "varchar(200)")
+  organisation: Organisation
+  startDate: Date!
+  returnDate: Date!
+  valueZar: Float! @default(value: 0)
+  status: RentalStatus! @default(value: PENDING)
+  notes: String @col(dataType: "text")
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── RentalApplication ────────────────────────────────────────────────────────
+
+type RentalApplication @table(name: "rental_applications") {
+  id: UUID! @default(expr: "uuidV4()")
+  ref: String! @col(dataType: "varchar(20)") @unique
+  applicantUser: User
+  organisation: Organisation
+  status: ApplicationStatus! @default(value: PENDING)
+  firstName: String! @col(dataType: "varchar(100)")
+  lastName: String! @col(dataType: "varchar(100)")
+  idNumber: String! @col(dataType: "varchar(20)")
+  dateOfBirth: Date!
+  email: String! @col(dataType: "varchar(200)")
+  phone: String! @col(dataType: "varchar(30)")
+  address: String! @col(dataType: "varchar(400)")
+  city: String @col(dataType: "varchar(100)")
+  province: SaProvince
+  postalCode: String @col(dataType: "varchar(10)")
+  employmentStatus: EmploymentStatus!
+  employerName: String! @col(dataType: "varchar(200)")
+  monthlyIncome: Float!
+  yearsEmployed: Int
+  bank: BankName!
+  accountType: AccountType! @default(value: CHEQUE)
+  outstandingCredit: Float! @default(value: 0)
+  creditCheckConsent: Boolean! @default(value: false)
+  vehicle: Vehicle
+  equipmentName: String! @col(dataType: "varchar(200)")
+  dailyRate: Float
+  startDate: Date!
+  endDate: Date!
+  estimatedCost: Float
+  deliveryAddress: String! @col(dataType: "varchar(400)")
+  purpose: RentalPurpose
+  rentalNotes: String @col(dataType: "text")
+  consentCreditCheck: Boolean! @default(value: false)
+  consentTerms: Boolean! @default(value: false)
+  consentUnderstanding: Boolean! @default(value: false)
+  idDocumentUrl: String
+  proofOfIncomeUrl: String
+  supportingDocUrl: String
+  reviewedBy: User
+  reviewedAt: Timestamp
+  rejectionReason: String @col(dataType: "text")
+  submittedAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── CatalogItem ──────────────────────────────────────────────────────────────
+
+type CatalogItem @table(name: "catalog_items") {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String! @col(dataType: "varchar(200)")
+  subtitle: String @col(dataType: "varchar(200)")
+  category: CatalogCategory!
+  description: String @col(dataType: "text")
+  specs: String @col(dataType: "text")
+  dailyRate: Float!
+  status: VehicleStatus! @default(value: AVAILABLE)
+  availableFrom: Date
+  imageUrl: String!
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── CatalogImage ─────────────────────────────────────────────────────────────
+
+type CatalogImage @table(name: "catalog_images") {
+  id: UUID! @default(expr: "uuidV4()")
+  catalogItem: CatalogItem!
+  imageUrl: String!
+  caption: String @col(dataType: "varchar(300)")
+  sortOrder: Int! @default(value: 0)
+  uploadedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── WaitlistEntry ────────────────────────────────────────────────────────────
+
+type WaitlistEntry @table(name: "waitlist_entries") {
+  id: UUID! @default(expr: "uuidV4()")
+  catalogItem: CatalogItem!
+  user: User
+  name: String! @col(dataType: "varchar(200)")
+  email: String! @col(dataType: "varchar(200)")
+  phone: String @col(dataType: "varchar(30)")
+  status: WaitlistStatus! @default(value: PENDING)
+  submittedAt: Timestamp! @default(expr: "request.time")
+  notifiedAt: Timestamp
+}
+
+# ─── ContactInquiry ───────────────────────────────────────────────────────────
+
+type ContactInquiry @table(name: "contact_inquiries") {
+  id: UUID! @default(expr: "uuidV4()")
+  referenceId: String! @col(dataType: "varchar(20)") @unique
+  name: String! @col(dataType: "varchar(200)")
+  email: String! @col(dataType: "varchar(200)")
+  subject: String! @col(dataType: "varchar(300)")
+  message: String! @col(dataType: "text")
+  status: InquiryStatus! @default(value: NEW)
+  repliedBy: User
+  repliedAt: Timestamp
+  submittedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── AuditLog ─────────────────────────────────────────────────────────────────
+
+type AuditLog @table(name: "audit_logs") {
+  id: UUID! @default(expr: "uuidV4()")
+  user: User
+  userName: String @col(dataType: "varchar(200)")
+  userRole: String @col(dataType: "varchar(50)")
+  action: String! @col(dataType: "varchar(100)")
+  details: String @col(dataType: "text")
+  page: String @col(dataType: "varchar(200)")
+  ipAddress: String @col(dataType: "varchar(45)")
+  userAgent: String @col(dataType: "varchar(500)")
+  createdAt: Timestamp! @default(expr: "request.time")
+}

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Profile — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.09);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .sidebar{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,0.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,0.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,0.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;max-width:860px;}
+
+  .profile-avatar{width:80px;height:80px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:#00f0ff;background:rgba(0,240,255,0.1);border:2px solid rgba(0,240,255,0.2);flex-shrink:0;}
+  .profile-header{display:flex;align-items:center;gap:20px;margin-bottom:32px;}
+
+  .sec{font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;color:#e2e2e8;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:8px;}
+  .sec .ms{font-size:18px;color:#00f0ff;}
+  .fg{margin-bottom:18px;}
+  .fl{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+  .fi{width:100%;padding:11px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+  .fi:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,0.2);}
+  textarea.fi{resize:vertical;min-height:80px;}
+  .fr{padding:11px 14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;font-size:14px;color:#b9cacb;}
+  select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' fill='none' stroke='%23849495' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;}
+
+  .role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;}
+
+  .btn-save{display:inline-flex;align-items:center;gap:6px;padding:11px 24px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;border-radius:10px;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 20px rgba(0,240,255,0.15);}
+  .btn-save:hover{filter:brightness(1.08);transform:translateY(-1px);}
+  .btn-save:disabled{opacity:0.5;cursor:default;transform:none;}
+  .btn-cancel{display:inline-flex;align-items:center;gap:5px;padding:11px 20px;background:rgba(255,255,255,0.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all .18s;text-decoration:none;}
+  .btn-cancel:hover{background:rgba(255,255,255,0.08);}
+
+  .toggle{position:relative;width:40px;height:22px;background:rgba(255,255,255,0.1);border-radius:11px;cursor:pointer;transition:background .2s;border:none;padding:0;flex-shrink:0;}
+  .toggle::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#849495;border-radius:50%;transition:all .2s;}
+  .toggle.on{background:rgba(0,240,255,0.25);}
+  .toggle.on::after{left:20px;background:#00f0ff;}
+  .perm-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;margin-bottom:8px;}
+  .perm-label{font-size:13px;color:#e2e2e8;}
+  .perm-desc{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:2px;}
+
+  .toast{position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:12px;opacity:0;transform:translateY(-10px);transition:all .3s ease;pointer-events:none;}
+  .toast.show{opacity:1;transform:none;}
+  .toast.ok{background:rgba(0,212,170,0.15);border:1px solid rgba(0,212,170,0.3);color:#00d4aa;}
+  .toast.err{background:rgba(255,100,100,0.1);border:1px solid rgba(255,100,100,0.2);color:#ff6b6b;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}.grid2{grid-template-columns:1fr}.profile-header{flex-direction:column;text-align:center}}
+</style>
+</head>
+<body>
+
+<div id="sidebar-root" class="sidebar"></div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <a href="javascript:history.back()" style="color:#849495;text-decoration:none;display:flex;align-items:center"><span class="material-symbols-outlined ms" style="font-size:20px">arrow_back</span></a>
+      <span style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px" id="pageTitle">My Profile</span>
+    </div>
+    <span id="orgLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;letter-spacing:.12em;text-transform:uppercase"></span>
+  </div>
+
+  <div class="body">
+    <!-- Header -->
+    <div class="profile-header">
+      <div class="profile-avatar" id="pAvatar"></div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800" id="pName">—</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;margin-top:4px" id="pEmail">—</div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <span class="role-badge" id="pRole" style="background:rgba(0,240,255,0.08);color:#00f0ff;border:1px solid rgba(0,240,255,0.15)">—</span>
+          <span id="pOrg" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495"></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <form id="profileForm">
+      <!-- Personal -->
+      <div class="sec"><span class="material-symbols-outlined ms">person</span> Personal Information</div>
+      <div class="grid2" style="margin-bottom:24px">
+        <div class="fg"><label class="fl">Full Name</label><input class="fi" id="fName" type="text" placeholder="Full name"/></div>
+        <div class="fg"><label class="fl">Phone</label><input class="fi" id="fPhone" type="tel" placeholder="+27 ..."/></div>
+      </div>
+
+      <!-- Work -->
+      <div class="sec"><span class="material-symbols-outlined ms">work</span> Work Information</div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="fg"><label class="fl">Position / Job Title</label><input class="fi" id="fPosition" type="text" placeholder="e.g. Fleet Manager"/></div>
+        <div class="fg"><label class="fl">Department</label><input class="fi" id="fDepartment" type="text" placeholder="e.g. Operations"/></div>
+      </div>
+      <div class="fg" style="margin-bottom:24px"><label class="fl">Organisation</label><div class="fr" id="fOrg">—</div></div>
+
+      <!-- Bio -->
+      <div class="sec"><span class="material-symbols-outlined ms">description</span> About</div>
+      <div class="fg" style="margin-bottom:32px">
+        <label class="fl">Bio</label>
+        <textarea class="fi" id="fBio" placeholder="Tell us about yourself, your experience, and what you do..."></textarea>
+      </div>
+
+      <!-- Account (read-only for self, editable by admin) -->
+      <div class="sec"><span class="material-symbols-outlined ms">shield</span> Account Details</div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="fg"><label class="fl">Email</label><div class="fr" id="fEmail">—</div></div>
+        <div class="fg" id="roleField">
+          <label class="fl">Role</label>
+          <div class="fr" id="fRoleDisplay">—</div>
+          <select class="fi" id="fRoleSelect" style="display:none">
+            <option value="ADMIN">Admin</option>
+            <option value="USER">User</option>
+            <option value="DRIVER">Driver</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Member Since</label><div class="fr" id="fJoined">—</div></div>
+        <div class="fg"><label class="fl">Status</label><div class="fr" id="fStatus">—</div></div>
+      </div>
+
+      <!-- Password change (admin only, editing another user) -->
+      <div id="passwordSection" style="display:none;margin-bottom:32px">
+        <div class="sec"><span class="material-symbols-outlined ms">lock</span> Change Password</div>
+        <div class="grid2">
+          <div class="fg"><label class="fl">New Password</label><input class="fi" id="fNewPwd" type="password" placeholder="Enter new password" autocomplete="new-password"/></div>
+          <div class="fg"><label class="fl">Confirm Password</label><input class="fi" id="fConfirmPwd" type="password" placeholder="Confirm password" autocomplete="new-password"/></div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:-10px;margin-bottom:16px">Leave blank to keep current password</div>
+      </div>
+
+      <!-- Permissions (admin only, editing another user) -->
+      <div id="permissionsSection" style="display:none;margin-bottom:32px">
+        <div class="sec"><span class="material-symbols-outlined ms">tune</span> Permissions</div>
+        <div class="perm-row">
+          <div><div class="perm-label">Fleet Management</div><div class="perm-desc">View and manage vehicles, service schedules</div></div>
+          <button type="button" class="toggle on" data-perm="fleet" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="perm-row">
+          <div><div class="perm-label">Rental Tracking</div><div class="perm-desc">View rentals, create and manage rental agreements</div></div>
+          <button type="button" class="toggle on" data-perm="rentals" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="perm-row">
+          <div><div class="perm-label">Maintenance Queries</div><div class="perm-desc">Log and manage maintenance issues</div></div>
+          <button type="button" class="toggle on" data-perm="maintenance" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="perm-row">
+          <div><div class="perm-label">Marketplace Access</div><div class="perm-desc">Browse and interact with the equipment marketplace</div></div>
+          <button type="button" class="toggle on" data-perm="marketplace" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="perm-row">
+          <div><div class="perm-label">Cost Calculator</div><div class="perm-desc">Access the rental cost calculator</div></div>
+          <button type="button" class="toggle on" data-perm="calculator" onclick="this.classList.toggle('on')"></button>
+        </div>
+        <div class="perm-row">
+          <div><div class="perm-label">Apply for Rentals</div><div class="perm-desc">Submit rental applications</div></div>
+          <button type="button" class="toggle on" data-perm="apply" onclick="this.classList.toggle('on')"></button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px">
+        <button type="submit" class="btn-save" id="saveBtn"><span class="material-symbols-outlined ms" style="font-size:16px">save</span> Save Profile</button>
+        <a href="javascript:history.back()" class="btn-cancel">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="dc.js"></script>
+<script src="sidebar.js"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('profile.html');
+var currentUser = EC_AUTH.require(['admin','user','driver']);
+document.getElementById('orgLabel').textContent = currentUser.org || 'Independent';
+
+// Determine if admin is viewing another user's profile
+var urlParams = new URLSearchParams(window.location.search);
+var viewingId = urlParams.get('id');
+var isAdminEditingOther = currentUser.role === 'admin' && viewingId;
+var _targetUser = null;
+
+if (isAdminEditingOther) {
+  document.getElementById('pageTitle').textContent = 'Edit User Profile';
+  document.getElementById('passwordSection').style.display = 'block';
+  document.getElementById('permissionsSection').style.display = 'block';
+  // Show role selector instead of read-only
+  document.getElementById('fRoleDisplay').style.display = 'none';
+  document.getElementById('fRoleSelect').style.display = 'block';
+}
+
+function showToast(type, msg) {
+  var t = document.getElementById('toast');
+  t.className = 'toast ' + type; t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+function initials(name) {
+  return (name || '').split(' ').map(function(n){return n[0]}).join('').slice(0,2).toUpperCase();
+}
+
+function fillForm(u) {
+  document.getElementById('pAvatar').textContent = initials(u.name);
+  document.getElementById('pName').textContent = u.name;
+  document.getElementById('pEmail').textContent = u.email;
+  document.getElementById('pRole').textContent = (u.role || '').toUpperCase();
+  document.getElementById('pOrg').textContent = u.orgName || u.org || '';
+
+  document.getElementById('fName').value = u.name || '';
+  document.getElementById('fPhone').value = u.phone || '';
+  document.getElementById('fPosition').value = u.position || '';
+  document.getElementById('fDepartment').value = u.department || '';
+  document.getElementById('fBio').value = u.bio || '';
+  document.getElementById('fOrg').textContent = u.orgName || u.org || 'Independent';
+  document.getElementById('fEmail').textContent = u.email;
+  document.getElementById('fRoleDisplay').textContent = (u.role || 'user').charAt(0).toUpperCase() + (u.role || 'user').slice(1);
+  document.getElementById('fRoleSelect').value = (u.role || 'user').toUpperCase();
+  document.getElementById('fJoined').textContent = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-ZA', {year:'numeric',month:'long',day:'numeric'}) : '—';
+  document.getElementById('fStatus').textContent = (u.status || 'active').charAt(0).toUpperCase() + (u.status || 'active').slice(1);
+}
+
+// Load from DB
+DC_DATA.init().then(function() {
+  var users = DC_DATA.getAllUsers ? DC_DATA.getAllUsers() : [];
+  if (!users.length) {
+    // Fallback: try unscoped
+    var old = DC_DATA.getOrgScope ? DC_DATA.getOrgScope() : null;
+    if (DC_DATA.setOrgScope) DC_DATA.setOrgScope(null);
+    users = DC_DATA.getUsers();
+    if (DC_DATA.setOrgScope && old) DC_DATA.setOrgScope(old);
+  }
+
+  if (isAdminEditingOther) {
+    _targetUser = users.find(function(u){ return u.id === viewingId; });
+  } else {
+    _targetUser = users.find(function(u){ return u.email === currentUser.email; });
+  }
+
+  if (_targetUser) fillForm(_targetUser);
+  else fillForm(currentUser);
+}).catch(function() {
+  fillForm(currentUser);
+});
+
+// ── Save ──
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  if (!_targetUser) { showToast('err', 'User not found in database.'); return; }
+
+  var btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  // Build variables
+  var vars = {
+    id: _targetUser.id,
+    name: document.getElementById('fName').value.trim(),
+    phone: document.getElementById('fPhone').value.trim() || null,
+    position: document.getElementById('fPosition').value.trim() || null,
+    department: document.getElementById('fDepartment').value.trim() || null,
+    bio: document.getElementById('fBio').value.trim() || null,
+  };
+
+  var API_KEY = (typeof FIREBASE_CONFIG !== 'undefined') ? FIREBASE_CONFIG.apiKey : '';
+  var C = 'projects/' + ((typeof FIREBASE_CONFIG !== 'undefined') ? FIREBASE_CONFIG.projectId : 'novara-f985b') + '/locations/us-east1/services/novara-f985b-service/connectors/equipcore';
+  var MUT_URL = 'https://firebasedataconnect.googleapis.com/v1/' + C + ':executeMutation?key=' + API_KEY;
+
+  function mutate(op, v) {
+    return fetch(MUT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:C, operationName:op, variables:v}) })
+      .then(function(r){ return r.json(); })
+      .then(function(j){ if (j.errors && j.errors.length) throw new Error(j.errors[0].message); return j; });
+  }
+
+  var promises = [mutate('UpdateUserProfile', vars)];
+
+  // Role change (admin only)
+  if (isAdminEditingOther) {
+    var newRole = document.getElementById('fRoleSelect').value;
+    if (newRole !== (_targetUser.role || '').toUpperCase()) {
+      promises.push(mutate('UpdateUserRole', { id: _targetUser.id, role: newRole }));
+    }
+
+    // Password change
+    var newPwd = document.getElementById('fNewPwd').value;
+    var confirmPwd = document.getElementById('fConfirmPwd').value;
+    if (newPwd) {
+      if (newPwd !== confirmPwd) {
+        showToast('err', 'Passwords do not match.');
+        btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">save</span> Save Profile';
+        return;
+      }
+      if (newPwd.length < 6) {
+        showToast('err', 'Password must be at least 6 characters.');
+        btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">save</span> Save Profile';
+        return;
+      }
+      // Update local auth password for demo users
+      var regUsers = JSON.parse(localStorage.getItem('ec_registered_users') || '[]');
+      var found = regUsers.find(function(u){ return u.email === _targetUser.email; });
+      if (found) { found.password = newPwd; localStorage.setItem('ec_registered_users', JSON.stringify(regUsers)); }
+    }
+  }
+
+  Promise.all(promises).then(function() {
+    showToast('ok', 'Profile updated successfully.');
+    document.getElementById('pName').textContent = vars.name;
+    document.getElementById('pAvatar').textContent = initials(vars.name);
+    document.getElementById('fNewPwd').value = '';
+    document.getElementById('fConfirmPwd').value = '';
+  }).catch(function(err) {
+    showToast('err', 'Failed to save: ' + err.message);
+  }).finally(function() {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">save</span> Save Profile';
+  });
+});
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>
