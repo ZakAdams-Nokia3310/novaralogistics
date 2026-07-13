@@ -57,11 +57,13 @@ const SECURITY_HEADERS = {
   // onclick handlers. Refactoring to nonce-based CSP is tracked as a future task.
   'Content-Security-Policy'   : [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://storage.googleapis.com https://firebasestorage.googleapis.com",
-    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com",
+    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://api.mapbox.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://api.mapbox.com",
+    "font-src 'self' https://fonts.gstatic.com https://api.mapbox.com",
+    "img-src 'self' data: blob: https://lh3.googleusercontent.com https://storage.googleapis.com https://firebasestorage.googleapis.com https://unpkg.com https://*.mapbox.com https://*.basemaps.cartocdn.com",
+    "media-src 'self' https://d8j0ntlcm91z4.cloudfront.net",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://firebasedataconnect.googleapis.com https://unpkg.com https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com",
+    "worker-src blob:",
     "frame-ancestors 'self'",
     "upgrade-insecure-requests",
   ].join('; '),

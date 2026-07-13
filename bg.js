@@ -62,6 +62,23 @@
     /* Scrollable table wrapper */
     .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+    /* Scroll-perf: promote sticky/fixed blurred chrome onto their own
+       compositor layer so the browser doesn't recompute backdrop-filter
+       against the whole page on every scroll frame (this is what causes
+       scrolling to stall/catch up on mobile and low-power laptops). */
+    .topbar, #sidebar-root, #sb-overlay {
+      transform: translateZ(0);
+      will-change: transform;
+    }
+    @media (max-width: 768px) {
+      /* Blur radius is the dominant cost — cut it on mobile where GPU
+         headroom is lowest, instead of removing the glass look entirely. */
+      .topbar { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+      .glass, .glass-lo, .glass-card, .glass-float {
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      }
+    }
+
     /* Mobile-safe stats grids */
     @media (max-width: 600px) {
       [style*="grid-template-columns:repeat(4"] {
@@ -201,16 +218,68 @@
     .leaflet-control-zoom a:hover{background:rgba(0,240,255,.1)!important;color:#00f0ff!important}
     .leaflet-control-attribution{background:rgba(8,10,14,.5)!important;color:#849495!important;font-size:9px!important;border-radius:4px!important;padding:2px 6px!important}
     .leaflet-control-attribution a{color:#849495!important}
+
+    /* ══ GLOBAL: smooth scrolling + accessible focus states ══ */
+    html { scroll-behavior: smooth; }
+    a:focus-visible, button:focus-visible, select:focus-visible,
+    input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid #00f0ff;
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ══ GLOBAL: aurora background — GPU-composited transform-only animation ══ */
+    .ec-aurora-blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(40px); mix-blend-mode: screen;
+      will-change: transform; transform: translateZ(0);
+    }
+    @keyframes ec-aurora-a { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-6%,8%); } }
+    @keyframes ec-aurora-b { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8%,5%); } }
+    @keyframes ec-aurora-c { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-5%,-8%); } }
+    @media (max-width: 768px) { .ec-aurora-blob { filter: blur(24px); } }
+    @media (prefers-reduced-motion: reduce) { .ec-aurora-blob { animation: none !important; } }
+
+    /* ══ GLOBAL: cheaper glass blur on desktop too (mobile already reduced above) ══ */
+    @media (min-width: 769px) {
+      .glass, .glass-lo, .glass-card, .glass-float {
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+      }
+    }
   `;
 
   var s = document.createElement('style');
   s.textContent = css;
   document.head.appendChild(s);
 
-  /* ── Static background ── */
+  /* ── Static background ──
+     App-shell pages (dashboards with a sidebar) skip the animated, blurred
+     aurora blobs entirely — they bring little value behind dense data UI and
+     are a real, measured scroll-jank cost: each one is a continuously
+     animating, blurred, blend-mode layer sitting directly behind several
+     backdrop-filter glass panels, forcing the browser to recomposite all of
+     them together on every frame. Marketing-ish pages (catalog, marketplace,
+     calculator, profile, login…) keep the atmosphere. */
+  var isAppShell = !!(document.getElementById('sidebar-root') || document.querySelector('.sidebar'));
   var bg = document.createElement('div');
   bg.id = 'ec-bg';
-  bg.innerHTML = '<div id="ec-bg-vignette"></div><div id="ec-bg-grid"></div><div id="ec-bg-tint"></div>';
+  bg.innerHTML =
+    (isAppShell ? '' :
+    '<div style="position:absolute;inset:0;overflow:hidden;isolation:isolate;-webkit-mask-image:linear-gradient(180deg,#000 60%,transparent 100%);mask-image:linear-gradient(180deg,#000 60%,transparent 100%)">' +
+      '<div class="ec-aurora-blob" style="width:640px;height:520px;top:-160px;right:-100px;background:radial-gradient(circle at 50% 50%,rgba(0,240,255,0.22),transparent 66%);animation:ec-aurora-a 27s ease-in-out infinite"></div>' +
+      '<div class="ec-aurora-blob" style="width:560px;height:480px;top:-110px;left:-140px;background:radial-gradient(circle at 50% 50%,rgba(112,0,255,0.18),transparent 66%);animation:ec-aurora-b 33s ease-in-out infinite"></div>' +
+    '</div>') +
+    '<div id="ec-bg-vignette"></div><div id="ec-bg-grid"></div><div id="ec-bg-tint"></div>';
   document.body.insertBefore(bg, document.body.firstChild);
 
   /* ── Content stagger helper ── */
@@ -324,6 +393,23 @@
     if (z !== zone && tint) { tint.style.background = TINTS[z]; zone = z; }
     tick = false;
   }
-  window.addEventListener('scroll', function () { if (!tick) { requestAnimationFrame(upd); tick = true; } }, { passive: true });
+
+  /* ── Scroll-perf: the fixed sidebar/topbar use backdrop-filter blur, which
+     the browser re-samples every frame the content behind it moves — that
+     per-frame blur recompute (not the tint update above) is what causes
+     scroll stutter. Swap to a solid, un-blurred background for the duration
+     of an active scroll burst, then restore the blur once scrolling settles;
+     see the body.is-scrolling rules in theme.css. ── */
+  var scrollStopTimer = null;
+  function onScrollPerf() {
+    document.body.classList.add('is-scrolling');
+    clearTimeout(scrollStopTimer);
+    scrollStopTimer = setTimeout(function () { document.body.classList.remove('is-scrolling'); }, 160);
+  }
+
+  window.addEventListener('scroll', function () {
+    onScrollPerf();
+    if (!tick) { requestAnimationFrame(upd); tick = true; }
+  }, { passive: true });
   upd();
 })();

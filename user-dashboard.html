@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark" lang="en"><head>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>EquipCore | User Dashboard</title>
@@ -7,10 +7,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-  .glass-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);}
-  .glass-float{background:rgba(255,255,255,0.08);backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,0.15);}
+  .glass-card{background:rgba(255,255,255,0.04);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);}
+  .glass-float{background:rgba(255,255,255,0.08);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.15);}
   .glow-pulse{box-shadow:0 0 12px currentColor;}
   .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  /* Scroll-perf: promote sticky/fixed blurred chrome onto its own compositor layer */
+  nav.fixed, header.sticky, nav.sticky { transform: translateZ(0); will-change: transform; }
+  @media (max-width: 768px) {
+    .glass-card, .glass-float, header.sticky, nav.fixed { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  }
+  html{scroll-behavior:smooth;}
+  a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #00f0ff;outline-offset:2px;border-radius:6px;}
+  @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}}
 </style>
 <script id="tailwind-config">
 tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","background":"#111317","primary":"#dbfcff","primary-container":"#00f0ff","on-primary-container":"#006970","primary-fixed-dim":"#00dbe9","secondary-container":"#7000ff","on-secondary-container":"#ddcdff","surface-container":"#1e2024","surface-container-lowest":"#0c0e12","surface-container-high":"#282a2e","surface-container-highest":"#333539","on-surface":"#e2e2e8","on-surface-variant":"#b9cacb","tertiary-fixed-dim":"#ffb4a2","on-tertiary-container":"#b42800","error":"#ffb4ab","secondary":"#d1bcff","outline":"#849495","surface-variant":"#333539"},fontFamily:{"body-md":["Inter"],"headline-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-sm":["JetBrains Mono"],"display-lg":["Hanken Grotesk"]},fontSize:{"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"600"}]},spacing:{"max-width":"1440px","base":"8px","margin-mobile":"16px","gutter":"24px","margin-desktop":"48px"}}}}

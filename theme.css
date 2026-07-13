@@ -1,0 +1,384 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   EquipCore — Shared design tokens + component styles
+   Linked via <link rel="stylesheet" href="theme.css"> on pages opted into the
+   redesign. Targets EXISTING class names/selectors used across the app
+   (.glass, .glass-lo, .sc, .tbl, .b/.ba/.bp/.bo/.bc/.bblue, .btnp/.btng/
+   .btny/.btnr, .modal-bg/.modal-card, #sidebar-root, .sidebar, .topbar) so
+   page markup does not need to change — only each page's own duplicate
+   per-page <style> block should be pared back to page-specific overrides
+   once this is linked in.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Backgrounds ── */
+  --bg: #0a0a0f;
+  --bg-elevated: #0e0f16;
+  --surface: rgba(255,255,255,.035);
+  --surface-hover: rgba(255,255,255,.055);
+  --surface-lo: rgba(255,255,255,.025);
+  --inner-fill: rgba(255,255,255,.03);
+
+  /* ── Borders ── */
+  --border: rgba(255,255,255,.08);
+  --border-strong: rgba(255,255,255,.14);
+  --hairline: rgba(255,255,255,.05);
+
+  /* ── Text ── */
+  --text-primary: #e7e7ec;
+  --text-secondary: #a8b0b3;
+  --text-muted: #7a8286;
+
+  /* ── Accent (brand cyan) ── */
+  --accent: #00f0ff;
+  --accent-dim: #00c4d1;
+  --accent-ink: #003a3c;
+  --accent-soft: rgba(0,240,255,.1);
+  --accent-glow: 0 0 20px rgba(0,240,255,.18);
+
+  /* ── Status (always paired with a text label in markup — never color-only) ── */
+  --success: #00d4aa; --success-bg: rgba(0,212,170,.1);
+  --warning: #ffd93d; --warning-bg: rgba(255,217,61,.1);
+  --danger:  #ff6b6b; --danger-bg:  rgba(255,107,107,.1);
+  --info:    #00f0ff; --info-bg:    rgba(0,240,255,.1);
+  --violet:  #d1bcff; --violet-bg:  rgba(209,188,255,.1);
+  --driver:  #ffb4a2; --driver-bg:  rgba(255,180,162,.1);
+
+  /* ── Radii ── */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* ── Shadows ── */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.25);
+  --shadow-md: 0 8px 24px rgba(0,0,0,.35);
+  --shadow-lg: 0 16px 48px rgba(0,0,0,.5);
+  --shadow-inset: inset 0 1px 0 rgba(255,255,255,.04);
+
+  /* ── Blur ──
+     Kept deliberately modest: backdrop-filter is one of the most expensive
+     things a browser composites, and --blur-lg in particular sits behind
+     always-on-screen fixed/sticky chrome (sidebar, topbar) that recomposites
+     on every scroll frame. See the scroll-jank fix note near the sidebar/
+     topbar rules below. */
+  --blur-sm: 8px;
+  --blur-md: 12px;
+  --blur-lg: 14px;
+
+  /* ── Spacing (4px base scale) ── */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px;
+
+  /* ── Fonts (loaded per-page via existing <link> tags) ── */
+  --font-display: 'Hanken Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ══ Base ══ */
+html { background: var(--bg); scroll-behavior: smooth; }
+body { background: transparent; color: var(--text-primary); }
+a:focus-visible, button:focus-visible, select:focus-visible,
+input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ══ Glass surfaces ══ */
+.glass {
+  background: var(--surface);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-inset);
+}
+.glass-lo {
+  background: var(--surface-lo);
+  backdrop-filter: blur(var(--blur-sm));
+  -webkit-backdrop-filter: blur(var(--blur-sm));
+  border: 1px solid var(--hairline);
+}
+@media (max-width: 768px) {
+  .glass, .glass-lo, .glass-card, .glass-float {
+    backdrop-filter: blur(var(--blur-sm));
+    -webkit-backdrop-filter: blur(var(--blur-sm));
+  }
+}
+
+/* ══ Stat / metric card ══
+   Headline number + label + icon chip, optional trend badge (.sc-trend) and
+   sparkline (.sc-spark) for later use once real historical data backs them —
+   intentionally not populated with fabricated deltas today. */
+.sc {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm), var(--shadow-inset);
+  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.sc:hover {
+  border-color: rgba(0,240,255,.22);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), var(--shadow-inset);
+}
+.sc-trend { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: var(--radius-full); }
+.sc-trend-up { background: var(--success-bg); color: var(--success); }
+.sc-trend-down { background: var(--danger-bg); color: var(--danger); }
+.sc-spark { display: block; overflow: visible; }
+
+/* ══ Data table ══ */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th {
+  font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: .1em; color: var(--text-muted); padding: 10px 14px;
+  text-align: left; border-bottom: 1px solid var(--hairline);
+  background: rgba(255,255,255,.02);
+}
+.tbl td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--hairline); vertical-align: middle; color: var(--text-primary); }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tbody tr { transition: background-color .15s ease; }
+.tbl tbody tr:nth-child(even) td { background-color: rgba(255,255,255,.014); }
+.tbl tbody tr:hover td { background-color: rgba(0,240,255,.03); }
+
+/* ══ Status badges — always paired with a text label in markup, never color-only ══ */
+.b { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--radius-full); font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .02em; }
+.b::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.ba { background: var(--success-bg); color: var(--success); }
+.bp { background: var(--warning-bg); color: var(--warning); }
+.bo { background: var(--danger-bg);  color: var(--danger); }
+.bc { background: var(--violet-bg);  color: var(--violet); }
+.bblue { background: var(--info-bg); color: var(--info); }
+
+/* ══ Buttons — slight scale/opacity micro-interaction on hover + press ══ */
+.btnp, .btng, .btny, .btnr {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-display); font-size: 13px; border-radius: var(--radius-sm);
+  cursor: pointer; text-decoration: none; border: none;
+  transition: filter .18s ease, background-color .18s ease, transform .12s ease, box-shadow .18s ease;
+}
+.btnp { padding: 8px 14px; background: var(--accent); color: var(--accent-ink); font-weight: 700; box-shadow: var(--accent-glow); }
+.btnp:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btng { padding: 7px 12px; background: var(--surface-hover); color: var(--text-primary); font-weight: 600; border: 1px solid var(--border); }
+.btng:hover { background: rgba(255,255,255,.09); transform: translateY(-1px); }
+.btny { padding: 7px 12px; background: var(--warning-bg); color: var(--warning); font-weight: 600; border: 1px solid rgba(255,217,61,.25); }
+.btny:hover { background: rgba(255,217,61,.16); transform: translateY(-1px); }
+.btnr { padding: 7px 12px; background: var(--danger-bg); color: var(--danger); font-weight: 600; border: 1px solid rgba(255,107,107,.25); }
+.btnr:hover { background: rgba(255,107,107,.16); transform: translateY(-1px); }
+.btnp:active, .btng:active, .btny:active, .btnr:active { transform: scale(.97); }
+
+/* ══ Form controls ══ */
+input, select, textarea {
+  background: var(--surface-lo); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-primary); font-family: var(--font-body); font-size: 13px; padding: 9px 12px;
+  outline: none; transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+}
+input:hover, select:hover, textarea:hover { border-color: var(--border-strong); }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(0,240,255,.2); background-color: rgba(0,240,255,.03); }
+select {
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M3 5l4 4 4-4' fill='none' stroke='%23849495' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; cursor: pointer; min-height: 40px;
+}
+select option { background-color: var(--bg-elevated); color: var(--text-primary); padding: 8px; }
+select option:checked { background-color: rgba(0,240,255,.12); }
+@media (max-width: 600px) { input, textarea, select { font-size: 16px !important; } } /* prevents iOS zoom-on-focus */
+
+/* ══ Custom select widget (built by sidebar.js initCustomSelects) ══ */
+.cs-wrap { position: relative; display: block; }
+.cs-trigger {
+  display: flex; align-items: center; gap: 8px; background: var(--surface-lo); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text-primary); font-family: var(--font-body); font-size: 13px;
+  padding: 9px 12px; cursor: pointer; transition: border-color .18s ease, background .18s ease; user-select: none; min-height: 40px;
+}
+.cs-trigger:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+.cs-wrap.cs-open .cs-trigger { border-color: rgba(0,240,255,.5); background: rgba(0,240,255,.03); }
+.cs-val { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-arrow { font-size: 18px !important; color: var(--text-muted); transition: transform .18s ease, color .18s ease; flex-shrink: 0; line-height: 1 !important; }
+.cs-wrap.cs-open .cs-arrow { transform: rotate(180deg) !important; color: var(--accent); }
+.cs-dropdown {
+  background: rgba(10,12,18,.98); border: 1px solid rgba(0,240,255,.16); border-radius: var(--radius-md);
+  overflow: hidden auto; max-height: 240px; box-shadow: var(--shadow-lg), 0 0 0 1px rgba(0,240,255,.04);
+  backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+}
+.cs-dropdown.cs-anim { animation: csSlide .14s ease both; }
+@keyframes csSlide { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+.cs-opt { padding: 10px 14px; font-size: 13px; color: var(--text-secondary); cursor: pointer; transition: background .1s, color .1s; font-family: var(--font-body); border-bottom: 1px solid var(--hairline); }
+.cs-opt:last-child { border-bottom: none; }
+.cs-opt:hover { background: rgba(0,240,255,.07); color: var(--text-primary); }
+.cs-opt.cs-sel { color: var(--accent); background: rgba(0,240,255,.04); }
+.cs-opt.cs-sel::after { content: '\2713'; float: right; font-size: 11px; opacity: .7; }
+
+/* ══ Modal / dialog — centered, backdrop blur, scale+fade in ══ */
+.modal-bg {
+  display: none; position: fixed; inset: 0; background: rgba(8,10,14,.85);
+  backdrop-filter: blur(var(--blur-md)); -webkit-backdrop-filter: blur(var(--blur-md));
+  z-index: 900; align-items: center; justify-content: center;
+}
+.modal-bg.show { display: flex; }
+.modal-card { background: var(--bg-elevated); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); }
+.modal-bg.show .modal-card { animation: slideUp .22s cubic-bezier(.4,0,.2,1) both; }
+@keyframes slideUp { from { opacity: 0; transform: scale(.96) translateY(10px); } to { opacity: 1; transform: none; } }
+@media (max-width: 600px) {
+  .modal-bg { align-items: flex-end !important; }
+  .modal-bg .modal-card { border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important; width: 100% !important; max-width: 100% !important; margin: 0 !important; max-height: 88vh !important; overflow-y: auto !important; }
+}
+
+/* ══ Sidebar / topbar shell ══
+   Applies to both #sidebar-root (buildSidebar/inline paths) and .sidebar
+   (EC_SHELL path) — mobile show/hide mechanics for each are left to their
+   existing owning script (sidebar.js for #sidebar-root, bg.js for .sidebar)
+   so this only changes appearance, not behavior. */
+#sidebar-root, .sidebar {
+  width: 220px; height: 100vh; position: fixed; left: 0; top: 0; z-index: 50;
+  display: flex; flex-direction: column;
+  background: linear-gradient(180deg, rgba(16,18,25,.92), rgba(8,9,13,.96));
+  backdrop-filter: blur(var(--blur-lg)); -webkit-backdrop-filter: blur(var(--blur-lg));
+  border-right: 1px solid var(--border);
+  overflow: hidden; /* clip anything that still overflows the fixed box, see nav rule below */
+}
+/* Scroll-containment fix: a flex item's default min-height is `auto`, which
+   means it refuses to shrink below its own content height — so this nav
+   never actually overflowed itself, its own overflow-y:auto never engaged,
+   and scrolling over the sidebar fell through to the main content instead.
+   min-height:0 lets it be constrained to the remaining flex space instead of
+   growing to fit every link; overscroll-behavior:contain stops scroll
+   chaining into the page once the nav reaches its own top/bottom. */
+#sidebar-root nav, .sidebar nav {
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.main { margin-left: 220px; min-height: 100vh; max-width: 100vw; overflow-x: hidden; }
+.topbar {
+  height: 56px; position: sticky; top: 0; z-index: 40;
+  background: rgba(10,10,15,.82); backdrop-filter: blur(var(--blur-lg)); -webkit-backdrop-filter: blur(var(--blur-lg));
+  border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+  padding: 0 26px; max-width: 100vw; overflow-x: hidden;
+}
+.body { padding: 22px 26px; max-width: 100vw; overflow-x: hidden; }
+@media (max-width: 768px) {
+  #sidebar-root { display: none !important; }
+  .main { margin-left: 0 !important; }
+  .topbar { padding: 0 14px !important; height: auto !important; min-height: 56px; gap: 6px; flex-wrap: nowrap; }
+  .body { padding: 14px 12px !important; }
+}
+.topbar, #sidebar-root, .sidebar, #sb-overlay { transform: translateZ(0); will-change: transform; }
+
+/* ══ Scroll-perf: suspend backdrop-filter blur during an active scroll burst ══
+   backdrop-filter forces the browser to re-sample whatever sits behind the
+   element on every frame that content moves — the .topbar is `sticky` with
+   real page content scrolling under it, so that resample runs on every
+   scroll tick and is the actual source of scroll stutter (not the scroll-tint
+   handler in bg.js, which is already rAF-throttled). bg.js toggles
+   body.is-scrolling for ~160ms after the last scroll event; swap to a solid
+   background for that window instead of paying the blur cost, then restore
+   it once scrolling settles. */
+body.is-scrolling .topbar, body.is-scrolling #sidebar-root, body.is-scrolling .sidebar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.is-scrolling .topbar { background: rgba(10,10,15,.97); }
+body.is-scrolling #sidebar-root, body.is-scrolling .sidebar { background: rgba(10,11,16,.98); }
+
+/* ══ Nav item — active state uses a left accent bar + soft glow instead of a
+   solid fill block. sidebar.js still sets the base inline styles per item;
+   these rules take over once callers switch to var()-based inline colors. ══ */
+.nav-item { position: relative; }
+.nav-item.active { box-shadow: inset 3px 0 0 0 var(--accent), 0 0 16px -6px rgba(0,240,255,.5); }
+
+/* ══ Leaflet dark-theme overrides ══ */
+.leaflet-container { background: var(--bg) !important; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: rgba(12,14,20,.98) !important; border: 1px solid rgba(0,240,255,.18) !important; color: var(--text-primary) !important; box-shadow: var(--shadow-lg) !important; border-radius: var(--radius-sm) !important; }
+.leaflet-popup-content { margin: 9px 13px !important; font-family: var(--font-mono); font-size: 11px !important; line-height: 1.6 !important; }
+.leaflet-popup-content b { color: var(--accent); }
+.leaflet-popup-close-button { color: var(--text-muted) !important; font-size: 16px !important; }
+.leaflet-bar { border: 1px solid var(--border) !important; border-radius: var(--radius-sm) !important; overflow: hidden !important; box-shadow: none !important; }
+.leaflet-control-zoom a { background: rgba(12,14,20,.9) !important; border-color: var(--hairline) !important; color: var(--text-secondary) !important; width: 28px !important; height: 28px !important; line-height: 28px !important; font-size: 16px !important; }
+.leaflet-control-zoom a:hover { background: rgba(0,240,255,.1) !important; color: var(--accent) !important; }
+.leaflet-control-attribution { background: rgba(8,10,14,.5) !important; color: var(--text-muted) !important; font-size: 9px !important; border-radius: 4px !important; padding: 2px 6px !important; }
+.leaflet-control-attribution a { color: var(--text-muted) !important; }
+
+/* ══ Collapsible sidebar ══
+   Single source of truth is body.sb-collapsed, toggled by sidebar.js
+   (toggleSidebarCollapse). Works for both the #sidebar-root (buildSidebar)
+   and .sidebar (EC_SHELL) shells since they already share base rules above.
+   Label text lives in .sb-label spans so it can be hidden without fighting
+   the icon spans' own explicit inline font-size. */
+.sb-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+  background: var(--surface-hover); border: 1px solid var(--border);
+  color: var(--text-muted); cursor: pointer; transition: all .18s ease;
+}
+.sb-toggle:hover { color: var(--accent); border-color: rgba(0,240,255,.3); background: rgba(0,240,255,.06); }
+.sb-toggle .material-symbols-outlined { font-size: 16px !important; display: block; transition: transform .22s ease; }
+body.sb-collapsed .sb-toggle .material-symbols-outlined { transform: rotate(180deg); }
+
+#sidebar-root, .sidebar { transition: width .2s ease; }
+.main { transition: margin-left .2s ease; }
+body.sb-collapsed #sidebar-root, body.sb-collapsed .sidebar { width: 68px; }
+body.sb-collapsed .main { margin-left: 68px; }
+body.sb-collapsed .sb-label,
+body.sb-collapsed .sb-section { display: none !important; }
+body.sb-collapsed .sb-logo-row { justify-content: center; }
+body.sb-collapsed .sb-user-card { justify-content: center; padding-left: 6px; padding-right: 6px; }
+body.sb-collapsed #sidebar-root nav a, body.sb-collapsed .sidebar nav a,
+body.sb-collapsed #sidebar-root nav button, body.sb-collapsed .sidebar nav button,
+body.sb-collapsed #sidebar-root > div:last-child a, body.sb-collapsed .sidebar > div:last-child a,
+body.sb-collapsed #sidebar-root > div:last-child button, body.sb-collapsed .sidebar > div:last-child button {
+  justify-content: center; padding-left: 0; padding-right: 0;
+}
+@media (max-width: 768px) {
+  body.sb-collapsed .main { margin-left: 0 !important; } /* mobile sidebar is an overlay, collapse is desktop-only */
+}
+
+/* ══ ApexCharts — dark theme overrides ══ */
+.apexcharts-tooltip { background: rgba(10,12,18,.98) !important; border: 1px solid rgba(0,240,255,.18) !important; color: var(--text-primary) !important; box-shadow: var(--shadow-lg) !important; border-radius: var(--radius-sm) !important; }
+.apexcharts-tooltip-title { background: rgba(255,255,255,.05) !important; border-bottom: 1px solid var(--hairline) !important; font-family: var(--font-mono) !important; }
+.apexcharts-xaxistooltip, .apexcharts-yaxistooltip { background: rgba(10,12,18,.98) !important; border-color: rgba(0,240,255,.18) !important; color: var(--text-secondary) !important; }
+.apexcharts-xaxistooltip-text, .apexcharts-yaxistooltip-text { color: var(--text-secondary) !important; }
+.apexcharts-legend-text { color: var(--text-secondary) !important; font-family: var(--font-mono) !important; font-size: 11px !important; }
+.apexcharts-gridline { stroke: rgba(255,255,255,.05) !important; }
+.apexcharts-text tspan { fill: var(--text-muted); }
+.apexcharts-menu-icon, .apexcharts-zoom-icon, .apexcharts-reset-icon, .apexcharts-pan-icon { color: var(--text-muted) !important; }
+.apexcharts-menu { background: var(--bg-elevated) !important; border: 1px solid var(--border) !important; box-shadow: var(--shadow-lg) !important; }
+.apexcharts-menu-item:hover { background: rgba(0,240,255,.08) !important; }
+
+/* ══ Footer bar ══ */
+.ec-footer {
+  margin-top: 22px; padding: 16px 20px;
+  background: var(--surface-lo); border: 1px solid var(--hairline); border-radius: var(--radius-lg);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);
+}
+.ec-footer a { color: var(--text-muted); text-decoration: none; transition: color .15s ease; }
+.ec-footer a:hover { color: var(--accent); }
+.ec-footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
+@media (max-width: 600px) { .ec-footer { flex-direction: column; align-items: flex-start; } }
+
+/* ══ Mobile: table → stacked card transform (mirrors sidebar.js's existing
+   ≤600px transform so both stay visually consistent once both are active) ══ */
+@media (max-width: 600px) {
+  .tbl { max-width: 100% !important; overflow-x: hidden !important; }
+  .tbl thead { display: none !important; }
+  .tbl, .tbl tbody { display: block !important; background: none !important; border: none !important; border-radius: 0 !important; width: 100% !important; }
+  .tbl tbody tr { display: block !important; margin-bottom: 10px; border-radius: var(--radius-md); padding: 10px 14px; background: var(--surface); border: 1px solid var(--hairline); }
+  .tbl tbody tr.tr-panel { display: table-row !important; background: none !important; border: none !important; border-radius: 0 !important; padding: 0 !important; margin: 0 !important; }
+  .tbl tbody tr.tr-panel td { display: table-cell !important; width: auto !important; border: none !important; padding: 0 !important; }
+  .tbl tbody td { display: flex !important; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--hairline); font-size: 12px !important; gap: 10px; width: 100% !important; max-width: 100% !important; white-space: normal !important; word-break: break-word; }
+  .tbl tbody td:last-child { border-bottom: none; padding-top: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .tbl tbody td[data-label]::before { content: attr(data-label); font-family: var(--font-mono); font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; flex-shrink: 0; white-space: nowrap; margin-right: 4px; }
+  .btnp, .btng, .btnr, .btny { min-height: 44px; }
+  [style*="grid-template-columns:repeat(4"] { grid-template-columns: repeat(2, 1fr) !important; }
+}

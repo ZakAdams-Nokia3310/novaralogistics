@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html class="dark" lang="en"><head>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Browse Equipment — EquipCore</title>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/apexcharts"></script>
+<link href="theme.css" rel="stylesheet"/>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;}
   body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
@@ -79,6 +81,12 @@
     <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:18px">Available Fleet <span id="cnt" style="font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(0,240,255,.1);color:#00f0ff;padding:3px 10px;border-radius:999px;margin-left:8px;font-weight:400">9 units</span></div>
   </div>
 
+  <!-- Fleet composition -->
+  <div class="glass" style="border-radius:13px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+    <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;flex-shrink:0">Fleet by Category</div>
+    <div id="catChart" style="flex:1;min-width:260px;max-width:520px"></div>
+  </div>
+
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px" id="gGrid">
 
     <div class="eq" data-cat="truck"><div style="height:170px;overflow:hidden"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv8e87iP2w_pHeQcW7esQSy6rjuuzXoliWo98ZkWquL6R0NH4Wt64g10-CEaMYh-ErLyiif_9SWsCi-be1XiCdLZkyB-gRd18LqFi005Twx_ZVbvSAesU6ZrpShpx61tTo3W1U8cBqCEYYtI3bSFTzgMM5gH2tB3QpkUFAaz3wImYaRMJlburfRXIHZYDZoVoXZviouUPktBzQx2UklNr9bjAoR2u_3hI7-Ba06LkWZBdJ3Vz1YJkfe80rjiD3De49_iR9BGneReY" alt="" style="width:100%;height:100%;object-fit:cover;transition:transform .4s"/></div><div style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px"><div><div style="font-weight:700;font-size:14px">Volvo FH16 Globetrotter</div><div style="font-size:12px;color:#849495">Long-Haul Freight</div></div><div style="text-align:right"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495">DAILY RATE</div><div style="font-family:'Hanken Grotesk',sans-serif;font-size:17px;font-weight:800;color:#00f0ff">R4,200</div></div></div><div style="font-size:12px;color:#849495;margin-bottom:12px">750 hp · 25,000 kg · 16.1L</div><a href="apply-rental.html" class="btnp" style="width:100%;justify-content:center;font-size:13px;padding:9px">Apply to Rent</a></div></div>
@@ -100,6 +108,15 @@
     <div class="eq" data-cat="crane"><div style="height:170px;overflow:hidden"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1MYSSyQH5cDzaHjMEjckr6J24PF7vEuxGC9SvpKUcTi2xyVvtt6ufMngUoY54qsNwD74bl-HdEjAPQaeXONTmttepMuTojTEeHX6tmwtJL-AOqBNOXPmZeyU-x1ZMcKFL4kQPwNEF6vMqaN-b3r9_Q1OM_1MRWn-rUSLM25_xsOfnyF6jdJSUEdEptUcXs5CaP4h6JKSJnGft95WglYu-vWl0aiXMAJp1Nl1jXGPIQv8Mx-fUr5Wo8DyzJ7ngbfVCRW4GUa0omb0" alt="" style="width:100%;height:100%;object-fit:cover;transition:transform .4s"/></div><div style="padding:14px"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px"><div><div style="font-weight:700;font-size:14px">Kalmar DRF450</div><div style="font-size:12px;color:#849495">Container Reachstacker</div></div><div style="text-align:right"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495">DAILY RATE</div><div style="font-family:'Hanken Grotesk',sans-serif;font-size:17px;font-weight:800;color:#00f0ff">R12,400</div></div></div><div style="font-size:12px;color:#849495;margin-bottom:12px">45,000 kg · 15.1m reach</div><a href="apply-rental.html" class="btnp" style="width:100%;justify-content:center;font-size:13px;padding:9px">Apply to Rent</a></div></div>
 
   </div>
+
+  <footer class="ec-footer">
+    <div>© 2026 EquipCore — Novara Terra Industrials. All rights reserved.</div>
+    <div class="ec-footer-links">
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="privacy.html">Privacy</a>
+    </div>
+  </footer>
 </div>
 
 <script src="security.js"></script>
@@ -107,6 +124,24 @@
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
+// Fleet composition chart — counted live from the cards in #gGrid
+const CAT_COLOR = { truck:'#00f0ff', excavator:'#00d4aa', crane:'#d1bcff', forklift:'#ffd93d', generator:'#ffb4a2' };
+const CAT_LABEL = { truck:'Trucks', excavator:'Excavators', crane:'Cranes', forklift:'Forklifts', generator:'Generators' };
+const catCounts = {};
+document.querySelectorAll('#gGrid .eq').forEach(c => { catCounts[c.dataset.cat] = (catCounts[c.dataset.cat] || 0) + 1; });
+const cats = Object.keys(catCounts);
+new ApexCharts(document.getElementById('catChart'), {
+  chart: { type:'donut', height:150, fontFamily:"'Inter',sans-serif", background:'transparent' },
+  series: cats.map(c => catCounts[c]),
+  labels: cats.map(c => CAT_LABEL[c] || c),
+  colors: cats.map(c => CAT_COLOR[c] || '#849495'),
+  stroke: { width:2, colors:['#080a0e'] },
+  dataLabels: { enabled:false },
+  legend: { position:'right', fontSize:'11px', fontFamily:"'JetBrains Mono',monospace", labels:{ colors:'#b9cacb' }, markers:{ width:8, height:8 } },
+  plotOptions: { pie: { donut: { size:'58%' } } },
+  tooltip: { theme:'dark' },
+}).render();
+
 function filter(){
   const q=document.getElementById('gSearch').value.toLowerCase(),cat=document.getElementById('gCat').value;
   let n=0;

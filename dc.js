@@ -26,7 +26,7 @@ const DC_DATA = (() => {
 
   // ─── In-memory cache ────────────────────────────────────────────────────────
   let _orgs = [], _orgRequests = [], _users = [], _vehicles = [];
-  let _maintenance = [], _rentals = [], _catalogItems = [];
+  let _maintenance = [], _rentals = [], _catalogItems = [], _rentalApplications = [];
   let _ready = false;
   let _orgScope = null;
 
@@ -40,6 +40,7 @@ const DC_DATA = (() => {
         orgs: _orgs, orgRequests: _orgRequests, users: _users,
         vehicles: _vehicles, maintenance: _maintenance,
         rentals: _rentals, catalogItems: _catalogItems,
+        rentalApplications: _rentalApplications,
       }));
     } catch(_) {}
   }
@@ -54,6 +55,7 @@ const DC_DATA = (() => {
       _users = c.users || []; _vehicles = c.vehicles || [];
       _maintenance = c.maintenance || []; _rentals = c.rentals || [];
       _catalogItems = c.catalogItems || [];
+      _rentalApplications = c.rentalApplications || [];
       return true;
     } catch(_) { return false; }
   }
@@ -192,6 +194,23 @@ const DC_DATA = (() => {
       value:      r.valueZar,
       status:     lo(r.status),
       notes:      r.notes || '',
+    };
+  }
+
+  function normRentalApplication(a) {
+    return {
+      id:            a.id,
+      applicantName: [a.firstName, a.lastName].filter(Boolean).join(' '),
+      email:         a.email,
+      phone:         a.phone,
+      equipment:     a.equipmentName,
+      vehicleId:     a.vehicle?.id || null,
+      vehicleLabel:  a.vehicle ? `${a.vehicle.make} ${a.vehicle.model}` : null,
+      startDate:     a.startDate,
+      endDate:       a.endDate,
+      status:        lo(a.status),
+      submittedAt:   toDate(a.submittedAt),
+      updatedAt:     toDate(a.updatedAt),
     };
   }
 
@@ -349,6 +368,10 @@ const DC_DATA = (() => {
     const d = await query('ListAllCatalogItems');
     _catalogItems = (d.catalogItems || []).map(normCatalog);
   }
+  async function _loadRentalApplications() {
+    const d = await query('ListAllRentalApplications');
+    _rentalApplications = (d.rentalApplications || []).map(normRentalApplication);
+  }
 
   // ─── Public API ──────────────────────────────────────────────────────────────
   return {
@@ -366,6 +389,7 @@ const DC_DATA = (() => {
         await Promise.all([
           _loadOrgs(), _loadOrgRequests(), _loadUsers(),
           _loadVehicles(), _loadMaintenance(), _loadRentals(), _loadCatalog(),
+          _loadRentalApplications(),
         ]);
         _ready = true;
         saveCache();
@@ -401,6 +425,9 @@ const DC_DATA = (() => {
     getRentals()            { return _orgScope ? _rentals.filter(r => r.org === _orgScope) : _rentals; },
     getAllRentals()          { return _rentals; },
     getCatalogItems()       { return _catalogItems; },
+    // Note: RentalApplication records aren't org-tagged in the schema, so this
+    // is intentionally unscoped (same precedent as getOrgRequests()).
+    getRentalApplications() { return _rentalApplications; },
 
     // ── Org Request mutations ───────────────────────────────────────────────
     async addOrgRequest(data) {

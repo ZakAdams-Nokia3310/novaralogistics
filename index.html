@@ -1,27 +1,80 @@
 <!DOCTYPE html>
-<html class="dark" lang="en"><head>
+<html lang="en" data-theme="dark"><head><script src="canonical-redirect.js"></script>
+<script>(function(){try{var t=localStorage.getItem('ec-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>EquipCore — Fleet & Equipment Manager</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&family=Fraunces:ital,wght@0,400;0,600;1,500;1,600&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
+  /* ═══════════ THEME TOKENS ═══════════ */
+  :root,[data-theme="dark"]{
+    --ec-bg:#080a0e;--ec-bg-elevated:#0c0e12;
+    --ec-surface:#1e2024;--ec-surface-lowest:#0c0e12;--ec-surface-high:#282a2e;
+    --ec-on-surface:#e2e2e8;--ec-on-surface-variant:#b9cacb;
+    --ec-primary:#dbfcff;--ec-primary-container:#00f0ff;--ec-on-primary-container:#006970;
+    --ec-primary-fixed-dim:#00dbe9;--ec-secondary-container:#7000ff;--ec-on-secondary-container:#ddcdff;
+    --ec-tertiary-fixed-dim:#ffb4a2;--ec-outline:#849495;--ec-surface-variant:#333539;
+    --ec-hairline:rgba(255,255,255,0.05);--ec-border:rgba(255,255,255,0.1);
+    --ec-glass-bg:rgba(255,255,255,0.04);--ec-glass-border:rgba(255,255,255,0.1);
+    --ec-inner-fill:rgba(255,255,255,0.03);--ec-inner-fill-strong:rgba(255,255,255,0.05);
+    --ec-nav-bg:rgba(12,14,18,0.8);--ec-nav-bg-scrolled:rgba(8,10,14,0.92);--ec-nav-shadow:0 12px 40px rgba(0,0,0,0.55);
+    --ec-tertiary-10:rgba(255,180,162,0.1);--ec-tertiary-20:rgba(255,180,162,0.2);
+    --ec-aurora-1:radial-gradient(circle at 50% 50%,rgba(0,240,255,0.32),transparent 66%);
+    --ec-aurora-2:radial-gradient(circle at 50% 50%,rgba(112,0,255,0.26),transparent 66%);
+    --ec-aurora-3:radial-gradient(circle at 50% 50%,rgba(255,180,162,0.18),transparent 66%);
+    --ec-aurora-blend:screen;--ec-aurora-opacity:1;
+    --ec-page-overlay:radial-gradient(ellipse at 50% 0%,rgba(0,240,255,0.10) 0%,transparent 60%),radial-gradient(ellipse at 100% 100%,rgba(112,0,255,0.07) 0%,transparent 50%),linear-gradient(to bottom,rgba(8,10,14,0.3) 0%,rgba(8,10,14,0.95) 60%,#080a0e 100%);
+    --ec-text-gradient:linear-gradient(135deg,#00f0ff 0%,#7df4ff 50%,#e2e2e8 100%);
+    --ec-glow-cyan:0 0 40px rgba(0,240,255,0.3);
+  }
+  :root[data-theme="light"]{
+    --ec-bg:#f3efe6;--ec-bg-elevated:#fdfbf5;
+    --ec-surface:#ffffff;--ec-surface-lowest:#ffffff;--ec-surface-high:#ece5d5;
+    --ec-on-surface:#1a1712;--ec-on-surface-variant:#6f6a5c;
+    --ec-primary:#006970;--ec-primary-container:#00f0ff;--ec-on-primary-container:#006970;
+    --ec-primary-fixed-dim:#00a3b3;--ec-secondary-container:#7000ff;--ec-on-secondary-container:#5a00cc;
+    --ec-tertiary-fixed-dim:#e2765f;--ec-outline:#8a8578;--ec-surface-variant:#e5dfd0;
+    --ec-hairline:rgba(26,23,18,0.06);--ec-border:rgba(26,23,18,0.1);
+    --ec-glass-bg:rgba(255,255,255,0.6);--ec-glass-border:rgba(26,23,18,0.08);
+    --ec-inner-fill:rgba(26,23,18,0.035);--ec-inner-fill-strong:rgba(26,23,18,0.06);
+    --ec-nav-bg:rgba(253,251,245,0.85);--ec-nav-bg-scrolled:rgba(253,251,245,0.96);--ec-nav-shadow:0 12px 32px rgba(26,23,18,0.12);
+    --ec-tertiary-10:rgba(226,118,95,0.1);--ec-tertiary-20:rgba(226,118,95,0.2);
+    --ec-aurora-1:radial-gradient(circle at 50% 50%,rgba(0,180,190,0.16),transparent 70%);
+    --ec-aurora-2:radial-gradient(circle at 50% 50%,rgba(112,0,255,0.08),transparent 70%);
+    --ec-aurora-3:radial-gradient(circle at 50% 50%,rgba(226,118,95,0.14),transparent 70%);
+    --ec-aurora-blend:normal;--ec-aurora-opacity:0.55;
+    --ec-page-overlay:radial-gradient(ellipse at 50% 0%,rgba(0,180,190,0.06) 0%,transparent 60%),radial-gradient(ellipse at 100% 100%,rgba(112,0,255,0.04) 0%,transparent 50%),linear-gradient(to bottom,rgba(243,239,230,0.2) 0%,rgba(243,239,230,0.9) 60%,#f3efe6 100%);
+    --ec-text-gradient:linear-gradient(135deg,#007680 0%,#00a3b3 50%,#1a1712 100%);
+    --ec-glow-cyan:0 0 32px rgba(0,180,190,0.18);
+  }
   .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
   @keyframes slide-up{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
   @keyframes intro-rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
   #ec-intro{transition:opacity 1.4s cubic-bezier(0.4,0,0.2,1),visibility 1.4s}
 
-  /* Scroll-reveal system */
-  .sr{opacity:0;transform:translateY(48px);transition:opacity 0.8s cubic-bezier(0.4,0,0.2,1),transform 0.8s cubic-bezier(0.4,0,0.2,1)}
-  .sr.from-left{transform:translateX(-52px) translateY(0)}
-  .sr.from-right{transform:translateX(52px) translateY(0)}
-  .sr.scale-in{transform:scale(0.9) translateY(24px)}
+  /* Smooth scroll for anchor links + scroll-cue */
+  html{scroll-behavior:smooth}
+
+  /* Scroll-reveal system — gentle rise + fade, opacity/transform only (no
+     filter: blur transitions are expensive to composite, and with 50+ of
+     these on the page a fast scroll could fire many at once — that's a
+     measured cause of scroll jank, not just a look-and-feel choice). */
+  .sr{opacity:0;transform:translateY(26px);transition:opacity 0.7s cubic-bezier(0.16,1,0.3,1),transform 0.7s cubic-bezier(0.16,1,0.3,1)}
+  .sr.from-left{transform:translateX(-36px) translateY(0)}
+  .sr.from-right{transform:translateX(36px) translateY(0)}
+  .sr.scale-in{transform:scale(0.95) translateY(16px)}
   .sr.visible{opacity:1;transform:none}
   .sr.sd1{transition-delay:0.08s}.sr.sd2{transition-delay:0.18s}.sr.sd3{transition-delay:0.28s}.sr.sd4{transition-delay:0.38s}
   .sr-line{width:0;height:1px;background:linear-gradient(90deg,#00f0ff,transparent);transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
   .sr-line.visible{width:100%}
+
+  /* Nav link underline — animates in from the left on hover */
+  .ec-nav-link{position:relative}
+  .ec-nav-link::after{content:'';position:absolute;left:0;right:100%;bottom:-3px;height:1.5px;background:currentColor;opacity:0.55;transition:right .28s cubic-bezier(0.4,0,0.2,1)}
+  .ec-nav-link:hover::after{right:0}
 
   /* Icon pulse effect */
   @keyframes icon-glow{0%,100%{box-shadow:0 0 0 0 rgba(0,240,255,0)}50%{box-shadow:0 0 24px 4px rgba(0,240,255,0.15)}}
@@ -30,36 +83,107 @@
   .animate-float{animation:float 4s ease-in-out infinite;}
   .animate-slide-up{animation:slide-up 0.7s cubic-bezier(0.4,0,0.2,1) both;}
   .delay-1{animation-delay:0.1s;}.delay-2{animation-delay:0.25s;}.delay-3{animation-delay:0.4s;}.delay-4{animation-delay:0.55s;}
-  .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.1);}
-  .glow-cyan{box-shadow:0 0 40px rgba(0,240,255,0.3);}
-  .text-gradient{background:linear-gradient(135deg,#00f0ff 0%,#7df4ff 50%,#e2e2e8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .glass{background:var(--ec-glass-bg);backdrop-filter:blur(16px);border:1px solid var(--ec-glass-border);}
+  /* Cheap alternative to .glass for small badges/pills/nested chips — same
+     translucent look, no backdrop-filter. Real blur is expensive to
+     composite; dozens of tiny pills each blurring the page behind them adds
+     up fast on scroll, and a 4-5px pill's backdrop blur is barely visible
+     anyway, so there's nothing lost by dropping it here. */
+  .pill{background:var(--ec-inner-fill-strong);border:1px solid var(--ec-glass-border);}
+
+  /* Mini illustrative bar chart — scroll-triggered growth (transform only,
+     never height, so it never forces layout during the reveal) + a hover
+     tooltip per bar. Data shown is a representative snapshot, the same
+     mockup convention already used by the product-preview panel above. */
+  .ec-chart{display:flex;align-items:flex-end;gap:5px;height:64px;margin-top:16px}
+  .ec-bar-wrap{flex:1;position:relative;display:flex;align-items:flex-end;height:100%;cursor:default}
+  .ec-bar{width:100%;height:100%;border-radius:4px 4px 0 0;background:linear-gradient(to top,rgba(0,240,255,0.22),rgba(0,240,255,0.85));transform:scaleY(0);transform-origin:bottom;transition:transform .7s cubic-bezier(0.16,1,0.3,1),filter .15s ease}
+  .sr.visible .ec-bar{transform:scaleY(1)}
+  .ec-bar-wrap:hover .ec-bar{filter:brightness(1.3)}
+  .ec-bar-tip{position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%) translateY(3px);background:var(--ec-bg-elevated);border:1px solid var(--ec-glass-border);color:var(--ec-on-surface);font-family:'JetBrains Mono',monospace;font-size:10px;padding:3px 8px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;z-index:5;box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+  .ec-bar-wrap:hover .ec-bar-tip{opacity:1;transform:translateX(-50%) translateY(0)}
+  .ec-chart-labels{display:flex;gap:5px;margin-top:6px}
+  .ec-chart-labels span{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--ec-on-surface-variant);letter-spacing:.02em}
+  .glow-cyan{box-shadow:var(--ec-glow-cyan);}
+  .text-gradient{background:var(--ec-text-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 
   /* Step connector line */
   .step-line{position:absolute;top:28px;left:50%;width:100%;height:1px;background:linear-gradient(90deg,rgba(0,240,255,0.3),rgba(0,240,255,0.05))}
+
+  /* Accessible focus states */
+  a:focus-visible,button:focus-visible{outline:2px solid #00f0ff;outline-offset:3px;border-radius:6px}
+
+  /* Mobile nav panel */
+  #ec-mobile-nav{transition:opacity .28s ease}
+  #ec-mobile-nav[hidden]{display:none}
+  #ec-mobile-panel{transition:transform .32s cubic-bezier(0.4,0,0.2,1)}
+  #ec-mobile-nav.closed #ec-mobile-panel{transform:translateX(100%)}
+  #ec-mobile-nav.closed{opacity:0;pointer-events:none}
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    .animate-float,.animate-slide-up,.icon-glow.visible{animation:none!important}
+    .sr{transition:opacity .3s linear!important;transform:none!important}
+    .sr.visible{transform:none!important}
+    #ec-intro,#ec-intro *{transition:none!important;animation:none!important}
+    .ec-scroll-cue span:last-child{animation:none!important}
+    #ec-preview-panel{transition:none!important}
+  }
+
+  /* Scroll cue — subtle bounce, echoes editorial "scroll to read" prompts */
+  @keyframes ec-scroll-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+  .ec-scroll-cue span:last-child{animation:ec-scroll-bounce 2s ease-in-out infinite}
+
+  /* Aurora background — GPU-composited transform-only animation, no JS render loop */
+  .ec-aurora-blob{position:absolute;border-radius:50%;filter:blur(28px);mix-blend-mode:var(--ec-aurora-blend);opacity:var(--ec-aurora-opacity);will-change:transform;transform:translateZ(0)}
+  @keyframes ec-aurora-a{0%,100%{transform:translate(0,0)}50%{transform:translate(-6%,8%)}}
+  @keyframes ec-aurora-b{0%,100%{transform:translate(0,0)}50%{transform:translate(8%,5%)}}
+  @keyframes ec-aurora-c{0%,100%{transform:translate(0,0)}50%{transform:translate(-5%,-8%)}}
+  @media (max-width:768px){.ec-aurora-blob{filter:blur(24px)}}
+  @media (prefers-reduced-motion: reduce){.ec-aurora-blob{animation:none!important}}
+
+  /* Cheaper glass blur — cuts scroll-compositing cost of the many .glass cards on this page */
+  .glass{backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  @media (max-width:768px){.glass{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}}
+
+  /* Floating nav docks tighter to the top + solidifies once scrolled */
+  #ec-nav-wrap{transition:top .25s cubic-bezier(0.4,0,0.2,1)}
+  #ec-nav-wrap.scrolled{top:0.5rem}
+  #ec-nav-wrap nav{transition:background-color .25s ease,box-shadow .25s ease}
+  #ec-nav-wrap.scrolled nav{background-color:var(--ec-nav-bg-scrolled);box-shadow:var(--ec-nav-shadow)}
+
+  .cv-auto{content-visibility:auto;contain-intrinsic-size:1px 900px}
+
+  /* Marquee — dual-track CSS transform loop, no JS, edge-fade mask */
+  .ec-marquee{position:relative;display:flex;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,black 8%,black 92%,transparent);mask-image:linear-gradient(to right,transparent,black 8%,black 92%,transparent)}
+  .ec-marquee-track{display:flex;flex-shrink:0;align-items:center;gap:2.5rem;padding-right:2.5rem;animation:ec-marquee-scroll 32s linear infinite;will-change:transform}
+  .ec-marquee-item{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ec-on-surface-variant);white-space:nowrap;letter-spacing:0.04em}
+  @keyframes ec-marquee-scroll{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+  @media (prefers-reduced-motion: reduce){.ec-marquee-track{animation:none!important}.ec-marquee{overflow-x:auto}}
 </style>
 <script>
   tailwind.config={darkMode:"class",theme:{extend:{colors:{
-    "primary":"#dbfcff","primary-container":"#00f0ff","on-primary-container":"#006970",
-    "primary-fixed-dim":"#00dbe9","secondary-container":"#7000ff","on-secondary-container":"#ddcdff",
-    "surface":"#111317","background":"#111317","surface-container":"#1e2024",
-    "surface-container-lowest":"#0c0e12","surface-container-high":"#282a2e",
-    "on-surface":"#e2e2e8","on-surface-variant":"#b9cacb","tertiary-fixed-dim":"#ffb4a2",
-    "outline":"#849495","surface-variant":"#333539"
+    "primary":"var(--ec-primary)","primary-container":"var(--ec-primary-container)","on-primary-container":"var(--ec-on-primary-container)",
+    "primary-fixed-dim":"var(--ec-primary-fixed-dim)","secondary-container":"var(--ec-secondary-container)","on-secondary-container":"var(--ec-on-secondary-container)",
+    "surface":"var(--ec-surface)","background":"var(--ec-bg)","surface-container":"var(--ec-surface)",
+    "surface-container-lowest":"var(--ec-surface-lowest)","surface-container-high":"var(--ec-surface-high)",
+    "on-surface":"var(--ec-on-surface)","on-surface-variant":"var(--ec-on-surface-variant)","tertiary-fixed-dim":"var(--ec-tertiary-fixed-dim)",
+    "outline":"var(--ec-outline)","surface-variant":"var(--ec-surface-variant)"
   },fontFamily:{
-    "display":["Hanken Grotesk"],"body":["Inter"],"mono":["JetBrains Mono"]
+    "display":["Hanken Grotesk"],"body":["Inter"],"mono":["JetBrains Mono"],"editorial":["Fraunces","serif"]
   },spacing:{
     "desktop":"48px","gutter":"24px"
   }}}}
 </script>
 </head>
-<body class="bg-[#080a0e] text-on-surface overflow-x-hidden">
+<body class="bg-background text-on-surface overflow-x-hidden" style="transition:background-color .3s ease">
 
 <!-- ═══════════ INTRO SPLASH ═══════════ -->
 <div id="ec-intro" style="position:fixed;inset:0;z-index:1000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden">
   <video id="ec-intro-vid" autoplay muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.7;filter:brightness(0.55) saturate(0.85)">
     <source src="https://d8j0ntlcm91z4.cloudfront.net/user_3F3a4QhSJAaJAIbLMhLHPVYFt1B/hf_20260621_020642_2528967a-7322-4941-9904-cc3b7438dc55.mp4" type="video/mp4"/>
   </video>
-  <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,10,14,0.15) 0%,rgba(8,10,14,0.25) 45%,rgba(8,10,14,0.88) 80%,#080a0e 100%);z-index:1"></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,10,14,0.15) 0%,rgba(8,10,14,0.25) 45%,rgba(8,10,14,0.88) 80%,var(--ec-bg) 100%);z-index:1"></div>
   <div style="position:relative;z-index:2;text-align:center;padding:0 28px;animation:intro-rise 1.1s cubic-bezier(0.4,0,0.2,1) both;animation-delay:0.3s">
     <div style="font-size:38px;margin-bottom:18px">⚡</div>
     <div style="font-family:'Hanken Grotesk',sans-serif;font-size:clamp(34px,5.5vw,78px);font-weight:800;color:#fff;line-height:1.05;letter-spacing:-0.02em;text-shadow:0 4px 40px rgba(0,0,0,0.9);margin-bottom:20px">
@@ -77,68 +201,146 @@
 </div>
 <script>
 (function(){
+  var reduceMotion=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var intro=document.getElementById('ec-intro');
+  if(reduceMotion){intro.remove();return;}
   document.body.style.overflow='hidden';var dismissed=false;
-  function dismiss(){if(dismissed)return;dismissed=true;var intro=document.getElementById('ec-intro');intro.style.opacity='0';intro.style.visibility='hidden';setTimeout(function(){intro.remove();document.body.style.overflow='';},1400);}
+  function dismiss(){if(dismissed)return;dismissed=true;intro.style.opacity='0';intro.style.visibility='hidden';setTimeout(function(){intro.remove();document.body.style.overflow='';},1400);}
   window.addEventListener('load',function(){var bar=document.getElementById('ec-intro-bar');if(bar)requestAnimationFrame(function(){requestAnimationFrame(function(){bar.style.width='100%';});});});
   var vid=document.getElementById('ec-intro-vid');if(vid)vid.addEventListener('ended',dismiss);
   setTimeout(dismiss,9000);
   document.getElementById('ec-skip-btn').addEventListener('click',dismiss);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')dismiss();});
 })();
 </script>
 
-<!-- ═══════════ BACKGROUND ═══════════ -->
+<!-- ═══════════ BACKGROUND (CSS aurora — GPU-only, no JS render loop) ═══════════ -->
+<div id="ec-aurora-layer" class="fixed inset-0 pointer-events-none" style="isolation:isolate;-webkit-mask-image:linear-gradient(180deg,#000 60%,transparent 100%);mask-image:linear-gradient(180deg,#000 60%,transparent 100%)">
+  <div class="ec-aurora-blob" style="width:760px;height:620px;top:-180px;right:-110px;background:var(--ec-aurora-1);animation:ec-aurora-a 27s ease-in-out infinite"></div>
+  <div class="ec-aurora-blob" style="width:680px;height:560px;top:-130px;left:-170px;background:var(--ec-aurora-2);animation:ec-aurora-b 33s ease-in-out infinite"></div>
+</div>
 <div class="fixed inset-0 pointer-events-none">
-  <canvas id="ec-bg-canvas" class="absolute inset-0 w-full h-full"></canvas>
-  <div class="absolute inset-0" style="background:radial-gradient(ellipse at 50% 0%,rgba(0,240,255,0.10) 0%,transparent 60%),radial-gradient(ellipse at 100% 100%,rgba(112,0,255,0.07) 0%,transparent 50%),linear-gradient(to bottom,rgba(8,10,14,0.3) 0%,rgba(8,10,14,0.95) 60%,#080a0e 100%)"></div>
+  <div class="absolute inset-0" style="background:var(--ec-page-overlay)"></div>
+</div>
+
+<!-- ═══════════ NAVBAR (floating pill) ═══════════ -->
+<div id="ec-nav-wrap" class="sticky top-4 z-20 w-full px-4 md:px-6">
+<nav class="relative z-10 flex justify-between items-center px-5 md:px-7 py-3 max-w-[1200px] mx-auto bg-[var(--ec-nav-bg)] backdrop-blur-md border border-[var(--ec-border)] rounded-full shadow-[var(--ec-nav-shadow)]" aria-label="Primary">
+  <a href="index.html" class="flex items-center gap-3">
+    <span class="text-2xl animate-float" aria-hidden="true">⚡</span>
+    <span class="font-display text-xl font-bold text-gradient tracking-tight">EquipCore</span>
+  </a>
+  <div class="hidden md:flex items-center gap-7">
+    <a href="marketplace.html" class="ec-nav-link font-display text-[15px] font-medium text-on-surface-variant hover:text-on-surface transition-colors">Marketplace</a>
+    <a href="catalog.html" class="ec-nav-link font-display text-[15px] font-medium text-on-surface-variant hover:text-on-surface transition-colors">Catalog</a>
+    <a href="calculator.html" class="ec-nav-link font-display text-[15px] font-medium text-on-surface-variant hover:text-on-surface transition-colors">Calculator</a>
+    <a href="about.html" class="ec-nav-link font-display text-[15px] font-medium text-on-surface-variant hover:text-on-surface transition-colors">About</a>
+  </div>
+  <div class="flex items-center gap-2 md:gap-3">
+    <button type="button" class="ec-theme-toggle flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full glass text-on-surface-variant hover:text-on-surface transition-colors" aria-label="Switch to light theme">
+      <span class="material-symbols-outlined" aria-hidden="true" style="font-size:19px">light_mode</span>
+    </button>
+    <a href="login.html" class="font-display text-[15px] font-medium text-on-surface-variant hover:text-on-surface transition-colors hidden md:inline">Sign in</a>
+    <a href="signup.html" class="font-display text-[13px] md:text-[14px] font-semibold bg-primary-container text-on-primary-container px-4 py-2 md:px-5 md:py-2.5 rounded-full hover:brightness-110 hover:-translate-y-0.5 transition-all active:scale-95 whitespace-nowrap">
+      <span class="md:hidden">Sign Up</span><span class="hidden md:inline">Start Free →</span>
+    </a>
+    <button id="ec-nav-burger" type="button" class="md:hidden flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-full glass text-on-surface" aria-label="Open menu" aria-expanded="false" aria-controls="ec-mobile-nav">
+      <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+    </button>
+  </div>
+</nav>
+</div>
+
+<!-- ═══════════ MOBILE NAV PANEL ═══════════ -->
+<div id="ec-mobile-nav" class="closed fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Mobile navigation" hidden>
+  <div id="ec-mobile-overlay" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+  <div id="ec-mobile-panel" class="absolute top-0 right-0 h-full w-[80%] max-w-[320px] bg-[var(--ec-bg-elevated)] border-l border-[var(--ec-border)] flex flex-col p-6 gap-2">
+    <div class="flex items-center justify-between mb-6">
+      <span class="font-display text-lg font-bold text-gradient">EquipCore</span>
+      <div class="flex items-center gap-2">
+        <button type="button" class="ec-theme-toggle flex items-center justify-center w-9 h-9 rounded-full glass text-on-surface-variant" aria-label="Switch to light theme">
+          <span class="material-symbols-outlined" aria-hidden="true" style="font-size:19px">light_mode</span>
+        </button>
+        <button id="ec-mobile-close" type="button" class="flex items-center justify-center w-9 h-9 rounded-full glass text-on-surface" aria-label="Close menu">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </div>
+    </div>
+    <a href="marketplace.html" class="font-display text-base font-medium text-on-surface-variant hover:text-on-surface transition-colors py-3 border-b border-[var(--ec-hairline)]">Marketplace</a>
+    <a href="catalog.html" class="font-display text-base font-medium text-on-surface-variant hover:text-on-surface transition-colors py-3 border-b border-[var(--ec-hairline)]">Catalog</a>
+    <a href="calculator.html" class="font-display text-base font-medium text-on-surface-variant hover:text-on-surface transition-colors py-3 border-b border-[var(--ec-hairline)]">Calculator</a>
+    <a href="about.html" class="font-display text-base font-medium text-on-surface-variant hover:text-on-surface transition-colors py-3 border-b border-[var(--ec-hairline)]">About</a>
+    <a href="login.html" class="font-display text-base font-medium text-on-surface-variant hover:text-on-surface transition-colors py-3 border-b border-[var(--ec-hairline)]">Sign in</a>
+    <a href="signup.html" class="font-display text-base font-semibold bg-primary-container text-on-primary-container px-5 py-3 rounded-full text-center mt-4">Start Free →</a>
+  </div>
 </div>
 <script>
 (function(){
-  const c=document.getElementById('ec-bg-canvas'),ctx=c.getContext('2d');let W,H,pts=[];const N=72,D=160;
-  function resize(){W=c.width=c.offsetWidth||window.innerWidth;H=c.height=c.offsetHeight||window.innerHeight;}
-  function mkPt(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,r:Math.random()*1.2+.4,pulse:Math.random()*Math.PI*2};}
-  resize();for(let i=0;i<N;i++)pts.push(mkPt());window.addEventListener('resize',resize);
-  var _raf;
-  function draw(){if(document.hidden){_raf=requestAnimationFrame(draw);return;}ctx.clearRect(0,0,W,H);for(let i=0;i<pts.length;i++){const p=pts[i];p.x+=p.vx;p.y+=p.vy;p.pulse+=.018;if(p.x<-10)p.x=W+10;if(p.x>W+10)p.x=-10;if(p.y<-10)p.y=H+10;if(p.y>H+10)p.y=-10;const pulse=.55+.45*Math.sin(p.pulse);ctx.beginPath();ctx.arc(p.x,p.y,p.r*pulse,0,Math.PI*2);ctx.fillStyle=`rgba(0,240,255,${0.28*pulse})`;ctx.fill();for(let j=i+1;j<pts.length;j++){const q=pts[j],dx=p.x-q.x,dy=p.y-q.y,d2=dx*dx+dy*dy;if(d2<D*D){const dist=Math.sqrt(d2);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle=`rgba(0,240,255,${.055*(1-dist/D)})`;ctx.lineWidth=.6;ctx.stroke();}}}requestAnimationFrame(draw);}
-  draw();
+  var panel=document.getElementById('ec-mobile-nav'),burger=document.getElementById('ec-nav-burger'),closeBtn=document.getElementById('ec-mobile-close'),overlay=document.getElementById('ec-mobile-overlay');
+  var lastFocus=null;
+  function open(){lastFocus=document.activeElement;panel.hidden=false;requestAnimationFrame(function(){panel.classList.remove('closed');});burger.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';closeBtn.focus();}
+  function close(){panel.classList.add('closed');burger.setAttribute('aria-expanded','false');document.body.style.overflow='';setTimeout(function(){panel.hidden=true;},300);if(lastFocus)lastFocus.focus();}
+  burger.addEventListener('click',open);
+  closeBtn.addEventListener('click',close);
+  overlay.addEventListener('click',close);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!panel.hidden)close();});
+  panel.querySelectorAll('a').forEach(function(a){a.addEventListener('click',close);});
 })();
 </script>
-
-<!-- ═══════════ NAVBAR ═══════════ -->
-<nav class="relative z-10 flex justify-between items-center px-desktop py-5 max-w-[1440px] mx-auto">
-  <div class="flex items-center gap-3">
-    <span class="text-2xl animate-float">⚡</span>
-    <span class="font-display text-xl font-bold text-gradient tracking-tight">EquipCore</span>
-  </div>
-  <div class="hidden md:flex items-center gap-8">
-    <a href="marketplace.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase">Marketplace</a>
-    <a href="catalog.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase">Catalog</a>
-    <a href="calculator.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase">Calculator</a>
-    <a href="about.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase">About</a>
-  </div>
-  <div class="flex items-center gap-3">
-    <a href="login.html" class="font-mono text-[12px] text-on-surface-variant hover:text-primary transition-colors tracking-wider uppercase hidden md:inline">Sign In</a>
-    <a href="signup.html" class="font-mono text-[12px] font-bold bg-primary-container text-on-primary-container px-5 py-2.5 rounded-lg hover:brightness-110 transition-all active:scale-95 glow-cyan">
-      Sign Up Free →
-    </a>
-  </div>
-</nav>
+<script>
+(function(){
+  var KEY='ec-theme';
+  function icon(t){return t==='light'?'dark_mode':'light_mode';}
+  function apply(t){
+    document.documentElement.setAttribute('data-theme',t);
+    document.querySelectorAll('.ec-theme-toggle').forEach(function(btn){
+      btn.querySelector('.material-symbols-outlined').textContent=icon(t);
+      btn.setAttribute('aria-label',t==='light'?'Switch to dark theme':'Switch to light theme');
+    });
+  }
+  apply(document.documentElement.getAttribute('data-theme')||'dark');
+  document.querySelectorAll('.ec-theme-toggle').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var next=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+      try{localStorage.setItem(KEY,next);}catch(e){}
+      apply(next);
+    });
+  });
+})();
+</script>
+<script>
+(function(){
+  // Note: the aurora layer no longer gets a scroll-linked parallax transform
+  // here — mutating transform on a large fixed element with blurred,
+  // blend-mode children on every scroll frame forced a full recomposite of
+  // that whole stack continuously during scroll, and was a measured
+  // contributor to jank on fast scrolls. The blobs still drift on their own
+  // independent, GPU-only keyframe animation.
+  var navWrap=document.getElementById('ec-nav-wrap'),ticking=false;
+  function update(){
+    navWrap.classList.toggle('scrolled',window.scrollY>24);
+    ticking=false;
+  }
+  window.addEventListener('scroll',function(){if(!ticking){requestAnimationFrame(update);ticking=true;}},{passive:true});
+})();
+</script>
 
 <!-- ═══════════ HERO ═══════════ -->
 <main class="relative z-10 min-h-[90vh] flex flex-col items-center justify-center text-center px-6 pt-16 pb-32 max-w-[1440px] mx-auto">
 
-  <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-10 animate-slide-up">
-    <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse inline-block"></span>
-    <span class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase">Powering Africa's Industrial Backbone</span>
+  <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass mb-10 animate-slide-up max-w-[92vw]">
+    <span class="w-2 h-2 rounded-full bg-primary-container animate-pulse inline-block flex-shrink-0"></span>
+    <span class="font-mono text-[9px] sm:text-[11px] text-primary tracking-[0.12em] sm:tracking-[0.2em] uppercase">Powering Africa's Industrial Backbone</span>
   </div>
 
-  <h1 class="font-display font-extrabold leading-[1.05] tracking-tight mb-6 animate-slide-up delay-1"
-      style="font-size:clamp(42px,7vw,90px)">
-    <span class="text-gradient">Bringing the World</span><br/>
-    <span class="text-on-surface opacity-90">of Logistics to You.</span>
+  <h1 class="font-editorial leading-[1.08] tracking-tight mb-6"
+      style="font-size:clamp(42px,7vw,88px);font-weight:500">
+    <span class="block text-on-surface animate-slide-up delay-1">Bringing the world</span>
+    <span class="block text-gradient animate-slide-up delay-2" style="font-style:italic;font-weight:600">of logistics to you</span>
   </h1>
 
   <!-- Animated ticker -->
-  <div class="overflow-hidden mb-6 animate-slide-up delay-2" style="height:1.8em">
+  <div class="overflow-hidden mb-6 animate-slide-up delay-3" style="height:1.8em">
     <div id="ec-ticker" class="font-mono text-[13px] text-primary-fixed-dim tracking-widest uppercase">
       <span id="ec-t0">⚡ Real-Time Fleet Tracking</span>
       <span id="ec-t1" style="display:none">⚡ Smart Rental Management</span>
@@ -147,17 +349,18 @@
   </div>
   <script>(function(){const s=[document.getElementById('ec-t0'),document.getElementById('ec-t1'),document.getElementById('ec-t2')];let i=0;setInterval(function(){s[i].style.display='none';i=(i+1)%s.length;s[i].style.display='block';},3000);})();</script>
 
-  <p class="text-on-surface-variant text-lg max-w-xl leading-relaxed mb-12 animate-slide-up delay-2">
+  <p class="text-on-surface-variant text-lg max-w-xl leading-relaxed mb-12 animate-slide-up delay-3">
     From South Africa's mines to global ports — real-time fleet intelligence,
     smart equipment rentals, and an industrial marketplace built for scale.
   </p>
 
-  <div class="flex flex-col sm:flex-row items-center gap-4 mb-20 animate-slide-up delay-3">
-    <a href="signup.html" class="font-display font-bold text-lg bg-primary-container text-on-primary-container px-10 py-4 rounded-xl hover:brightness-110 transition-all active:scale-95 glow-cyan">
+  <div class="flex flex-col sm:flex-row items-center gap-7 mb-20 animate-slide-up delay-4">
+    <a href="signup.html" class="font-display font-bold text-lg bg-primary-container text-on-primary-container px-10 py-4 rounded-full hover:brightness-110 hover:-translate-y-0.5 transition-all active:scale-95 glow-cyan">
       Sign Up Free
     </a>
-    <a href="marketplace.html" class="font-display font-bold text-lg glass text-on-surface px-10 py-4 rounded-xl hover:bg-white/10 transition-all border-white/10">
+    <a href="marketplace.html" class="font-display font-medium text-lg text-on-surface hover:text-primary-container transition-colors inline-flex items-center gap-1.5 group">
       Browse Fleet
+      <span class="material-symbols-outlined transition-transform group-hover:translate-x-1" aria-hidden="true" style="font-size:20px">arrow_forward</span>
     </a>
   </div>
 
@@ -180,19 +383,159 @@
       <div class="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Monitoring</div>
     </div>
   </div>
+
+  <!-- Scroll cue -->
+  <a href="#ec-preview" class="ec-scroll-cue mt-16 flex flex-col items-center gap-2 text-on-surface-variant hover:text-primary transition-colors">
+    <span class="font-mono text-[10px] tracking-[0.2em] uppercase">Scroll to explore</span>
+    <span class="material-symbols-outlined" aria-hidden="true" style="font-size:20px">keyboard_arrow_down</span>
+  </a>
 </main>
 
+<!-- ═══════════ PRODUCT PREVIEW ═══════════ -->
+<section id="ec-preview" class="relative z-10 px-6 md:px-desktop max-w-[1160px] mx-auto -mt-6 md:-mt-10 pb-28" style="scroll-margin-top:100px">
+  <div class="sr scale-in relative">
+    <div class="hidden md:block absolute inset-x-8 -top-3 bottom-0 rounded-2xl md:rounded-3xl border border-[var(--ec-glass-border)] pointer-events-none" style="background:var(--ec-glass-bg);transform:rotate(-1.4deg)"></div>
+    <div class="hidden md:block absolute inset-x-4 -top-1.5 bottom-0 rounded-2xl md:rounded-3xl border border-[var(--ec-glass-border)] pointer-events-none" style="background:var(--ec-glass-bg);transform:rotate(0.9deg)"></div>
+  <div id="ec-preview-panel" data-theme="dark" class="relative rounded-2xl md:rounded-3xl bg-surface-container-lowest border border-[var(--ec-glass-border)] overflow-hidden" style="box-shadow:0 50px 120px -30px rgba(0,240,255,0.18);transition:transform .5s cubic-bezier(0.4,0,0.2,1);transform-style:preserve-3d;will-change:transform">
+    <!-- Browser chrome bar -->
+    <div class="flex items-center gap-2 px-4 py-3 border-b border-white/5 bg-black/20">
+      <span class="w-2.5 h-2.5 rounded-full bg-red-400/70"></span>
+      <span class="w-2.5 h-2.5 rounded-full bg-yellow-400/70"></span>
+      <span class="w-2.5 h-2.5 rounded-full bg-green-400/70"></span>
+      <span class="ml-3 font-mono text-[10px] text-on-surface-variant bg-white/5 px-3 py-1 rounded-full">app.equipcore.io/dashboard</span>
+    </div>
+    <!-- App shell -->
+    <div class="flex">
+      <!-- Mini sidebar (desktop only) -->
+      <div class="hidden md:flex flex-col w-48 border-r border-white/5 bg-black/10 py-5 px-3 flex-shrink-0">
+        <div class="flex items-center gap-2 px-2 mb-6">
+          <span class="text-lg" aria-hidden="true">⚡</span>
+          <span class="font-display font-bold text-sm text-gradient">EquipCore</span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[rgba(0,240,255,0.1)] text-primary-fixed-dim">
+            <span class="material-symbols-outlined" style="font-size:16px">dashboard</span>
+            <span class="font-mono text-[10px] uppercase tracking-wider">Overview</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-on-surface-variant">
+            <span class="material-symbols-outlined" style="font-size:16px">garage</span>
+            <span class="font-mono text-[10px] uppercase tracking-wider">Fleet</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-on-surface-variant">
+            <span class="material-symbols-outlined" style="font-size:16px">receipt_long</span>
+            <span class="font-mono text-[10px] uppercase tracking-wider">Rentals</span>
+          </div>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-on-surface-variant">
+            <span class="material-symbols-outlined" style="font-size:16px">build</span>
+            <span class="font-mono text-[10px] uppercase tracking-wider">Maintenance</span>
+          </div>
+        </div>
+      </div>
+      <!-- Main content -->
+      <div class="flex-1 p-5 md:p-7 min-w-0">
+        <div class="flex items-center justify-between mb-5 gap-3">
+          <div class="min-w-0">
+            <div class="font-display font-bold text-on-surface">Fleet Overview</div>
+            <div class="font-mono text-[10px] text-on-surface-variant truncate">Welcome back, Thabo — here's today's snapshot</div>
+          </div>
+          <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 flex-shrink-0">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+            <span class="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider">Live</span>
+          </div>
+        </div>
+        <!-- stat cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+          <div class="rounded-xl bg-white/[0.03] border border-white/5 p-4">
+            <div class="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider mb-1.5">Total Assets</div>
+            <div class="font-display font-bold text-xl text-on-surface">4,821</div>
+            <div class="font-mono text-[9px] text-green-400 mt-1">▲ 12% mo/mo</div>
+          </div>
+          <div class="rounded-xl bg-white/[0.03] border border-white/5 p-4">
+            <div class="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider mb-1.5">On Rent</div>
+            <div class="font-display font-bold text-xl text-primary-container">2,014</div>
+            <div class="font-mono text-[9px] text-green-400 mt-1">▲ 8% mo/mo</div>
+          </div>
+          <div class="rounded-xl bg-white/[0.03] border border-white/5 p-4">
+            <div class="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider mb-1.5">Utilization</div>
+            <div class="font-display font-bold text-xl text-on-surface">94%</div>
+            <div class="font-mono text-[9px] text-green-400 mt-1">▲ 3% mo/mo</div>
+          </div>
+          <div class="rounded-xl bg-white/[0.03] border border-white/5 p-4">
+            <div class="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider mb-1.5">Alerts</div>
+            <div class="font-display font-bold text-xl text-tertiary-fixed-dim">3</div>
+            <div class="font-mono text-[9px] text-on-surface-variant mt-1">Needs review</div>
+          </div>
+        </div>
+        <!-- chart + activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div class="lg:col-span-3 rounded-xl bg-white/[0.03] border border-white/5 p-4">
+            <div class="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider mb-4">Utilization — Last 7 Days</div>
+            <div class="flex items-end gap-2 md:gap-3" style="height:110px" role="img" aria-label="Bar chart showing fleet utilization trending up over the last 7 days, from 55% to 94%">
+              <div class="flex-1 rounded-t bg-gradient-to-t from-[rgba(0,240,255,0.2)] to-[rgba(0,240,255,0.6)]" style="height:55%"></div>
+              <div class="flex-1 rounded-t bg-gradient-to-t from-[rgba(0,240,255,0.2)] to-[rgba(0,240,255,0.6)]" style="height:70%"></div>
+              <div class="flex-1 rounded-t bg-gradient-to-t from-[rgba(0,240,255,0.2)] to-[rgba(0,240,255,0.6)]" style="height:62%"></div>
+              <div class="flex-1 rounded-t bg-gradient-to-t from-[rgba(0,240,255,0.2)] to-[rgba(0,240,255,0.6)]" style="height:80%"></div>
+              <div class="flex-1 rounded-t bg-gradient-to-t from-[rgba(0,240,255,0.2)] to-[rgba(0,240,255,0.6)]" style="height:74%"></div>
+              <div class="flex-1 rounded-t bg-gradient-to-t from-[rgba(0,240,255,0.3)] to-primary-container" style="height:92%"></div>
+              <div class="flex-1 rounded-t bg-gradient-to-t from-[rgba(0,240,255,0.3)] to-primary-container" style="height:94%"></div>
+            </div>
+          </div>
+          <div class="lg:col-span-2 rounded-xl bg-white/[0.03] border border-white/5 p-4">
+            <div class="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider mb-3">Recent Activity</div>
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0"></span>
+                <span class="font-mono text-[10px] text-on-surface-variant flex-1 truncate">Cat 390F Excavator returned</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-yellow-400 flex-shrink-0"></span>
+                <span class="font-mono text-[10px] text-on-surface-variant flex-1 truncate">Volvo A40G — application pending</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-primary-container flex-shrink-0"></span>
+                <span class="font-mono text-[10px] text-on-surface-variant flex-1 truncate">Sandvik DD421 — maintenance done</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</section>
+<script>
+(function(){
+  var reduceMotion=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var noHover=window.matchMedia && window.matchMedia('(hover: none)').matches;
+  var section=document.getElementById('ec-preview'),panel=document.getElementById('ec-preview-panel');
+  if(!section||!panel||reduceMotion||noHover)return;
+  var raf=null;
+  section.addEventListener('mousemove',function(e){
+    var r=section.getBoundingClientRect();
+    var px=(e.clientX-r.left)/r.width-0.5,py=(e.clientY-r.top)/r.height-0.5;
+    if(raf)cancelAnimationFrame(raf);
+    raf=requestAnimationFrame(function(){
+      panel.style.transform='perspective(1400px) rotateX('+(py*-3.5)+'deg) rotateY('+(px*5)+'deg) translateZ(0)';
+    });
+  });
+  section.addEventListener('mouseleave',function(){
+    if(raf)cancelAnimationFrame(raf);
+    panel.style.transform='perspective(1400px) rotateX(0) rotateY(0)';
+  });
+})();
+</script>
+
 <!-- ═══════════ HOW IT WORKS ═══════════ -->
-<section class="relative z-10 py-28 px-desktop max-w-[1440px] mx-auto">
+<section class="relative z-10 py-28 px-6 md:px-desktop max-w-[1440px] mx-auto">
   <div class="sr-line sr mb-16"></div>
   <div class="text-center mb-20 sr">
     <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">How It Works</p>
-    <h2 class="font-display font-bold text-on-surface" style="font-size:clamp(28px,4vw,48px)">Three steps to move your fleet</h2>
+    <h2 class="font-editorial text-on-surface" style="font-size:clamp(28px,4vw,48px);font-weight:500">Three steps to move your fleet</h2>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
     <!-- Step 1 -->
     <div class="text-center relative sr sd1">
-      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-6 icon-glow sr">
+      <div class="w-14 h-14 rounded-2xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mx-auto mb-6 icon-glow sr">
         <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">search</span>
       </div>
       <div class="font-mono text-[10px] text-primary-container tracking-widest mb-2">STEP 01</div>
@@ -201,7 +544,7 @@
     </div>
     <!-- Step 2 -->
     <div class="text-center relative sr sd2">
-      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-6 icon-glow sr">
+      <div class="w-14 h-14 rounded-2xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mx-auto mb-6 icon-glow sr">
         <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">description</span>
       </div>
       <div class="font-mono text-[10px] text-primary-container tracking-widest mb-2">STEP 02</div>
@@ -210,7 +553,7 @@
     </div>
     <!-- Step 3 -->
     <div class="text-center relative sr sd3">
-      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-6 icon-glow sr">
+      <div class="w-14 h-14 rounded-2xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mx-auto mb-6 icon-glow sr">
         <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">monitoring</span>
       </div>
       <div class="font-mono text-[10px] text-primary-container tracking-widest mb-2">STEP 03</div>
@@ -221,52 +564,237 @@
 </section>
 
 <!-- ═══════════ FEATURE STRIP ═══════════ -->
-<section class="relative z-10 border-t border-white/5 py-28 px-desktop max-w-[1440px] mx-auto">
+<section class="relative z-10 border-t border-[var(--ec-hairline)] py-28 px-6 md:px-desktop max-w-[1440px] mx-auto">
   <div class="sr-line sr mb-16"></div>
   <div class="text-center mb-16 sr">
     <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Platform</p>
-    <h2 class="font-display font-bold text-on-surface mb-3" style="font-size:clamp(28px,4vw,48px)">Everything your fleet needs</h2>
+    <h2 class="font-editorial text-on-surface mb-3" style="font-size:clamp(28px,4vw,48px);font-weight:500">Everything your fleet needs</h2>
     <p class="text-on-surface-variant max-w-xl mx-auto">One platform for every stage of industrial equipment lifecycle.</p>
   </div>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <a href="dashboard.html" class="glass rounded-2xl p-8 hover:border-primary-container/30 transition-all hover:-translate-y-1 group sr sd1 scale-in">
-      <div class="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center mb-5 group-hover:bg-primary-container/20 transition-colors">
+  <!-- Bento grid: one flagship card + three supporting cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-5" style="grid-auto-rows:minmax(0,1fr)">
+    <a href="dashboard.html" class="md:col-span-2 md:row-span-2 glass rounded-2xl p-8 hover:border-[rgba(0,240,255,0.3)] transition-all hover:-translate-y-1 group sr sd1 scale-in flex flex-col">
+      <div class="w-12 h-12 rounded-xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mb-5 group-hover:bg-[rgba(0,240,255,0.2)] transition-colors">
         <span class="material-symbols-outlined text-primary-fixed-dim">sensors</span>
       </div>
-      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Live Fleet Tracking</h3>
-      <p class="text-on-surface-variant text-sm leading-relaxed">Real-time GPS telemetry, fuel monitoring, and status updates across your entire fleet.</p>
-    </a>
-    <a href="marketplace.html" class="glass rounded-2xl p-8 hover:border-primary-container/30 transition-all hover:-translate-y-1 group sr sd2 scale-in">
-      <div class="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center mb-5 group-hover:bg-primary-container/20 transition-colors">
-        <span class="material-symbols-outlined text-primary-fixed-dim">storefront</span>
+      <h3 class="font-display font-bold text-xl text-on-surface mb-2">Live Fleet Tracking</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed mb-6 max-w-sm">Real-time GPS telemetry, fuel monitoring, and status updates across your entire fleet — down to the minute.</p>
+      <div class="mt-auto rounded-xl bg-[var(--ec-inner-fill)] border border-[var(--ec-hairline)] p-4">
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-mono text-[9px] text-on-surface-variant uppercase tracking-wider">Fleet Uptime — 7d</span>
+          <span class="font-mono text-[9px] text-green-400">▲ 3.2%</span>
+        </div>
+        <div class="flex items-end gap-1.5" style="height:56px">
+          <div class="flex-1 rounded-t bg-[rgba(0,240,255,0.5)]" style="height:60%"></div>
+          <div class="flex-1 rounded-t bg-[rgba(0,240,255,0.5)]" style="height:75%"></div>
+          <div class="flex-1 rounded-t bg-[rgba(0,240,255,0.5)]" style="height:66%"></div>
+          <div class="flex-1 rounded-t bg-[rgba(0,240,255,0.6)]" style="height:84%"></div>
+          <div class="flex-1 rounded-t bg-[rgba(0,240,255,0.7)]" style="height:78%"></div>
+          <div class="flex-1 rounded-t bg-primary-container" style="height:94%"></div>
+          <div class="flex-1 rounded-t bg-primary-container" style="height:96%"></div>
+        </div>
       </div>
-      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Global Marketplace</h3>
-      <p class="text-on-surface-variant text-sm leading-relaxed">Rent premium equipment from verified providers. Transparent pricing, verified specs.</p>
     </a>
-    <a href="calculator.html" class="glass rounded-2xl p-8 hover:border-primary-container/30 transition-all hover:-translate-y-1 group sr sd3 scale-in">
-      <div class="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center mb-5 group-hover:bg-primary-container/20 transition-colors">
+    <a href="marketplace.html" class="md:col-span-2 glass rounded-2xl p-8 hover:border-[rgba(0,240,255,0.3)] transition-all hover:-translate-y-1 group sr sd2 scale-in">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <div class="w-12 h-12 rounded-xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mb-5 group-hover:bg-[rgba(0,240,255,0.2)] transition-colors">
+            <span class="material-symbols-outlined text-primary-fixed-dim">storefront</span>
+          </div>
+          <h3 class="font-display font-bold text-lg text-on-surface mb-2">Global Marketplace</h3>
+          <p class="text-on-surface-variant text-sm leading-relaxed">Rent premium equipment from verified providers. Transparent pricing, verified specs.</p>
+        </div>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider whitespace-nowrap hidden sm:inline-block">142 Providers</span>
+      </div>
+    </a>
+    <a href="calculator.html" class="glass rounded-2xl p-8 hover:border-[rgba(0,240,255,0.3)] transition-all hover:-translate-y-1 group sr sd3 scale-in">
+      <div class="w-12 h-12 rounded-xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mb-5 group-hover:bg-[rgba(0,240,255,0.2)] transition-colors">
         <span class="material-symbols-outlined text-primary-fixed-dim">calculate</span>
       </div>
       <h3 class="font-display font-bold text-lg text-on-surface mb-2">Rent Calculator</h3>
-      <p class="text-on-surface-variant text-sm leading-relaxed">Precise cost modelling with optional services, VAT, and volume discounts built in.</p>
+      <p class="text-on-surface-variant text-sm leading-relaxed">Precise cost modelling with VAT and volume discounts built in.</p>
+    </a>
+    <a href="admin-maintenance.html" class="glass rounded-2xl p-8 hover:border-[rgba(0,240,255,0.3)] transition-all hover:-translate-y-1 group sr sd4 scale-in">
+      <div class="w-12 h-12 rounded-xl bg-[var(--ec-tertiary-10)] flex items-center justify-center mb-5 group-hover:bg-[var(--ec-tertiary-20)] transition-colors">
+        <span class="material-symbols-outlined text-tertiary-fixed-dim">build</span>
+      </div>
+      <h3 class="font-display font-bold text-lg text-on-surface mb-2">Maintenance Alerts</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed">Predictive service reminders before downtime hits.</p>
     </a>
   </div>
 </section>
 
+<!-- ═══════════ MORE FEATURES (alternating full-width sections) ═══════════ -->
+<div class="text-center pt-20 px-6 sr">
+  <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">And There's More</p>
+  <h2 class="font-editorial text-on-surface mb-3" style="font-size:clamp(26px,3.6vw,42px);font-weight:500">The details that add up</h2>
+  <p class="text-on-surface-variant max-w-xl mx-auto">Small, practical features that save real time, day to day — hover a chart below for the numbers behind it.</p>
+</div>
+<div class="relative z-10 px-6 md:px-desktop max-w-[1440px] mx-auto">
+  <div class="sr-line sr mt-16"></div>
+</div>
+<div id="ec-feature-sections"></div>
+<script>
+(function(){
+  var GRADIENTS = [
+    'rgba(0,240,255,0.05),rgba(112,0,255,0.03)',
+    'rgba(112,0,255,0.05),rgba(0,240,255,0.03)',
+    'rgba(0,240,255,0.05),rgba(255,180,162,0.03)',
+    'rgba(255,180,162,0.05),rgba(0,240,255,0.03)'
+  ];
+
+  var FEATURES = [
+    { eyebrow:'Fleet Status', heading:'Fleet Status at a Glance', icon:'view_kanban',
+      description:"Every vehicle sits in exactly one state — available, reserved, on rent, or in for service — so nothing is ever double-booked or forgotten in a yard.",
+      pills:['Available','Reserved','On Rent','Maintenance'],
+      visual:'chart', chartLabels:['Avail.','Resv.','Rent','Maint.'],
+      bars:[{h:82,tip:'Available — 38'},{h:34,tip:'Reserved — 16'},{h:52,tip:'On Rent — 24'},{h:16,tip:'Maintenance — 8'}] },
+
+    { eyebrow:'Service Tracking', heading:'Odometer &amp; Service Tracking', icon:'speed',
+      description:"Log usage per vehicle as it happens, and service intervals stay accurate on their own — no more guessing when the next check is due.",
+      pills:['Live Logging','Auto Reminders','Accurate Intervals'],
+      visual:'chart', chartLabels:['M','T','W','T','F','S','S'],
+      bars:[{h:26,tip:'Mon — 120km'},{h:68,tip:'Tue — 340km'},{h:42,tip:'Wed — 210km'},{h:96,tip:'Thu — 480km'},{h:78,tip:'Fri — 390km'},{h:30,tip:'Sat — 150km'},{h:12,tip:'Sun — 60km'}] },
+
+    { eyebrow:'Activity Logs', heading:'Audit-Ready Activity Logs', icon:'policy',
+      description:"Every status change, approval, and edit is timestamped and traceable — a complete history you can hand to an auditor without digging.",
+      pills:['Timestamped','Traceable','Audit-Ready'],
+      visual:'chart', chartLabels:['M','T','W','T','F','S','S'],
+      bars:[{h:44,tip:'Mon — 22'},{h:60,tip:'Tue — 31'},{h:38,tip:'Wed — 19'},{h:88,tip:'Thu — 45'},{h:56,tip:'Fri — 29'},{h:20,tip:'Sat — 11'},{h:14,tip:'Sun — 7'}] },
+
+    { eyebrow:'Application Review', heading:'Rental Application Review', icon:'fact_check',
+      description:"Structured screening and approval steps built into every rental request, so applications don't stall in someone's inbox.",
+      pills:['Submitted','Reviewed','Approved'],
+      visual:'chart', chartLabels:['Submitted','Reviewed','Approved'],
+      bars:[{h:100,tip:'Submitted — 64'},{h:74,tip:'Reviewed — 47'},{h:52,tip:'Approved — 34'}] },
+
+    { eyebrow:'Fleet Map', heading:'Interactive Fleet Map', icon:'near_me',
+      description:"Every vehicle plotted live on an interactive map — zoom out for the whole region, or in for a single yard, without leaving the dashboard.",
+      pills:['Live Tracking','Region View','Yard-Level Zoom'],
+      visual:'chips', chips:[{icon:'my_location',label:'6 Vehicles Tracked'},{icon:'zoom_in',label:'Yard-Level Detail'},{icon:'public',label:'Region-Wide View'}] },
+
+    { eyebrow:'Document Uploads', heading:'Photo &amp; Document Uploads', icon:'upload_file',
+      description:"Attach photos, inspection notes, and paperwork directly to any asset record, so the full condition history travels with the vehicle.",
+      pills:['Photos','Inspection Notes','Paperwork'],
+      visual:'chips', chips:[{icon:'image',label:'vehicle-front.jpg'},{icon:'description',label:'inspection-report.pdf'},{icon:'receipt_long',label:'service-history.pdf'}] },
+
+    { eyebrow:'Multi-Org', heading:'Multi-Organisation Support', icon:'domain',
+      description:"Run several fleets or business units side by side, each scoped to its own data, without setting up a separate account for every one.",
+      pills:['Scoped Data','Multiple Fleets','Single Login'],
+      visual:'chips', chips:[{icon:'apartment',label:'Head Office'},{icon:'storefront',label:'Regional Branch'},{icon:'engineering',label:'Contractor Unit'}] },
+
+    { eyebrow:'Mobile Access', heading:'Mobile-Ready Anywhere', icon:'smartphone',
+      description:"A fully responsive interface built for a phone in the yard just as well as a desk in the office — no separate app required.",
+      pills:['Responsive UI','Field-Ready','No App Required'],
+      visual:'chips', chips:[{icon:'smartphone',label:'Phone'},{icon:'tablet_mac',label:'Tablet'},{icon:'desktop_windows',label:'Desktop'}] }
+  ];
+
+  function pillsHtml(pills){
+    return pills.map(function(p){
+      return '<span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">'+p+'</span>';
+    }).join('');
+  }
+
+  function visualHtml(f){
+    if (f.visual === 'chart') {
+      var bars = f.bars.map(function(b){
+        return '<div class="ec-bar-wrap" style="height:'+b.h+'%"><div class="ec-bar"></div><span class="ec-bar-tip">'+b.tip+'</span></div>';
+      }).join('');
+      var labels = f.chartLabels.map(function(l){ return '<span>'+l+'</span>'; }).join('');
+      return '<div class="ec-chart" style="height:110px;margin-top:24px">'+bars+'</div><div class="ec-chart-labels">'+labels+'</div>';
+    }
+    var chips = f.chips.map(function(c){
+      return '<div class="pill rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">'+c.icon+'</span><span class="font-mono text-[11px] text-on-surface-variant">'+c.label+'</span></div>';
+    }).join('');
+    return '<div class="space-y-2 mt-4 text-left max-w-[280px] mx-auto">'+chips+'</div>';
+  }
+
+  function renderFeatureSection(f, i){
+    // Text is always FIRST in DOM so mobile naturally stacks text-above-visual
+    // with no order override needed at all at that width. Alternation only
+    // touches desktop: even index leaves both columns in natural order
+    // (text-left/visual-right); odd index swaps sides at md: via order-*,
+    // exactly like the Rental Management template's Highlight 2 does.
+    var altDesktop = (i % 2 === 1);
+    var textOrder = altDesktop ? 'md:order-2' : '';
+    var visualOrder = altDesktop ? 'md:order-1' : '';
+    var textReveal = altDesktop ? 'from-right' : 'from-left';
+    var gradient = GRADIENTS[i % GRADIENTS.length];
+
+    var textCol =
+      '<div class="'+textOrder+' sr '+textReveal+' sd1">' +
+        '<p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">'+f.eyebrow+'</p>' +
+        '<h3 class="font-editorial text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px);font-weight:500">'+f.heading+'</h3>' +
+        '<p class="text-on-surface-variant text-sm leading-relaxed mb-6">'+f.description+'</p>' +
+        '<div class="flex flex-wrap gap-3">'+pillsHtml(f.pills)+'</div>' +
+      '</div>';
+
+    var visualCol =
+      '<div class="'+visualOrder+' sr scale-in sd2">' +
+        '<div class="glass rounded-2xl p-1 overflow-hidden">' +
+          '<div class="rounded-xl overflow-hidden relative h-72 md:h-80 bg-surface-container flex items-center justify-center">' +
+            '<div class="absolute inset-0" style="background:linear-gradient(135deg,'+gradient+')"></div>' +
+            '<div class="relative text-center p-6 w-full">' +
+              '<span class="material-symbols-outlined text-primary-container mb-3" style="font-size:56px;opacity:0.7">'+f.icon+'</span>' +
+              visualHtml(f) +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    return '<section class="relative z-10 py-16 md:py-20 px-6 md:px-desktop max-w-[1440px] mx-auto">' +
+      '<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">' + textCol + visualCol + '</div>' +
+    '</section>';
+  }
+
+  // Runs synchronously at this point in HTML parsing, so these .sr elements
+  // already exist in the DOM by the time the page's scroll-reveal
+  // IntersectionObserver (further down the page) does its one-time
+  // querySelectorAll('.sr') — no extra wiring needed.
+  document.getElementById('ec-feature-sections').innerHTML =
+    FEATURES.map(renderFeatureSection).join('');
+})();
+</script>
+
+<!-- ═══════════ TRUSTED-BY MARQUEE ═══════════ -->
+<section class="relative z-10 border-t border-[var(--ec-hairline)] py-14 overflow-hidden sr">
+  <p class="font-mono text-[10px] text-on-surface-variant tracking-[0.2em] uppercase text-center mb-8">Trusted across every heavy industry</p>
+  <div class="ec-marquee">
+    <div class="ec-marquee-track">
+      <span class="ec-marquee-item">⛏ Mining</span>
+      <span class="ec-marquee-item">🏗 Construction</span>
+      <span class="ec-marquee-item">🚚 Logistics</span>
+      <span class="ec-marquee-item">⚡ Energy</span>
+      <span class="ec-marquee-item">🏭 Manufacturing</span>
+      <span class="ec-marquee-item">⚓ Ports &amp; Freight</span>
+      <span class="ec-marquee-item">🌾 Agriculture</span>
+    </div>
+    <div class="ec-marquee-track" aria-hidden="true">
+      <span class="ec-marquee-item">⛏ Mining</span>
+      <span class="ec-marquee-item">🏗 Construction</span>
+      <span class="ec-marquee-item">🚚 Logistics</span>
+      <span class="ec-marquee-item">⚡ Energy</span>
+      <span class="ec-marquee-item">🏭 Manufacturing</span>
+      <span class="ec-marquee-item">⚓ Ports &amp; Freight</span>
+      <span class="ec-marquee-item">🌾 Agriculture</span>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════════ PLATFORM HIGHLIGHTS ═══════════ -->
-<section class="relative z-10 py-28 px-desktop max-w-[1440px] mx-auto">
+<section class="relative z-10 py-28 px-6 md:px-desktop max-w-[1440px] mx-auto">
   <div class="sr-line sr mb-16"></div>
 
   <!-- Highlight 1: Dashboard -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-28">
     <div class="sr from-left">
       <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Dashboard</p>
-      <h3 class="font-display font-bold text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px)">Your fleet command centre</h3>
-      <p class="text-on-surface-variant text-sm leading-relaxed mb-6">See every vehicle, every rental, every metric — all in one real-time dashboard tailored to your role. Admins, operators, and drivers each get exactly what they need.</p>
+      <h3 class="font-editorial text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px);font-weight:500">Your fleet command centre</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed mb-6">See every vehicle, every rental, every metric — all in one real-time dashboard that adapts to exactly what you're doing, from a single overview down to a single asset.</p>
       <div class="flex flex-wrap gap-3">
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">GPS Tracking</span>
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Rental Status</span>
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Maintenance Alerts</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">GPS Tracking</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Rental Status</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Maintenance Alerts</span>
       </div>
     </div>
     <div class="sr from-right">
@@ -276,9 +804,9 @@
           <div class="relative text-center p-6">
             <span class="material-symbols-outlined text-primary-container mb-3" style="font-size:56px;opacity:0.7">dashboard</span>
             <div class="grid grid-cols-3 gap-3 mt-4">
-              <div class="glass rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">Active</div><div class="font-display font-bold text-primary-container text-lg">23</div></div>
-              <div class="glass rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">On Rent</div><div class="font-display font-bold text-primary-container text-lg">18</div></div>
-              <div class="glass rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">Alerts</div><div class="font-display font-bold text-tertiary-fixed-dim text-lg">3</div></div>
+              <div class="pill rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">Active</div><div class="font-display font-bold text-primary-container text-lg">23</div></div>
+              <div class="pill rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">On Rent</div><div class="font-display font-bold text-primary-container text-lg">18</div></div>
+              <div class="pill rounded-lg p-3"><div class="font-mono text-[10px] text-on-surface-variant">Alerts</div><div class="font-display font-bold text-tertiary-fixed-dim text-lg">3</div></div>
             </div>
           </div>
         </div>
@@ -295,9 +823,9 @@
           <div class="relative text-center p-6">
             <span class="material-symbols-outlined text-primary-container mb-3" style="font-size:56px;opacity:0.7">storefront</span>
             <div class="space-y-2 mt-4 text-left max-w-[260px] mx-auto">
-              <div class="glass rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">verified</span><span class="font-mono text-[11px] text-on-surface-variant">Verified Providers</span></div>
-              <div class="glass rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">payments</span><span class="font-mono text-[11px] text-on-surface-variant">Transparent Pricing</span></div>
-              <div class="glass rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">inventory_2</span><span class="font-mono text-[11px] text-on-surface-variant">400+ Equipment Listings</span></div>
+              <div class="pill rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">verified</span><span class="font-mono text-[11px] text-on-surface-variant">Verified Providers</span></div>
+              <div class="pill rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">payments</span><span class="font-mono text-[11px] text-on-surface-variant">Transparent Pricing</span></div>
+              <div class="pill rounded-lg px-4 py-2.5 flex items-center gap-3"><span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:16px">inventory_2</span><span class="font-mono text-[11px] text-on-surface-variant">400+ Equipment Listings</span></div>
             </div>
           </div>
         </div>
@@ -305,13 +833,13 @@
     </div>
     <div class="order-1 md:order-2 sr from-right">
       <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Marketplace</p>
-      <h3 class="font-display font-bold text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px)">Rent the right equipment, instantly</h3>
+      <h3 class="font-editorial text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px);font-weight:500">Rent the right equipment, instantly</h3>
       <p class="text-on-surface-variant text-sm leading-relaxed mb-6">Browse hundreds of verified listings from trusted providers across South Africa. Compare specs, check availability, and apply to rent — all without a phone call.</p>
       <div class="flex flex-wrap gap-3">
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Heavy Trucks</span>
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Excavators</span>
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Drill Rigs</span>
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Cranes</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Heavy Trucks</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Excavators</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Drill Rigs</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Cranes</span>
       </div>
     </div>
   </div>
@@ -320,12 +848,12 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
     <div class="sr from-left">
       <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Rental Management</p>
-      <h3 class="font-display font-bold text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px)">Manage every rental, end to end</h3>
+      <h3 class="font-editorial text-on-surface mb-4" style="font-size:clamp(24px,3vw,38px);font-weight:500">Manage every rental, end to end</h3>
       <p class="text-on-surface-variant text-sm leading-relaxed mb-6">From application to return — track your rentals in real-time, get status notifications, and never miss a return date. Integrated cost estimation keeps budgets in check.</p>
       <div class="flex flex-wrap gap-3">
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Application Tracking</span>
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Cost Estimates</span>
-        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full glass tracking-wider">Return Management</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Application Tracking</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Cost Estimates</span>
+        <span class="font-mono text-[10px] text-primary-fixed-dim px-3 py-1.5 rounded-full pill tracking-wider">Return Management</span>
       </div>
     </div>
     <div class="sr from-right">
@@ -347,37 +875,37 @@
 </section>
 
 <!-- ═══════════ INDUSTRIES ═══════════ -->
-<section class="relative z-10 border-t border-white/5 py-28 px-desktop max-w-[1440px] mx-auto">
+<section class="relative z-10 border-t border-[var(--ec-hairline)] py-28 px-6 md:px-desktop max-w-[1440px] mx-auto">
   <div class="sr-line sr mb-16"></div>
   <div class="text-center mb-16 sr">
     <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase mb-4">Industries</p>
-    <h2 class="font-display font-bold text-on-surface mb-3" style="font-size:clamp(28px,4vw,48px)">Built for industrial scale</h2>
+    <h2 class="font-editorial text-on-surface mb-3" style="font-size:clamp(28px,4vw,48px);font-weight:500">Built for industrial scale</h2>
     <p class="text-on-surface-variant max-w-xl mx-auto">From deep mines to open roads — EquipCore powers operations across every heavy industry.</p>
   </div>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
-    <div class="glass rounded-2xl p-6 text-center hover:border-primary-container/20 transition-all group sr sd1 scale-in">
-      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-container/15 transition-colors icon-glow sr">
+    <div class="glass rounded-2xl p-6 text-center hover:border-[rgba(0,240,255,0.2)] transition-all group sr sd1 scale-in">
+      <div class="w-14 h-14 rounded-2xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[rgba(0,240,255,0.15)] transition-colors icon-glow sr">
         <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">precision_manufacturing</span>
       </div>
       <h4 class="font-display font-bold text-on-surface mb-1 text-sm">Mining</h4>
       <p class="text-on-surface-variant text-[12px] leading-relaxed">Drill rigs, excavators, haul trucks</p>
     </div>
-    <div class="glass rounded-2xl p-6 text-center hover:border-primary-container/20 transition-all group sr sd2 scale-in">
-      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-container/15 transition-colors icon-glow sr">
+    <div class="glass rounded-2xl p-6 text-center hover:border-[rgba(0,240,255,0.2)] transition-all group sr sd2 scale-in">
+      <div class="w-14 h-14 rounded-2xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[rgba(0,240,255,0.15)] transition-colors icon-glow sr">
         <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">construction</span>
       </div>
       <h4 class="font-display font-bold text-on-surface mb-1 text-sm">Construction</h4>
       <p class="text-on-surface-variant text-[12px] leading-relaxed">Loaders, cranes, backhoes</p>
     </div>
-    <div class="glass rounded-2xl p-6 text-center hover:border-primary-container/20 transition-all group sr sd3 scale-in">
-      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-container/15 transition-colors icon-glow sr">
+    <div class="glass rounded-2xl p-6 text-center hover:border-[rgba(0,240,255,0.2)] transition-all group sr sd3 scale-in">
+      <div class="w-14 h-14 rounded-2xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[rgba(0,240,255,0.15)] transition-colors icon-glow sr">
         <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">local_shipping</span>
       </div>
       <h4 class="font-display font-bold text-on-surface mb-1 text-sm">Logistics</h4>
       <p class="text-on-surface-variant text-[12px] leading-relaxed">Heavy haulers, freight, tankers</p>
     </div>
-    <div class="glass rounded-2xl p-6 text-center hover:border-primary-container/20 transition-all group sr sd4 scale-in">
-      <div class="w-14 h-14 rounded-2xl bg-primary-container/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-container/15 transition-colors icon-glow sr">
+    <div class="glass rounded-2xl p-6 text-center hover:border-[rgba(0,240,255,0.2)] transition-all group sr sd4 scale-in">
+      <div class="w-14 h-14 rounded-2xl bg-[rgba(0,240,255,0.1)] flex items-center justify-center mx-auto mb-4 group-hover:bg-[rgba(0,240,255,0.15)] transition-colors icon-glow sr">
         <span class="material-symbols-outlined text-primary-fixed-dim" style="font-size:28px">bolt</span>
       </div>
       <h4 class="font-display font-bold text-on-surface mb-1 text-sm">Energy</h4>
@@ -386,49 +914,27 @@
   </div>
 </section>
 
-<!-- ═══════════ VEHICLE SHOWCASE ═══════════ -->
-<section class="relative z-10 py-12 pb-28 px-desktop max-w-[1440px] mx-auto">
-  <div class="sr-line sr mb-10"></div>
-  <p class="font-mono text-[11px] text-primary tracking-[0.2em] uppercase text-center mb-8 sr">Featured Fleet</p>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <a href="catalog.html" class="relative rounded-2xl overflow-hidden h-56 group sr sd1">
-      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv8e87iP2w_pHeQcW7esQSy6rjuuzXoliWo98ZkWquL6R0NH4Wt64g10-CEaMYh-ErLyiif_9SWsCi-be1XiCdLZkyB-gRd18LqFi005Twx_ZVbvSAesU6ZrpShpx61tTo3W1U8cBqCEYYtI3bSFTzgMM5gH2tB3QpkUFAaz3wImYaRMJlburfRXIHZYDZoVoXZviouUPktBzQx2UklNr9bjAoR2u_3hI7-Ba06LkWZBdJ3Vz1YJkfe80rjiD3De49_iR9BGneReY" alt="Volvo FH16" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-      <div class="absolute bottom-4 left-4"><p class="font-display font-bold text-white">Volvo FH16 Globetrotter</p><p class="font-mono text-[11px] text-primary-fixed-dim">R4,200/day</p></div>
-    </a>
-    <a href="catalog.html" class="relative rounded-2xl overflow-hidden h-56 group sr sd2">
-      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvjBh4G6uFhvFE7zGhLGVK_LfyO1n_pJWncpqsRMSKAU_7NZLlqLR6zwSRawgQ6QMNb21cdXuxXF-7laAXMHx4efih_N9wXGraW9q_I0AkUr_B-EJvaYRIWUwS0TDgpL5qYluKnb3Isqkkiiyw3PMQywZIHRIF1bmUHqSXA5Vg0Uk0biPqwV2yLb7xPD8v5t4ByxG9fI3_L0N9YUeP8LgseDLL0MIRtCDA78mrOrjsAarzBLHZNXtkgAS__EyBAVC9DqZ2OIKpwRE" alt="EX-350 Excavator" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-      <div class="absolute bottom-4 left-4"><p class="font-display font-bold text-white">EX-350 Crawler</p><p class="font-mono text-[11px] text-primary-fixed-dim">R5,800/day</p></div>
-    </a>
-    <a href="catalog.html" class="relative rounded-2xl overflow-hidden h-56 group sr sd3">
-      <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdE2hCW5w2ij9u0n1ow2t5elpRp1Mbj3wDGIvJDwLfM0OVkDC7dwpdHhpZD0nZ70no8JAVxJ6HZs84JXziytiGiBWNmLFx3Qc-cWt6qAnt7FNNujYtVfB1hdxk3dXLJMlSHjAkY-XkCUnBXWuv-JdxrX3FdKCoWnG1HKStyXtBvm8HsO1wgNo6nBhN5GN9pSraR9Y2oUFbBhaeZI7sT1dMs1buHld872mq5n6ezGvPzlsGvQ9ArczrClq2unSaMPmSIubvGK3mhjQ" alt="HC-900 Crane" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-      <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-      <div class="absolute bottom-4 left-4"><p class="font-display font-bold text-white">HC-900 Heavy Lifter</p><p class="font-mono text-[11px] text-primary-fixed-dim">R18,500/day</p></div>
-    </a>
-  </div>
-</section>
-
 <!-- ═══════════ CTA ═══════════ -->
-<section class="relative z-10 py-28 px-desktop max-w-[1440px] mx-auto">
+<section class="relative z-10 py-28 px-6 md:px-desktop max-w-[1440px] mx-auto">
   <div class="sr-line sr mb-16"></div>
-  <div class="glass rounded-3xl p-12 md:p-20 text-center sr scale-in" style="border-color:rgba(0,240,255,0.08)">
+  <div class="glass rounded-3xl p-12 md:p-20 text-center sr scale-in">
     <span class="text-4xl mb-6 inline-block">⚡</span>
-    <h2 class="font-display font-bold text-on-surface mb-4" style="font-size:clamp(28px,4vw,48px)">Ready to power your operations?</h2>
+    <h2 class="font-editorial text-on-surface mb-4" style="font-size:clamp(28px,4vw,48px);font-weight:500">Ready to power your operations?</h2>
     <p class="text-on-surface-variant max-w-lg mx-auto mb-10 leading-relaxed">Create your free account and get instant access to South Africa's largest industrial equipment marketplace.</p>
-    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-      <a href="signup.html" class="font-display font-bold text-lg bg-primary-container text-on-primary-container px-10 py-4 rounded-xl hover:brightness-110 transition-all active:scale-95 glow-cyan">
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-7">
+      <a href="signup.html" class="font-display font-bold text-lg bg-primary-container text-on-primary-container px-10 py-4 rounded-full hover:brightness-110 hover:-translate-y-0.5 transition-all active:scale-95 glow-cyan">
         Create Free Account
       </a>
-      <a href="about.html" class="font-display font-bold text-lg glass text-on-surface px-10 py-4 rounded-xl hover:bg-white/10 transition-all">
+      <a href="about.html" class="font-display font-medium text-lg text-on-surface hover:text-primary-container transition-colors inline-flex items-center gap-1.5 group">
         Learn More
+        <span class="material-symbols-outlined transition-transform group-hover:translate-x-1" aria-hidden="true" style="font-size:20px">arrow_forward</span>
       </a>
     </div>
   </div>
 </section>
 
 <!-- ═══════════ FOOTER ═══════════ -->
-<footer class="relative z-10 border-t border-white/5 px-desktop py-10 max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<footer class="relative z-10 border-t border-[var(--ec-hairline)] px-6 md:px-desktop py-10 max-w-[1440px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
   <div class="flex items-center gap-3">
     <span class="text-xl">⚡</span>
     <span class="font-display font-bold text-gradient">EquipCore</span>

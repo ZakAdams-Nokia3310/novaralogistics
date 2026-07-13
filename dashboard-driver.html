@@ -1,62 +1,50 @@
 <!DOCTYPE html>
-<html class="dark" lang="en"><head>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Driver Portal — EquipCore</title>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' rel='stylesheet'/>
 <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+<script src="https://unpkg.com/apexcharts"></script>
+<link href="theme.css" rel="stylesheet"/>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;}
-  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  body{font-family:'Inter',sans-serif;min-height:100vh;}
   .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
-  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.09);}
-  .glass-lo{background:rgba(255,255,255,0.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.07);}
   .grad{background:linear-gradient(135deg,#ffb4a2,#ffd6cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-  .sidebar{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,0.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,0.06);}
-  .main{margin-left:220px;min-height:100vh;}
-  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,0.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
-  .body{padding:22px 26px;}
-  .nl{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#b9cacb;text-decoration:none;transition:all .18s;background:none;border:none;cursor:pointer;width:100%;}
-  .nl:hover{color:#e2e2e8;background:rgba(255,255,255,.05);}
+  .nl{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-secondary,#b9cacb);text-decoration:none;transition:all .18s;background:none;border:none;cursor:pointer;width:100%;}
+  .nl:hover{color:var(--text-primary,#e2e2e8);background:var(--surface-hover,rgba(255,255,255,.05));}
   .nl.on{color:#ffb4a2;background:rgba(255,180,162,.08);border:1px solid rgba(255,180,162,.14);}
   .nl .ms{font-size:16px;}
-  .tbl{width:100%;border-collapse:collapse;}
-  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 13px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
-  .tbl td{padding:11px 13px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);}
-  .tbl tr:last-child td{border-bottom:none;}
-  .tbl tbody tr:hover td{background:rgba(255,180,162,.02);}
-  input,select,textarea{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;padding:11px 13px;width:100%;outline:none;transition:border-color .18s;resize:vertical;}
-  input:focus,select:focus,textarea:focus{border-color:#ffb4a2;}
-  select option{background:#111317;}
+  input:focus,select:focus,textarea:focus{border-color:#ffb4a2!important;}
   .btn-warm{width:100%;padding:13px;background:#ffb4a2;color:#3c0700;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;border:none;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;}
   .btn-warm:hover{filter:brightness(1.08);}
   .btnd{width:100%;padding:13px;background:rgba(255,107,107,.1);color:#ff6b6b;border:1px solid rgba(255,107,107,.22);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;}
   .btnd:hover{background:rgba(255,107,107,.17);}
-  .btng{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
-  .btng:hover{background:rgba(255,255,255,.08);}
   @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
 </style>
 </head>
 <body>
 
 <aside class="sidebar">
-  <div style="padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,0.05)">
-    <a href="index.html" style="display:flex;align-items:center;gap:8px;text-decoration:none">
-      <span style="font-size:19px">⚡</span>
-      <span class="grad" style="font-family:'Hanken Grotesk',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.03em">EquipCore</span>
+  <div class="sb-logo-row" style="padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <a href="index.html" style="display:flex;align-items:center;gap:8px;text-decoration:none;min-width:0">
+      <span style="font-size:19px;flex-shrink:0">⚡</span>
+      <span class="grad sb-label" style="font-family:'Hanken Grotesk',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.03em;white-space:nowrap;overflow:hidden">EquipCore</span>
     </a>
+    <button class="sb-label sb-toggle" aria-label="Collapse sidebar" title="Collapse sidebar" onclick="toggleSidebarCollapse()"><span class="material-symbols-outlined">chevron_left</span></button>
   </div>
   <div style="padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04)">
-    <div class="glass-lo" style="border-radius:10px;padding:9px 10px;display:flex;align-items:center;gap:9px">
+    <div class="glass-lo sb-user-card" style="border-radius:10px;padding:9px 10px;display:flex;align-items:center;gap:9px">
       <div id="sh-avatar" style="width:30px;height:30px;border-radius:8px;background:rgba(255,180,162,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#ffb4a2;flex-shrink:0">DR</div>
-      <div style="min-width:0;flex:1"><div id="sh-name" style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Driver</div><div id="sh-id" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">—</div></div>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(255,180,162,.1);color:#ffb4a2;padding:2px 6px;border-radius:999px;border:1px solid rgba(255,180,162,.2);flex-shrink:0">DRIVER</span>
+      <div class="sb-label" style="min-width:0;flex:1"><div id="sh-name" style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Driver</div><div id="sh-id" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">—</div></div>
+      <span class="sb-label" style="font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(255,180,162,.1);color:#ffb4a2;padding:2px 6px;border-radius:999px;border:1px solid rgba(255,180,162,.2);flex-shrink:0">DRIVER</span>
     </div>
   </div>
-  <nav id="sh-nav" style="flex:1;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px"></nav>
+  <nav id="sh-nav" style="flex:1;min-height:0;overscroll-behavior:contain;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px"></nav>
   <div style="padding:9px 7px;border-top:1px solid rgba(255,255,255,0.04)">
-    <button onclick="EC_AUTH.logout()" class="nl" style="color:#849495"><span class="material-symbols-outlined ms">logout</span>Sign Out</button>
+    <button onclick="EC_AUTH.logout()" class="nl" title="Sign Out" style="color:#849495"><span class="material-symbols-outlined ms">logout</span><span class="sb-label">Sign Out</span></button>
   </div>
 </aside>
 
@@ -101,6 +89,14 @@
           <div id="routeMap" style="height:240px"></div>
         </div>
 
+        <!-- Trip distance chart -->
+        <div class="glass" style="border-radius:13px;overflow:hidden">
+          <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.05)">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Distance &amp; Fuel — Recent Trips</div>
+          </div>
+          <div id="tripChart" style="padding:6px 12px 0"></div>
+        </div>
+
         <!-- Trip log -->
         <div class="glass" style="border-radius:13px;overflow:hidden">
           <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
@@ -108,11 +104,7 @@
             <button class="btng" style="font-size:12px;padding:6px 10px" onclick="logTrip()">+ Log Trip</button>
           </div>
           <table class="tbl"><thead><tr><th>Date</th><th>Route</th><th>Dist</th><th>Fuel</th></tr></thead>
-          <tbody id="tripBody">
-            <tr><td style="font-size:13px">3 Jun 2026</td><td style="font-size:13px;color:#b9cacb">Joburg → Rustenburg</td><td style="font-size:13px">142 km</td><td style="font-size:13px">68 L</td></tr>
-            <tr><td style="font-size:13px">2 Jun 2026</td><td style="font-size:13px;color:#b9cacb">Pretoria → Cullinan</td><td style="font-size:13px">78 km</td><td style="font-size:13px">34 L</td></tr>
-            <tr><td style="font-size:13px">31 May 2026</td><td style="font-size:13px;color:#b9cacb">Rustenburg → Joburg</td><td style="font-size:13px">138 km</td><td style="font-size:13px">65 L</td></tr>
-          </tbody></table>
+          <tbody id="tripBody"></tbody></table>
         </div>
       </div>
 
@@ -164,6 +156,15 @@
         </div>
       </div>
     </div>
+
+    <footer class="ec-footer">
+      <div>© 2026 EquipCore — Novara Terra Industrials. All rights reserved.</div>
+      <div class="ec-footer-links">
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy</a>
+      </div>
+    </footer>
   </div>
 </div>
 
@@ -213,7 +214,40 @@ function submitCallout(){
 }
 function autoLoc(){const i=document.getElementById('incLoc');i.value='Detecting…';navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{i.value=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`;},()=>{i.value='N1 Highway, near Midrand';}):i.value='N1 Highway, near Midrand';}
 function reportFailure(){alert('Failure report submitted.\nRef: MF-'+Math.floor(1000+Math.random()*9000)+'\nMaintenance team will contact you shortly.');}
-function logTrip(){const f=prompt('Origin'),t=prompt('Destination'),k=prompt('Distance (km)');if(f&&t&&k){const tr=document.createElement('tr');tr.innerHTML=`<td style="font-size:13px">Today</td><td style="font-size:13px;color:#b9cacb">${f} → ${t}</td><td style="font-size:13px">${k} km</td><td style="font-size:13px">—</td>`;tr.style.borderBottom='1px solid rgba(255,255,255,.03)';document.getElementById('tripBody').prepend(tr);}}
+
+// Trip log — table and chart both render from this array
+const trips = [
+  { date:'3 Jun 2026',  route:'Joburg → Rustenburg', dist:142, fuel:68 },
+  { date:'2 Jun 2026',  route:'Pretoria → Cullinan',  dist:78,  fuel:34 },
+  { date:'31 May 2026', route:'Rustenburg → Joburg',  dist:138, fuel:65 },
+];
+let tripChart;
+function renderTrips(){
+  document.getElementById('tripBody').innerHTML = trips.map(t =>
+    `<tr><td style="font-size:13px">${t.date}</td><td style="font-size:13px;color:#b9cacb">${t.route}</td><td style="font-size:13px">${t.dist} km</td><td style="font-size:13px">${t.fuel != null ? t.fuel + ' L' : '—'}</td></tr>`
+  ).join('');
+
+  const chronological = [...trips].reverse();
+  const opts = {
+    chart:{ type:'bar', height:200, toolbar:{show:false}, fontFamily:"'Inter',sans-serif", background:'transparent' },
+    series:[
+      { name:'Distance (km)', data: chronological.map(t => t.dist) },
+      { name:'Fuel (L)',      data: chronological.map(t => t.fuel || 0) },
+    ],
+    colors:['#00f0ff','#ffb4a2'],
+    plotOptions:{ bar:{ columnWidth:'55%', borderRadius:4 } },
+    dataLabels:{ enabled:false },
+    grid:{ borderColor:'rgba(255,255,255,.05)', strokeDashArray:3 },
+    xaxis:{ categories: chronological.map(t => t.date), labels:{ style:{ colors:'#849495', fontFamily:"'JetBrains Mono',monospace", fontSize:'10px' } }, axisBorder:{show:false}, axisTicks:{show:false} },
+    yaxis:{ labels:{ style:{ colors:'#849495', fontSize:'10px' } } },
+    legend:{ position:'top', horizontalAlign:'right', fontSize:'11px', fontFamily:"'JetBrains Mono',monospace", labels:{colors:'#b9cacb'}, markers:{width:8,height:8} },
+    tooltip:{ theme:'dark' },
+  };
+  if (tripChart) { tripChart.updateOptions(opts); } else { tripChart = new ApexCharts(document.getElementById('tripChart'), opts); tripChart.render(); }
+}
+renderTrips();
+
+function logTrip(){const f=prompt('Origin'),t=prompt('Destination'),k=prompt('Distance (km)');if(f&&t&&k){trips.unshift({date:'Today',route:`${f} → ${t}`,dist:Number(k)||0,fuel:null});renderTrips();}}
 document.getElementById('fuelForm').addEventListener('submit',e=>{e.preventDefault();const l=document.getElementById('fLitres').value;if(l){alert(`Fuel entry saved: ${l}L added.`);e.target.reset();}});
 
 const s=document.createElement('style');s.textContent='@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}';document.head.appendChild(s);

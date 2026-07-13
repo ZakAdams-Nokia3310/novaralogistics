@@ -54,7 +54,8 @@
   };
 
   const ROLE_COLOUR = {
-    admin: '#00f0ff', user: '#00f0ff', driver: '#ffb4a2', guest: '#849495'
+    admin: 'var(--accent, #00f0ff)', user: 'var(--accent, #00f0ff)',
+    driver: 'var(--driver, #ffb4a2)', guest: 'var(--text-muted, #849495)'
   };
 
   window.buildSidebar = function (currentHref) {
@@ -74,63 +75,66 @@
 
     // ── Mobile close button (hidden on desktop) ───────────
     h += `<button id="sb-close" aria-label="Close menu" style="display:none;position:absolute;top:12px;right:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;width:32px;height:32px;color:#849495;cursor:pointer;align-items:center;justify-content:center;z-index:1;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24">close</span></button>`;
-    // ── Logo ──────────────────────────────────────────────
-    h += `<div style="padding:18px 15px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
-      <a href="index.html" style="display:flex;align-items:center;gap:9px;text-decoration:none">
-        <span style="font-size:20px">⚡</span>
-        <span style="font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">EquipCore</span>
+    // ── Logo + collapse toggle ──────────────────────────────
+    h += `<div class="sb-logo-row" style="padding:18px 15px 14px;border-bottom:1px solid var(--hairline, rgba(255,255,255,0.05));display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <a href="index.html" style="display:flex;align-items:center;gap:9px;text-decoration:none;min-width:0">
+        <span style="font-size:20px;flex-shrink:0">⚡</span>
+        <span class="sb-label" style="font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;overflow:hidden">EquipCore</span>
       </a>
+      <button class="sb-label sb-toggle" aria-label="Collapse sidebar" title="Collapse sidebar" onclick="toggleSidebarCollapse()"><span class="material-symbols-outlined">chevron_left</span></button>
     </div>`;
 
     // ── User card or Sign-In prompt ────────────────────────
     if (user) {
       const init = user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-      const avatarBg = role === 'driver' ? 'rgba(255,180,162,.14)' : 'rgba(0,240,255,.12)';
-      h += `<div style="padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04)">
-        <div style="background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:9px 10px;display:flex;align-items:center;gap:9px">
-          <div style="width:30px;height:30px;border-radius:8px;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${rc};flex-shrink:0">${init}</div>
-          <div style="min-width:0;flex:1">
-            <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e2e2e8">${user.name}</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${user.org || 'Independent'}</div>
+      const avatarBg = role === 'driver' ? 'var(--driver-bg, rgba(255,180,162,.14))' : 'var(--accent-soft, rgba(0,240,255,.12))';
+      h += `<div style="padding:9px 11px;border-bottom:1px solid var(--hairline, rgba(255,255,255,0.04))">
+        <div class="sb-user-card" style="background:var(--surface, rgba(255,255,255,0.035));border:1px solid var(--border, rgba(255,255,255,0.07));border-radius:10px;padding:9px 10px;display:flex;align-items:center;gap:9px">
+          <div style="width:30px;height:30px;border-radius:8px;background:${avatarBg};display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${rc};flex-shrink:0" title="${user.name}">${init}</div>
+          <div class="sb-label" style="min-width:0;flex:1">
+            <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary, #e2e2e8)">${user.name}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted, #849495)">${user.org || 'Independent'}</div>
           </div>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(0,240,255,.08);color:${rc};padding:2px 6px;border-radius:999px;border:1px solid rgba(0,240,255,.15);flex-shrink:0;letter-spacing:.06em">${role.toUpperCase()}</span>
+          <span class="sb-label" style="font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(0,240,255,.08);color:${rc};padding:2px 6px;border-radius:999px;border:1px solid rgba(0,240,255,.15);flex-shrink:0;letter-spacing:.06em">${role.toUpperCase()}</span>
         </div>
       </div>`;
     } else {
-      h += `<div style="padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04)">
-        <a href="login.html" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:#00f0ff;color:#003a3c;border-radius:10px;text-decoration:none;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;box-shadow:0 0 20px rgba(0,240,255,.18)">
-          ${icon('bolt')} Sign In
+      h += `<div style="padding:9px 11px;border-bottom:1px solid var(--hairline, rgba(255,255,255,0.04))">
+        <a href="login.html" title="Sign In" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--accent, #00f0ff);color:var(--accent-ink, #003a3c);border-radius:10px;text-decoration:none;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;box-shadow:var(--accent-glow, 0 0 20px rgba(0,240,255,.18))">
+          ${icon('bolt')}<span class="sb-label">Sign In</span>
         </a>
       </div>`;
     }
 
     // ── Nav links ──────────────────────────────────────────
-    h += `<nav style="flex:1;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">`;
+    h += `<nav style="flex:1;min-height:0;overscroll-behavior:contain;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">`;
     links.forEach(item => {
       if (item.section) {
-        h += `<div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;letter-spacing:.18em;padding:10px 10px 4px;margin-top:4px">${item.section}</div>`;
+        h += `<div class="sb-section" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted, #849495);text-transform:uppercase;letter-spacing:.18em;padding:10px 10px 4px;margin-top:4px">${item.section}</div>`;
         return;
       }
       const itemBase = item.href.split('#')[0];
       const active = current === item.href || current === itemBase;
-      const base   = 'display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;text-decoration:none;transition:all .18s;border:1px solid transparent;';
+      const base   = 'display:flex;align-items:center;gap:9px;padding:9px 11px;padding-left:14px;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;text-decoration:none;transition:all .18s;border:1px solid transparent;';
+      // Active item: left accent bar + soft glow, not a solid fill block.
       const style  = active
-        ? `${base}color:${rc};background:rgba(0,240,255,.08);border-color:rgba(0,240,255,.15);`
-        : `${base}color:#b9cacb;`;
-      h += `<a href="${item.href}" style="${style}" onmouseover="if(!this.style.color.includes('240'))this.style.cssText+=';background:rgba(255,255,255,.05)'" onmouseout="if(!this.style.color.includes('240'))this.style.background='transparent'">${icon(item.icon)}${item.label}</a>`;
+        ? `${base}color:${rc};background:rgba(0,240,255,.04);box-shadow:inset 3px 0 0 0 ${rc},0 0 16px -8px rgba(0,240,255,.6);`
+        : `${base}color:var(--text-secondary, #b9cacb);`;
+      h += `<a href="${item.href}" title="${item.label}" data-nav-active="${active ? '1' : ''}" style="${style}" onmouseover="if(!this.dataset.navActive)this.style.background='var(--surface-hover, rgba(255,255,255,.05))'" onmouseout="if(!this.dataset.navActive)this.style.background='transparent'">${icon(item.icon)}<span class="sb-label">${item.label}</span></a>`;
     });
     h += `</nav>`;
 
     // ── Footer ────────────────────────────────────────────
-    h += `<div style="padding:9px 7px;border-top:1px solid rgba(255,255,255,0.04)">`;
+    h += `<div style="padding:9px 7px;border-top:1px solid var(--hairline, rgba(255,255,255,0.04))">`;
     if (user) {
-      h += `<button onclick="EC_AUTH.logout()" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;background:none;border:none;cursor:pointer;width:100%;color:#849495;transition:all .18s" onmouseover="this.style.background='rgba(255,255,255,.05)'" onmouseout="this.style.background='transparent'">${icon('logout')}Sign Out</button>`;
+      h += `<button onclick="EC_AUTH.logout()" title="Sign Out" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;background:none;border:none;cursor:pointer;width:100%;color:var(--text-muted, #849495);transition:all .18s" onmouseover="this.style.background='var(--surface-hover, rgba(255,255,255,.05))'" onmouseout="this.style.background='transparent'">${icon('logout')}<span class="sb-label">Sign Out</span></button>`;
     } else {
-      h += `<a href="index.html" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#849495;text-decoration:none;">${icon('home')}Home</a>`;
+      h += `<a href="index.html" title="Home" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted, #849495);text-decoration:none;">${icon('home')}<span class="sb-label">Home</span></a>`;
     }
     h += `</div>`;
 
     el.innerHTML = h;
+    applySidebarCollapseState();
 
     // ── Mobile + toast system (injected once per page) ───────────────────
     if (!document.getElementById('sb-m-css')) {
@@ -175,6 +179,13 @@
           '.modal-bg .modal-card{border-radius:16px 16px 0 0!important;width:100%!important;max-width:100%!important;margin:0!important;max-height:88vh!important;overflow-y:auto!important}' +
           '.btnp,.btng,.btnr,.btny{min-height:44px}' +
           '#ec-toast-wrap{bottom:24px}' +
+        '}' +
+        // Smooth in-page scrolling + accessible focus states (site-wide)
+        'html{scroll-behavior:smooth}' +
+        'a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid #00f0ff;outline-offset:2px;border-radius:6px}' +
+        '@media(prefers-reduced-motion:reduce){' +
+          'html{scroll-behavior:auto}' +
+          '*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}' +
         '}';
       document.head.appendChild(s);
     }
@@ -311,6 +322,17 @@
 
   document.addEventListener('DOMContentLoaded', () => window.initCustomSelects?.());
 
+  // ── Collapsible sidebar (desktop) ───────────────────────────────
+  // body.sb-collapsed is the single source of truth; theme.css reacts to it.
+  window.applySidebarCollapseState = function () {
+    document.body.classList.toggle('sb-collapsed', localStorage.getItem('ec_sb_collapsed') === '1');
+  };
+  window.toggleSidebarCollapse = function () {
+    const collapsed = document.body.classList.toggle('sb-collapsed');
+    localStorage.setItem('ec_sb_collapsed', collapsed ? '1' : '0');
+  };
+  applySidebarCollapseState();
+
   window.openSbMobile = function () {
     document.getElementById('sidebar-root').classList.add('mob');
     const o = document.getElementById('sb-overlay');
@@ -333,15 +355,16 @@
       const current = location.pathname.split('/').pop();
       nav.innerHTML = items.map(item => {
         const isActive = item.active ? item.active() : (current === item.href);
-        const base = `display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;` +
+        const base = `display:flex;align-items:center;gap:9px;padding:9px 11px;padding-left:14px;border-radius:10px;` +
           `font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;` +
           `letter-spacing:.1em;text-decoration:none;transition:all .18s;border:1px solid transparent;`;
-        const activeStyle = `color:${rc};background:${rc}14;border-color:${rc}22;`;
-        const inactiveStyle = `color:#b9cacb;`;
-        return `<a href="${item.href}" style="${base}${isActive ? activeStyle : inactiveStyle}"` +
-          ` onmouseover="if(!this.style.color.includes('240')&&!this.style.color.includes('180'))this.style.background='rgba(255,255,255,.05)'"` +
-          ` onmouseout="if(!this.style.color.includes('240')&&!this.style.color.includes('180'))this.style.background='transparent'">` +
-          `<span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;flex-shrink:0">${item.icon}</span>${item.label}</a>`;
+        // Active item: left accent bar + soft glow, not a solid fill block.
+        const activeStyle = `color:${rc};background:rgba(0,240,255,.04);box-shadow:inset 3px 0 0 0 ${rc},0 0 16px -8px rgba(0,240,255,.6);`;
+        const inactiveStyle = `color:var(--text-secondary, #b9cacb);`;
+        return `<a href="${item.href}" title="${item.label}" data-nav-active="${isActive ? '1' : ''}" style="${base}${isActive ? activeStyle : inactiveStyle}"` +
+          ` onmouseover="if(!this.dataset.navActive)this.style.background='var(--surface-hover, rgba(255,255,255,.05))'"` +
+          ` onmouseout="if(!this.dataset.navActive)this.style.background='transparent'">` +
+          `<span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;flex-shrink:0">${item.icon}</span><span class="sb-label">${item.label}</span></a>`;
       }).join('');
     }
   };

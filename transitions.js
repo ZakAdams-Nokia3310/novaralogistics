@@ -256,9 +256,10 @@ document.addEventListener('DOMContentLoaded', () => {
   finishBar();
   document.body.classList.add('ec-enter');
 
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!sessionStorage.getItem('ec_v')) {
     sessionStorage.setItem('ec_v', '1');
-    showSplash();
+    if (!reduceMotion) showSplash();
   }
 
   // Scroll-reveal
@@ -293,6 +294,12 @@ document.addEventListener('click', (e) => {
   startBar();
   document.body.style.opacity = '0';
   setTimeout(() => { window.location.href = href; }, 270);
+  // Safety net: if navigation is ever interrupted (blocked, cancelled, a
+  // redirect race with security.js's session guard, etc.) the page must
+  // never stay stuck invisible — restore it after a generous grace period.
+  setTimeout(() => {
+    if (document.body.style.opacity === '0') document.body.style.opacity = '1';
+  }, 2000);
 });
 
 window.addEventListener('pageshow', (e) => {

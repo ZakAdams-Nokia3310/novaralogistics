@@ -1,43 +1,18 @@
 <!DOCTYPE html>
-<html class="dark" lang="en"><head>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Admin Overview — EquipCore</title>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'/>
 <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+<script src="https://unpkg.com/apexcharts"></script>
+<link href="theme.css" rel="stylesheet"/>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;}
-  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  body{font-family:'Inter',sans-serif;min-height:100vh;}
   .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
-  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
-  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
   .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
-  .main{margin-left:220px;min-height:100vh;}
-  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
-  .body{padding:22px 26px;}
-  .sc{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);border-radius:13px;padding:18px;transition:border-color .2s,background .2s;}
-  .sc:hover{border-color:rgba(0,240,255,.16);background:rgba(0,240,255,.025);}
-  .tbl{width:100%;border-collapse:collapse;}
-  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:10px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);}
-  .tbl td{padding:12px 14px;font-size:13px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
-  .tbl tr:last-child td{border-bottom:none;}
-  .tbl tbody tr:hover td{background:rgba(0,240,255,.02);}
-  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
-  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
-  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
-  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
-  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
-  .bc{background:rgba(209,188,255,.1);color:#d1bcff;}
-  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:filter .18s;}
-  .btnp:hover{filter:brightness(1.08);}
-  .btng{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:background .18s;}
-  .btng:hover{background:rgba(255,255,255,.09);}
-  input,select{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:8px 11px;outline:none;transition:border-color .18s;}
-  input:focus,select:focus{border-color:#00f0ff;}
-  select option{background:#111317;}
-  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
 
   /* ── Mapbox popup dark theme ───────────────────── */
   .mapboxgl-popup-content{background:rgba(8,10,14,.96)!important;border:1px solid rgba(255,255,255,.1)!important;border-radius:10px!important;padding:10px 13px!important;font-family:'Inter',sans-serif!important;box-shadow:0 4px 24px rgba(0,0,0,.7)!important;}
@@ -143,40 +118,8 @@
 
   <div class="body">
 
-    <!-- Stat cards -->
-    <div class="dash-kpi" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
-      <div class="sc">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
-          <div style="width:34px;height:34px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:#00dbe9">local_shipping</span></div>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(0,212,170,.1);color:#00d4aa;padding:2px 6px;border-radius:999px">+3</span>
-        </div>
-        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:#00f0ff;margin-bottom:2px">24</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Active Rentals</div>
-      </div>
-      <div class="sc">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
-          <div style="width:34px;height:34px;border-radius:9px;background:rgba(209,188,255,.1);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:#d1bcff">payments</span></div>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(0,212,170,.1);color:#00d4aa;padding:2px 6px;border-radius:999px">+18%</span>
-        </div>
-        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:#d1bcff;margin-bottom:2px">R142k</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Monthly Revenue</div>
-      </div>
-      <div class="sc">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
-          <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,217,61,.1);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:#ffd93d">engineering</span></div>
-        </div>
-        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:#ffd93d;margin-bottom:2px">87</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Fleet Units</div>
-      </div>
-      <div class="sc">
-        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
-          <div style="width:34px;height:34px;border-radius:9px;background:rgba(255,107,107,.1);display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:#ff6b6b">warning</span></div>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,107,107,.1);color:#ff6b6b;padding:2px 6px;border-radius:999px">Action</span>
-        </div>
-        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:#ff6b6b;margin-bottom:2px">5</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Overdue Returns</div>
-      </div>
-    </div>
+    <!-- Stat cards — real data, rendered by renderKPIs() below -->
+    <div id="statsRow" class="dash-kpi" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px"></div>
 
     <div class="dash-main" style="display:grid;grid-template-columns:1fr 290px;gap:14px;align-items:start">
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -190,6 +133,15 @@
             </div>
           </div>
           <div id="adminMap" style="height:260px"></div>
+        </div>
+
+        <!-- Revenue & rentals trend -->
+        <div class="glass" style="border-radius:13px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:space-between;align-items:center">
+            <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Revenue &amp; Rentals Trend</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Last 6 months</div>
+          </div>
+          <div id="revenueChart" style="padding:6px 12px 0"></div>
         </div>
 
         <!-- Active Rentals -->
@@ -233,31 +185,20 @@
       <!-- Right panel -->
       <div class="dash-right-col" style="display:flex;flex-direction:column;gap:12px">
 
-        <!-- Fleet status -->
-        <div class="glass" style="border-radius:13px;padding:16px">
+        <!-- Fleet status — real data, rendered by renderFleetStatus() below -->
+        <div class="glass-lo" style="border-radius:13px;padding:16px">
           <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:14px">Fleet Status</div>
-          <div style="margin-bottom:11px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span style="color:#849495">Available</span><span style="color:#00d4aa;font-weight:600">54</span></div>
-            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px"><div style="width:62%;height:100%;background:#00d4aa;border-radius:999px"></div></div>
-          </div>
-          <div style="margin-bottom:11px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span style="color:#849495">On Rent</span><span style="color:#00f0ff;font-weight:600">24</span></div>
-            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px"><div style="width:28%;height:100%;background:#00f0ff;border-radius:999px"></div></div>
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span style="color:#849495">Maintenance</span><span style="color:#ffd93d;font-weight:600">9</span></div>
-            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px"><div style="width:10%;height:100%;background:#ffd93d;border-radius:999px"></div></div>
-          </div>
+          <div id="fleetStatus"></div>
         </div>
 
         <!-- Activity -->
-        <div class="glass" style="border-radius:13px;padding:16px">
+        <div class="glass-lo" style="border-radius:13px;padding:16px">
           <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:12px">Activity</div>
           <div id="actFeed"></div>
         </div>
 
         <!-- Quick actions -->
-        <div class="dash-quick-actions glass" style="border-radius:13px;padding:16px">
+        <div class="dash-quick-actions glass-lo" style="border-radius:13px;padding:16px">
           <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:10px">Quick Actions</div>
           <div style="display:flex;flex-direction:column;gap:6px">
             <a href="admin-rentals.html" class="btng" style="justify-content:flex-start;font-size:12px;padding:8px 10px"><span class="material-symbols-outlined ms" style="font-size:15px">receipt_long</span>Rental Tracking</a>
@@ -270,13 +211,22 @@
 
       </div>
     </div>
+
+    <footer class="ec-footer">
+      <div>© 2026 EquipCore — Novara Terra Industrials. All rights reserved.</div>
+      <div class="ec-footer-links">
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy</a>
+      </div>
+    </footer>
   </div>
 </div>
 
 <script src="security.js"></script>
 <script src="auth.js"></script>
 <script src="firebase-config.js"></script>
-<script src="data.js"></script>
+<script src="dc.js?v=2"></script>
 <script src="sidebar.js?v=2"></script>
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
@@ -286,6 +236,103 @@ const user = EC_AUTH.require(['admin']);
 if (user) {
   document.getElementById('orgLabel').textContent = user.org || 'EquipCore Ops';
 }
+DC_DATA.setOrgScope(user.orgId);
+
+// ── Real stat cards + fleet status (Data Connect — no fabricated numbers) ───
+function daysLeft(dateStr) {
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  const t = new Date(); t.setHours(0,0,0,0);
+  return Math.ceil((d - t) / (1000*60*60*24));
+}
+
+function renderKPIs() {
+  const vehicles = DC_DATA.getVehicles();
+  const rentals  = DC_DATA.getRentals();
+  const apps     = DC_DATA.getRentalApplications();
+
+  const totalFleet = vehicles.length;
+  const active     = rentals.filter(r => r.status === 'active').length;
+  const overdue    = rentals.filter(r => r.status === 'overdue' || (r.status === 'active' && daysLeft(r.returnDate) < 0)).length;
+  const pendingApps = apps.filter(a => a.status === 'pending').length;
+
+  const now = new Date();
+  const revenueThisMonth = rentals
+    .filter(r => r.status !== 'cancelled' && r.startDate)
+    .filter(r => { const d = new Date(r.startDate); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); })
+    .reduce((s, r) => s + (r.value || 0), 0);
+
+  const cards = [
+    { icon:'garage',         bg:'rgba(0,240,255,.1)',  color:'#00dbe9', val:totalFleet,                                label:'Total Fleet Vehicles' },
+    { icon:'local_shipping', bg:'rgba(0,240,255,.1)',  color:'#00f0ff', val:active,                                    label:'Active Rentals' },
+    { icon:'warning',        bg:'rgba(255,107,107,.1)',color:'#ff6b6b', val:overdue,                                   label:'Overdue Returns' },
+    { icon:'payments',       bg:'rgba(209,188,255,.1)',color:'#d1bcff', val:'R' + revenueThisMonth.toLocaleString('en-ZA'), label:'Monthly Revenue' },
+    { icon:'pending_actions',bg:'rgba(255,217,61,.1)', color:'#ffd93d', val:pendingApps,                               label:'Applications Pending Review' },
+  ];
+  document.getElementById('statsRow').innerHTML = cards.map(c => `
+    <div class="sc">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+        <div style="width:34px;height:34px;border-radius:9px;background:${c.bg};display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:17px;color:${c.color}">${c.icon}</span></div>
+      </div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-size:26px;font-weight:800;color:${c.color};margin-bottom:2px">${c.val}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">${c.label}</div>
+    </div>`).join('');
+}
+
+function renderFleetStatus() {
+  const vehicles = DC_DATA.getVehicles();
+  const rows = [
+    { label:'Available',   color:'#00d4aa', n: vehicles.filter(v => v.status === 'available').length },
+    { label:'On Rent',     color:'#00f0ff', n: vehicles.filter(v => v.status === 'on_rent').length },
+    { label:'Maintenance', color:'#ffd93d', n: vehicles.filter(v => v.status === 'maintenance').length },
+  ];
+  document.getElementById('fleetStatus').innerHTML = '';
+  new ApexCharts(document.getElementById('fleetStatus'), {
+    chart: { type:'donut', height:210, fontFamily:"'Inter',sans-serif", background:'transparent' },
+    series: rows.map(r => r.n),
+    labels: rows.map(r => r.label),
+    colors: rows.map(r => r.color),
+    stroke: { width:2, colors:['#0a0a0f'] },
+    dataLabels: { enabled:true, style:{ fontSize:'10px', fontFamily:"'JetBrains Mono',monospace", colors:['#0a0a0f'] }, dropShadow:{ enabled:false } },
+    legend: { position:'bottom', fontSize:'11px', fontFamily:"'JetBrains Mono',monospace", labels:{ colors:'#b9cacb' }, markers:{ width:8, height:8 }, itemMargin:{ horizontal:8, vertical:3 } },
+    plotOptions: { pie: { donut: { size:'62%', labels: { show:true, value:{ color:'#e7e7ec', fontSize:'20px', fontFamily:"'Hanken Grotesk',sans-serif", fontWeight:800 }, total:{ show:true, label:'Total Fleet', color:'#849495', fontSize:'9px', fontFamily:"'JetBrains Mono',monospace" } } } } },
+    tooltip: { theme:'dark' }
+  }).render();
+}
+
+function renderRevenueChart() {
+  const rentals = DC_DATA.getRentals();
+  const now = new Date();
+  const months = Array.from({ length:6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    return { y:d.getFullYear(), m:d.getMonth(), label:d.toLocaleString('en-US', { month:'short' }) };
+  });
+  const inMonth = (r, y, m) => { const d = new Date(r.startDate); return d.getFullYear() === y && d.getMonth() === m; };
+  const revenue = months.map(({y,m}) => rentals.filter(r => r.status !== 'cancelled' && r.startDate && inMonth(r,y,m)).reduce((s,r) => s + (r.value || 0), 0));
+  const counts  = months.map(({y,m}) => rentals.filter(r => r.startDate && inMonth(r,y,m)).length);
+
+  new ApexCharts(document.getElementById('revenueChart'), {
+    chart: { height:230, toolbar:{ show:false }, fontFamily:"'Inter',sans-serif", background:'transparent' },
+    series: [
+      { name:'Revenue (R)',      type:'area', data:revenue },
+      { name:'Rentals Started',  type:'line', data:counts },
+    ],
+    colors: ['#00f0ff','#d1bcff'],
+    stroke: { width:[2,2], curve:'smooth' },
+    fill: { type:['gradient','solid'], gradient:{ shadeIntensity:1, opacityFrom:.32, opacityTo:0, stops:[0,90] } },
+    markers: { size:0, hover:{ size:4 } },
+    dataLabels: { enabled:false },
+    grid: { borderColor:'rgba(255,255,255,.05)', strokeDashArray:3, padding:{ left:4, right:4 } },
+    xaxis: { categories:months.map(m => m.label), labels:{ style:{ colors:'#849495', fontFamily:"'JetBrains Mono',monospace", fontSize:'10px' } }, axisBorder:{ show:false }, axisTicks:{ show:false } },
+    yaxis: [
+      { seriesName:'Revenue (R)', labels:{ style:{ colors:'#849495', fontSize:'10px' }, formatter:v => 'R' + (v >= 1000 ? Math.round(v/1000) + 'k' : Math.round(v)) } },
+      { seriesName:'Rentals Started', opposite:true, min:0, forceNiceScale:true, labels:{ style:{ colors:'#849495', fontSize:'10px' } } },
+    ],
+    legend: { position:'top', horizontalAlign:'right', fontSize:'11px', fontFamily:"'JetBrains Mono',monospace", labels:{ colors:'#b9cacb' }, markers:{ width:8, height:8 } },
+    tooltip: { theme:'dark', y:{ formatter:(v, { seriesIndex }) => seriesIndex === 0 ? 'R' + v.toLocaleString('en-ZA') : v + ' rentals' } },
+  }).render();
+}
+
+DC_DATA.init().then(() => { renderKPIs(); renderFleetStatus(); renderRevenueChart(); });
 
 // ── Mapbox GL JS interactive fleet map ─────────────────────────────────────
 mapboxgl.accessToken = (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.mapboxToken) || '';
