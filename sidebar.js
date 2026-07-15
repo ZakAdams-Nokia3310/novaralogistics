@@ -6,50 +6,50 @@
   const NAV = {
     admin: [
       { section: 'Main' },
-      { href:'dashboard-admin.html',  icon:'dashboard',     label:'Overview' },
-      { href:'admin-rentals.html',    icon:'receipt_long',  label:'Rental Tracking' },
-      { href:'admin-orgs.html',       icon:'domain',        label:'Organisations' },
-      { href:'admin-fleet.html',      icon:'garage',        label:'Fleet' },
-      { href:'add-vehicle.html',      icon:'add_box',       label:'Add Vehicle' },
-      { href:'admin-maintenance.html',icon:'build',         label:'Maintenance' },
+      { href:'dashboard-admin',  icon:'dashboard',     label:'Overview' },
+      { href:'admin-rentals',    icon:'receipt_long',  label:'Rental Tracking' },
+      { href:'admin-orgs',       icon:'domain',        label:'Organisations' },
+      { href:'admin-fleet',      icon:'garage',        label:'Fleet' },
+      { href:'add-vehicle',      icon:'add_box',       label:'Add Vehicle' },
+      { href:'admin-maintenance',icon:'build',         label:'Maintenance' },
       { section: 'Tools' },
-      { href:'calculator.html',       icon:'calculate',     label:'Calculator' },
-      { href:'catalog.html',          icon:'inventory_2',   label:'Equipment Catalog' },
-      { href:'marketplace.html',      icon:'storefront',    label:'Marketplace' },
+      { href:'calculator',       icon:'calculate',     label:'Calculator' },
+      { href:'catalog',          icon:'inventory_2',   label:'Equipment Catalog' },
+      { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
       { section: 'Security' },
-      { href:'admin-audit.html',      icon:'policy',        label:'Audit Logs' },
-      { href:'admin-orgs.html#users', icon:'manage_accounts', label:'User Management' },
+      { href:'admin-audit',      icon:'policy',        label:'Audit Logs' },
+      { href:'admin-orgs#users', icon:'manage_accounts', label:'User Management' },
       { section: 'Account' },
-      { href:'profile.html',          icon:'person',        label:'My Profile' },
+      { href:'profile',          icon:'person',        label:'My Profile' },
     ],
     user: [
       { section: 'My Account' },
-      { href:'dashboard-user.html',   icon:'dashboard',     label:'My Dashboard' },
-      { href:'my-rentals.html',       icon:'receipt_long',  label:'My Rentals' },
-      { href:'apply-rental.html',     icon:'add_circle',    label:'Apply to Rent' },
+      { href:'dashboard-user',   icon:'dashboard',     label:'My Dashboard' },
+      { href:'my-rentals',       icon:'receipt_long',  label:'My Rentals' },
+      { href:'apply-rental',     icon:'add_circle',    label:'Apply to Rent' },
       { section: 'Browse' },
-      { href:'calculator.html',       icon:'calculate',     label:'Calculator' },
-      { href:'catalog.html',          icon:'inventory_2',   label:'Catalog' },
-      { href:'marketplace.html',      icon:'storefront',    label:'Marketplace' },
+      { href:'calculator',       icon:'calculate',     label:'Calculator' },
+      { href:'catalog',          icon:'inventory_2',   label:'Catalog' },
+      { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
       { section: 'Account' },
-      { href:'profile.html',          icon:'person',        label:'My Profile' },
+      { href:'profile',          icon:'person',        label:'My Profile' },
     ],
     driver: [
       { section: 'Driver Portal' },
-      { href:'dashboard-driver.html', icon:'home',          label:'My Dashboard' },
-      { href:'my-rentals.html',       icon:'receipt_long',  label:'My Rentals' },
-      { href:'calculator.html',       icon:'calculate',     label:'Calculator' },
+      { href:'dashboard-driver', icon:'home',          label:'My Dashboard' },
+      { href:'my-rentals',       icon:'receipt_long',  label:'My Rentals' },
+      { href:'calculator',       icon:'calculate',     label:'Calculator' },
       { section: 'Account' },
-      { href:'profile.html',          icon:'person',        label:'My Profile' },
+      { href:'profile',          icon:'person',        label:'My Profile' },
     ],
     guest: [
       { section: 'Browse' },
-      { href:'dashboard-guest.html',  icon:'inventory_2',   label:'Browse Fleet' },
-      { href:'marketplace.html',      icon:'storefront',    label:'Marketplace' },
-      { href:'calculator.html',       icon:'calculate',     label:'Calculator' },
+      { href:'dashboard-guest',  icon:'inventory_2',   label:'Browse Fleet' },
+      { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
+      { href:'calculator',       icon:'calculate',     label:'Calculator' },
       { section: 'Info' },
-      { href:'about.html',            icon:'info',          label:'About' },
-      { href:'contact.html',          icon:'mail',          label:'Contact' },
+      { href:'about',            icon:'info',          label:'About' },
+      { href:'contact',          icon:'mail',          label:'Contact' },
     ],
   };
 
@@ -77,7 +77,7 @@
     h += `<button id="sb-close" aria-label="Close menu" style="display:none;position:absolute;top:12px;right:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;width:32px;height:32px;color:#849495;cursor:pointer;align-items:center;justify-content:center;z-index:1;flex-shrink:0"><span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24">close</span></button>`;
     // ── Logo + collapse toggle ──────────────────────────────
     h += `<div class="sb-logo-row" style="padding:18px 15px 14px;border-bottom:1px solid var(--hairline, rgba(255,255,255,0.05));display:flex;align-items:center;justify-content:space-between;gap:8px">
-      <a href="index.html" style="display:flex;align-items:center;gap:9px;text-decoration:none;min-width:0">
+      <a href="/" style="display:flex;align-items:center;gap:9px;text-decoration:none;min-width:0">
         <span style="font-size:20px;flex-shrink:0">⚡</span>
         <span class="sb-label" style="font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;overflow:hidden">EquipCore</span>
       </a>
@@ -100,7 +100,7 @@
       </div>`;
     } else {
       h += `<div style="padding:9px 11px;border-bottom:1px solid var(--hairline, rgba(255,255,255,0.04))">
-        <a href="login.html" title="Sign In" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--accent, #00f0ff);color:var(--accent-ink, #003a3c);border-radius:10px;text-decoration:none;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;box-shadow:var(--accent-glow, 0 0 20px rgba(0,240,255,.18))">
+        <a href="login" title="Sign In" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;background:var(--accent, #00f0ff);color:var(--accent-ink, #003a3c);border-radius:10px;text-decoration:none;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;box-shadow:var(--accent-glow, 0 0 20px rgba(0,240,255,.18))">
           ${icon('bolt')}<span class="sb-label">Sign In</span>
         </a>
       </div>`;
@@ -129,7 +129,7 @@
     if (user) {
       h += `<button onclick="EC_AUTH.logout()" title="Sign Out" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;background:none;border:none;cursor:pointer;width:100%;color:var(--text-muted, #849495);transition:all .18s" onmouseover="this.style.background='var(--surface-hover, rgba(255,255,255,.05))'" onmouseout="this.style.background='transparent'">${icon('logout')}<span class="sb-label">Sign Out</span></button>`;
     } else {
-      h += `<a href="index.html" title="Home" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted, #849495);text-decoration:none;">${icon('home')}<span class="sb-label">Home</span></a>`;
+      h += `<a href="/" title="Home" style="display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted, #849495);text-decoration:none;">${icon('home')}<span class="sb-label">Home</span></a>`;
     }
     h += `</div>`;
 

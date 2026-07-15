@@ -72,7 +72,7 @@
       <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Fleet Management</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Upload vehicles, manage service schedules and fleet status</div>
     </div>
-    <a href="add-vehicle.html" class="btnp" style="font-size:12px;padding:7px 13px;text-decoration:none">
+    <a href="add-vehicle" class="btnp" style="font-size:12px;padding:7px 13px;text-decoration:none">
       <span class="material-symbols-outlined ms" style="font-size:15px">add</span>Add Vehicle
     </a>
   </div>
@@ -321,13 +321,14 @@
 
 <script src="security.js"></script>
 <script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
 <script src="firebase-config.js"></script>
 <script src="dc.js?v=2"></script>
 <script src="sidebar.js?v=2"></script>
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
-buildSidebar('admin-fleet.html');
+buildSidebar('admin-fleet');
 const _ecUser = EC_AUTH.require(['admin']);
 DC_DATA.setOrgScope(_ecUser.orgId);
 

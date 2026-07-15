@@ -214,13 +214,14 @@
 
 <script src="security.js"></script>
 <script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
 <script src="firebase-config.js"></script>
 <script src="dc.js?v=2"></script>
 <script src="sidebar.js?v=2"></script>
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
-buildSidebar('admin-orgs.html');
+buildSidebar('admin-orgs');
 const _ecUser = EC_AUTH.require(['admin']);
 DC_DATA.setOrgScope(_ecUser.orgId);
 
@@ -429,7 +430,7 @@ function renderUsers() {
   tbody.innerHTML = users.map(u => {
     const roleColors = { admin: '#00f0ff', user: '#00dbe9', driver: '#ffb4a2' };
     const rc = roleColors[u.role] || '#849495';
-    return `<tr onclick="location.href='profile.html?id=${u.id}'" style="cursor:pointer" title="View profile">
+    return `<tr onclick="location.href='profile?id=${u.id}'" style="cursor:pointer" title="View profile">
       <td data-label="Name">
         <div style="font-weight:600">${u.name}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.email}</div>
@@ -442,7 +443,7 @@ function renderUsers() {
       <td data-label="Added" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.createdAt || '—'}</td>
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap" onclick="event.stopPropagation()">
-          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="location.href='profile.html?id=${u.id}'">
+          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="location.href='profile?id=${u.id}'">
             <span class="material-symbols-outlined ms" style="font-size:13px">edit</span>Edit
           </button>
           <button class="btng" style="font-size:11px;padding:5px 10px" onclick="DC_DATA.toggleUserStatus('${u.id}').then(renderAll)">

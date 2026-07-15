@@ -57,12 +57,12 @@ const SECURITY_HEADERS = {
   // onclick handlers. Refactoring to nonce-based CSP is tracked as a future task.
   'Content-Security-Policy'   : [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://api.mapbox.com",
+    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://api.mapbox.com https://www.gstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://api.mapbox.com",
     "font-src 'self' https://fonts.gstatic.com https://api.mapbox.com",
     "img-src 'self' data: blob: https://lh3.googleusercontent.com https://storage.googleapis.com https://firebasestorage.googleapis.com https://unpkg.com https://*.mapbox.com https://*.basemaps.cartocdn.com",
     "media-src 'self' https://d8j0ntlcm91z4.cloudfront.net",
-    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://firebasedataconnect.googleapis.com https://unpkg.com https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasedataconnect.googleapis.com https://unpkg.com https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com",
     "worker-src blob:",
     "frame-ancestors 'self'",
     "upgrade-insecure-requests",
@@ -142,39 +142,66 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  let urlPath = req.url.split('?')[0];
-  if (urlPath === '/' || urlPath === '') urlPath = '/index.html';
+  const urlPath = req.url.split('?')[0];
 
-  const filePath = safePath(urlPath);
-  if (!filePath) {
-    res.writeHead(400, SECURITY_HEADERS);
-    res.end('Bad Request');
+  // Root serves index.html directly — never redirected, so this can't loop
+  // with the ".html" redirect rule below.
+  if (urlPath === '/' || urlPath === '') {
+    serveFirstExisting(['/index.html'], 0);
     return;
   }
 
-  const ext  = path.extname(filePath).toLowerCase();
-  const type = MIME[ext] || 'application/octet-stream';
+  // ── Clean URLs (mirrors Firebase Hosting's "cleanUrls" setting) ──────────
+  // Requests for an extensionless path (e.g. /dashboard-admin) are served
+  // from the matching .html file without a redirect. Requests that still
+  // carry ".html" (e.g. /dashboard-admin.html) are 301-redirected to the
+  // extensionless URL so local dev matches production exactly.
+  if (/\.html$/i.test(urlPath)) {
+    const clean = urlPath.toLowerCase() === '/index.html' ? '/' : urlPath.slice(0, -'.html'.length);
+    res.writeHead(301, { Location: clean, ...SECURITY_HEADERS });
+    res.end();
+    return;
+  }
 
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      if (err.code === 'ENOENT') {
-        res.writeHead(302, { Location: '/index.html', ...SECURITY_HEADERS });
-        res.end();
-      } else {
-        res.writeHead(500, SECURITY_HEADERS);
-        res.end('Internal Server Error');
-      }
+  const hasExt = path.extname(urlPath) !== '';
+  const candidatePaths = hasExt ? [urlPath] : [urlPath + '.html'];
+
+  serveFirstExisting(candidatePaths, 0);
+
+  function serveFirstExisting(paths, i) {
+    if (i >= paths.length) {
+      res.writeHead(302, { Location: '/', ...SECURITY_HEADERS });
+      res.end();
       return;
     }
 
-    const headers = {
-      'Content-Type'  : type,
-      'Cache-Control' : ext === '.html' ? 'no-store' : 'public, max-age=3600',
-      ...SECURITY_HEADERS,
-    };
-    res.writeHead(200, headers);
-    res.end(content);
-  });
+    const filePath = safePath(paths[i]);
+    if (!filePath) {
+      res.writeHead(400, SECURITY_HEADERS);
+      res.end('Bad Request');
+      return;
+    }
+
+    const ext  = path.extname(filePath).toLowerCase();
+    const type = MIME[ext] || 'application/octet-stream';
+
+    fs.readFile(filePath, (err, content) => {
+      if (err) {
+        if (err.code === 'ENOENT') return serveFirstExisting(paths, i + 1);
+        res.writeHead(500, SECURITY_HEADERS);
+        res.end('Internal Server Error');
+        return;
+      }
+
+      const headers = {
+        'Content-Type'  : type,
+        'Cache-Control' : ext === '.html' ? 'no-store' : 'public, max-age=3600',
+        ...SECURITY_HEADERS,
+      };
+      res.writeHead(200, headers);
+      res.end(content);
+    });
+  }
 });
 
 server.listen(PORT, () => {

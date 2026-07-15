@@ -26,25 +26,27 @@ const EC_SECURITY = (() => {
   };
 
   // Pages open to unauthenticated visitors
+  // NOTE: keys are extensionless (clean URLs — see firebase.json's
+  // "cleanUrls" and server.js) and must match location.pathname.split('/').pop().
   const PUBLIC_PAGES = new Set([
-    '', 'index.html', 'login.html', 'about.html', 'contact.html',
-    'catalog.html', 'marketplace.html', 'calculator.html',
-    'dashboard-guest.html', 'dashboard.html', 'privacy.html',
+    '', 'index', 'login', 'about', 'contact',
+    'catalog', 'marketplace', 'calculator',
+    'dashboard-guest', 'dashboard', 'privacy',
   ]);
 
   const PAGE_ROLES = {
-    'dashboard-admin.html'   : ['admin'],
-    'admin-rentals.html'     : ['admin'],
-    'admin-fleet.html'       : ['admin'],
-    'admin-maintenance.html' : ['admin'],
-    'admin-orgs.html'        : ['admin'],
-    'admin-audit.html'       : ['admin'],
-    'dashboard-user.html'    : ['user'],
-    'user-dashboard.html'    : ['user'],
-    'my-rentals.html'        : ['user', 'driver', 'admin'],
-    'apply-rental.html'      : ['user', 'admin'],
-    'dashboard-driver.html'  : ['driver'],
-    'driver-vehicles.html'   : ['driver', 'admin'],
+    'dashboard-admin'   : ['admin'],
+    'admin-rentals'     : ['admin'],
+    'admin-fleet'       : ['admin'],
+    'admin-maintenance' : ['admin'],
+    'admin-orgs'        : ['admin'],
+    'admin-audit'       : ['admin'],
+    'dashboard-user'    : ['user'],
+    'user-dashboard'    : ['user'],
+    'my-rentals'        : ['user', 'driver', 'admin'],
+    'apply-rental'      : ['user', 'admin'],
+    'dashboard-driver'  : ['driver'],
+    'driver-vehicles'   : ['driver', 'admin'],
   };
 
   // ── Cryptographically secure random ───────────────────────────────────────
@@ -313,7 +315,7 @@ const EC_SECURITY = (() => {
   // ── Page access guard ──────────────────────────────────────────────────────
 
   function guardPage() {
-    const page = location.pathname.split('/').pop() || 'index.html';
+    const page = location.pathname.split('/').pop() || 'index';
     if (PUBLIC_PAGES.has(page)) return;
 
     const allowed = PAGE_ROLES[page];
@@ -330,17 +332,17 @@ const EC_SECURITY = (() => {
         sessionStorage.removeItem('ec_session');
         _audit('SESSION_EXPIRED_REDIRECT', { page });
       }
-      location.href = 'login.html';
+      location.href = 'login';
       return;
     }
 
     if (!allowed.includes(user.role)) {
       _audit('UNAUTHORIZED_ACCESS_ATTEMPT', { page, userRole: user.role, required: allowed });
       const dashMap = {
-        admin: 'dashboard-admin.html', user: 'dashboard-user.html',
-        driver: 'dashboard-driver.html', guest: 'dashboard-guest.html',
+        admin: 'dashboard-admin', user: 'dashboard-user',
+        driver: 'dashboard-driver', guest: 'dashboard-guest',
       };
-      location.href = dashMap[user.role] || 'login.html';
+      location.href = dashMap[user.role] || 'login';
       return;
     }
 
@@ -361,7 +363,7 @@ const EC_SECURITY = (() => {
         _audit('INACTIVITY_LOGOUT', { page });
         sessionStorage.removeItem('ec_session');
         sessionStorage.removeItem(K.SESSION_TS);
-        location.href = 'login.html';
+        location.href = 'login';
       }
     }, INACTIVITY_MS);
   }

@@ -352,7 +352,14 @@
     else { window.addEventListener('load', stagger); }
   }
 
-  /* ── Mobile sidebar toggle ── */
+  /* ── Mobile sidebar toggle (floating FAB) ──
+     Only needed on pages built around .sidebar (dashboard-driver.html,
+     dashboard-user.html) — those have no topbar-embedded hamburger of their
+     own. Pages using #sidebar-root (buildSidebar) already get a proper
+     hamburger inserted into .topbar by sidebar.js, and #sidebar-root's
+     mobile CSS never wires up a `.sb-open` state anyway, so on those pages
+     this floating button was dead weight sitting over the content. */
+  if (!document.getElementById('sidebar-root') && document.querySelector('.sidebar')) {
   var sidebarToggle = document.createElement('button');
   sidebarToggle.id = 'sb-toggle';
   sidebarToggle.setAttribute('aria-label', 'Toggle menu');
@@ -360,7 +367,7 @@
   document.body.appendChild(sidebarToggle);
 
   sidebarToggle.addEventListener('click', function () {
-    var sb = document.getElementById('sidebar-root');
+    var sb = document.querySelector('.sidebar');
     if (!sb) return;
     var isOpen = sb.classList.contains('sb-open');
     if (isOpen) {
@@ -382,6 +389,7 @@
       sidebarToggle.innerHTML = '<span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:\'FILL\' 0,\'wght\' 400,\'GRAD\' 0,\'opsz\' 24">close</span>';
     }
   });
+  }
 
   /* ── Scroll tint ── */
   var tint = document.getElementById('ec-bg-tint');

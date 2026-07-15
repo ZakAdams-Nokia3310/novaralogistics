@@ -28,7 +28,7 @@
         <span>
           We use essential cookies to keep you signed in and remember your preferences.
           No tracking or advertising cookies are used without your consent.
-          <a href="privacy.html" style="color:#00f0ff;text-decoration:none;white-space:nowrap">Privacy Policy →</a>
+          <a href="privacy" style="color:#00f0ff;text-decoration:none;white-space:nowrap">Privacy Policy →</a>
         </span>
       </div>
       <div style="display:flex;gap:8px;flex-shrink:0">

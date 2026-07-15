@@ -31,11 +31,13 @@ const EC_AUTH = (() => {
     { id: 52, name: 'Johan Pretorius',  email: 'driver@ironclad.co.za', password: 'ironclad1',  role: 'driver', org: 'Ironclad Logistics',   orgId: '624ad6b5-3870-43d4-ab35-3d33a1c26d05' },
   ];
 
+  // Extensionless — matches the clean URLs served by firebase.json's
+  // "cleanUrls" setting (and server.js's local-dev equivalent).
   const DASH = {
-    admin:  'dashboard-admin.html',
-    user:   'dashboard-user.html',
-    driver: 'dashboard-driver.html',
-    guest:  'dashboard-guest.html',
+    admin:  'dashboard-admin',
+    user:   'dashboard-user',
+    driver: 'dashboard-driver',
+    guest:  'dashboard-guest',
   };
 
   const KEY = 'ec_session';
@@ -131,7 +133,7 @@ const EC_AUTH = (() => {
       }
       sessionStorage.removeItem(KEY);
       sessionStorage.removeItem('ec_session_ts');
-      location.href = 'login.html';
+      location.href = 'login';
     },
 
     current() {
@@ -161,14 +163,14 @@ const EC_AUTH = (() => {
             required : roles,
           });
         }
-        location.href = 'login.html';
+        location.href = 'login';
         throw new Error('Unauthorised');
       }
       return user;
     },
 
     dashFor(role) {
-      return DASH[role] || 'dashboard-guest.html';
+      return DASH[role] || 'dashboard-guest';
     },
 
     detectOrg(email) {

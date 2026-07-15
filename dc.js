@@ -380,7 +380,7 @@ const DC_DATA = (() => {
       if (_ready) return;
       if (!API_KEY) {
         window.showToast?.('error', 'Service configuration issue. Please contact support.');
-        setTimeout(() => { window.location.href = 'error.html'; }, 1800);
+        setTimeout(() => { window.location.href = 'error'; }, 1800);
         throw new Error('Service configuration issue.');
       }
       // Serve from sessionStorage cache if fresh (avoids refetch on page navigation)
@@ -395,7 +395,7 @@ const DC_DATA = (() => {
         saveCache();
       } catch (err) {
         window.showToast?.('error', 'Unable to load data. Please refresh or try again later.');
-        setTimeout(() => { window.location.href = 'error.html'; }, 2000);
+        setTimeout(() => { window.location.href = 'error'; }, 2000);
         throw err;
       }
     },

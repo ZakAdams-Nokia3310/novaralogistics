@@ -44,7 +44,7 @@
 <div class="main">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:10px">
-      <a href="admin-fleet.html" class="btn-back" style="padding:7px 12px">
+      <a href="admin-fleet" class="btn-back" style="padding:7px 12px">
         <span class="material-symbols-outlined ms" style="font-size:18px">arrow_back</span>
       </a>
       <div>
@@ -59,7 +59,7 @@
 
     <div class="success-banner" id="successBanner">
       <span class="material-symbols-outlined ms" style="font-size:16px">check_circle</span>
-      Vehicle added to fleet successfully! <a href="admin-fleet.html" style="color:#00d4aa;margin-left:8px">View Fleet →</a>
+      Vehicle added to fleet successfully! <a href="admin-fleet" style="color:#00d4aa;margin-left:8px">View Fleet →</a>
     </div>
     <div class="err" id="errBox"></div>
 
@@ -214,7 +214,7 @@
           <span class="material-symbols-outlined ms" style="font-size:18px">add</span>
           Add to Fleet
         </button>
-        <a href="admin-fleet.html" class="btn-back">Cancel</a>
+        <a href="admin-fleet" class="btn-back">Cancel</a>
       </div>
     </form>
   </div>
@@ -223,12 +223,13 @@
 <script src="firebase-config.js"></script>
 <script src="security.js"></script>
 <script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
 <script src="dc.js"></script>
 <script src="sidebar.js"></script>
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
-buildSidebar('add-vehicle.html');
+buildSidebar('add-vehicle');
 var user = EC_AUTH.require(['admin']);
 DC_DATA.setOrgScope(user.orgId);
 document.getElementById('orgLabel').textContent = user.org || 'EquipCore';
