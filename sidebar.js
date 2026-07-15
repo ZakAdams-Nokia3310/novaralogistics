@@ -7,6 +7,7 @@
     admin: [
       { section: 'Main' },
       { href:'dashboard-admin',  icon:'dashboard',     label:'Overview' },
+      { href:'messages',         icon:'chat',          label:'Messages' },
       { href:'admin-rentals',    icon:'receipt_long',  label:'Rental Tracking' },
       { href:'admin-orgs',       icon:'domain',        label:'Organisations' },
       { href:'admin-fleet',      icon:'garage',        label:'Fleet' },
@@ -26,6 +27,7 @@
       { section: 'My Account' },
       { href:'dashboard-user',   icon:'dashboard',     label:'My Dashboard' },
       { href:'my-rentals',       icon:'receipt_long',  label:'My Rentals' },
+      { href:'messages',         icon:'chat',          label:'Messages' },
       { href:'apply-rental',     icon:'add_circle',    label:'Apply to Rent' },
       { section: 'Browse' },
       { href:'calculator',       icon:'calculate',     label:'Calculator' },
@@ -38,6 +40,7 @@
       { section: 'Driver Portal' },
       { href:'dashboard-driver', icon:'home',          label:'My Dashboard' },
       { href:'my-rentals',       icon:'receipt_long',  label:'My Rentals' },
+      { href:'messages',         icon:'chat',          label:'Messages' },
       { href:'calculator',       icon:'calculate',     label:'Calculator' },
       { section: 'Account' },
       { href:'profile',          icon:'person',        label:'My Profile' },

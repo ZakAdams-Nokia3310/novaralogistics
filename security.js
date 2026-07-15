@@ -47,6 +47,7 @@ const EC_SECURITY = (() => {
     'apply-rental'      : ['user', 'admin'],
     'dashboard-driver'  : ['driver'],
     'driver-vehicles'   : ['driver', 'admin'],
+    'messages'          : ['admin', 'user', 'driver'],
   };
 
   // ── Cryptographically secure random ───────────────────────────────────────

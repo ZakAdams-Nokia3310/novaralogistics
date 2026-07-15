@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Messages — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;background:#080a0e;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;flex-shrink:0;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btnp:disabled{opacity:.4;cursor:not-allowed;filter:none;}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+
+  /* ── Chat layout ── */
+  .msg-layout{display:flex;height:calc(100vh - 56px);}
+  .msg-list-panel{width:320px;flex-shrink:0;overflow-y:auto;border-right:1px solid rgba(255,255,255,.06);}
+  .convo-item{display:flex;gap:11px;padding:13px 16px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;position:relative;}
+  .convo-item:hover{background:rgba(255,255,255,.03);}
+  .convo-item.active{background:rgba(0,240,255,.06);}
+  .convo-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#00f0ff;}
+  .convo-avatar{width:38px;height:38px;border-radius:10px;background:rgba(0,240,255,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#00f0ff;flex-shrink:0;}
+  .convo-meta{flex:1;min-width:0;}
+  .convo-name{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .convo-preview{font-size:12px;color:#849495;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
+  .convo-time{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495;flex-shrink:0;margin-top:1px;}
+  .unread-dot{width:8px;height:8px;border-radius:50%;background:#00f0ff;flex-shrink:0;margin-top:5px;}
+
+  .msg-thread-panel{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .thread-header{padding:13px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:11px;flex-shrink:0;}
+  #backBtn{display:none;background:none;border:none;color:#b9cacb;cursor:pointer;padding:4px;}
+  .messages-scroll{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:4px;}
+  .msg-row{display:flex;flex-direction:column;max-width:65%;}
+  .msg-row.mine{align-self:flex-end;align-items:flex-end;}
+  .msg-row.theirs{align-self:flex-start;align-items:flex-start;}
+  .msg-bubble{padding:9px 13px;border-radius:14px;font-size:13.5px;line-height:1.5;word-wrap:break-word;}
+  .msg-row.mine .msg-bubble{background:#00f0ff;color:#003a3c;border-bottom-right-radius:4px;}
+  .msg-row.theirs .msg-bubble{background:rgba(255,255,255,.07);color:#e2e2e8;border-bottom-left-radius:4px;}
+  .msg-time{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495;margin-top:3px;padding:0 3px;}
+  .msg-sender-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#849495;margin-bottom:3px;padding:0 3px;}
+
+  .composer{padding:13px 20px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:10px;align-items:flex-end;flex-shrink:0;}
+  .composer textarea{flex:1;resize:none;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:11px;padding:10px 13px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13.5px;line-height:1.4;max-height:120px;}
+  .composer textarea:focus{outline:none;border-color:rgba(0,240,255,.4);}
+  .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#849495;text-align:center;padding:0 30px;}
+
+  @media(max-width:768px){
+    #sidebar-root{display:none!important}
+    .main{margin-left:0!important}
+    .msg-list-panel{width:100%;border-right:none;}
+    #backBtn{display:inline-flex;}
+    .msg-layout:not(.thread-open) .msg-thread-panel{display:none;}
+    .msg-layout.thread-open .msg-list-panel{display:none;}
+    .msg-row{max-width:82%;}
+  }
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Messages</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Chat with approved rental applicants</div>
+    </div>
+  </div>
+
+  <div class="msg-layout" id="msgLayout">
+    <div class="msg-list-panel glass-lo" id="convoList">
+      <div class="empty-state" id="listEmpty" style="padding:40px 20px">
+        <span class="material-symbols-outlined ms" style="font-size:32px;opacity:.4">forum</span>
+        <div style="font-size:13px">No conversations yet</div>
+        <div style="font-size:11.5px">Conversations start automatically once a rental application is approved.</div>
+      </div>
+    </div>
+
+    <div class="msg-thread-panel">
+      <div class="empty-state" id="threadEmpty">
+        <span class="material-symbols-outlined ms" style="font-size:40px;opacity:.35">chat</span>
+        <div style="font-size:13.5px">Select a conversation to start chatting</div>
+      </div>
+
+      <div id="threadActive" style="display:none;flex-direction:column;flex:1;min-height:0;">
+        <div class="thread-header">
+          <button id="backBtn" aria-label="Back to conversations"><span class="material-symbols-outlined ms" style="font-size:22px">arrow_back</span></button>
+          <div class="convo-avatar" id="threadAvatar" style="width:34px;height:34px">--</div>
+          <div style="min-width:0">
+            <div style="font-weight:700;font-size:14px" id="threadName">—</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495" id="threadSub">—</div>
+          </div>
+        </div>
+        <div class="messages-scroll" id="messagesScroll"></div>
+        <div class="composer">
+          <textarea id="msgInput" rows="1" placeholder="Type a message… (Enter to send, Shift+Enter for newline)"></textarea>
+          <button class="btnp" id="sendBtn" disabled>
+            <span class="material-symbols-outlined ms" style="font-size:16px">send</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="frontend/chat-client.js"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('messages');
+
+const user = EC_AUTH.require(['admin', 'user', 'driver']);
+
+const msgLayout      = document.getElementById('msgLayout');
+const convoListEl    = document.getElementById('convoList');
+const listEmpty      = document.getElementById('listEmpty');
+const threadEmpty    = document.getElementById('threadEmpty');
+const threadActive   = document.getElementById('threadActive');
+const threadAvatar   = document.getElementById('threadAvatar');
+const threadName     = document.getElementById('threadName');
+const threadSub      = document.getElementById('threadSub');
+const messagesScroll = document.getElementById('messagesScroll');
+const msgInput       = document.getElementById('msgInput');
+const sendBtn        = document.getElementById('sendBtn');
+const backBtn        = document.getElementById('backBtn');
+
+let conversations = [];
+let activeConvoId = null;
+let unsubMessages = null;
+
+function initials(name) {
+  return (name || '?').split(' ').map(n => n[0] || '').join('').slice(0, 2).toUpperCase();
+}
+
+// The "other party" — from the org side, that's the customer; from the
+// customer side, that's the organisation.
+function otherPartyLabel(convo) {
+  if (user.role === 'admin') return { name: convo.customerName || 'Customer', sub: convo.customerEmail || '' };
+  return { name: convo.organisationName || 'Organisation', sub: 'Rental support' };
+}
+
+function renderConvoList() {
+  if (!conversations.length) {
+    listEmpty.style.display = 'flex';
+    convoListEl.querySelectorAll('.convo-item').forEach(el => el.remove());
+    return;
+  }
+  listEmpty.style.display = 'none';
+  convoListEl.querySelectorAll('.convo-item').forEach(el => el.remove());
+
+  conversations.forEach(convo => {
+    const other = otherPartyLabel(convo);
+    const unread = (convo.lastMessageSenderId && convo.lastMessageSenderId !== user.id
+      && !(convo.readBy || []).includes(user.id));
+
+    const el = document.createElement('div');
+    el.className = 'convo-item' + (convo.id === activeConvoId ? ' active' : '');
+    el.innerHTML = `
+      <div class="convo-avatar">${initials(other.name)}</div>
+      <div class="convo-meta">
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <div class="convo-name">${other.name}</div>
+          <div class="convo-time">${EC_CHAT.relativeTime(convo.lastMessageAt)}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+          <div class="convo-preview">${convo.lastMessagePreview || ''}</div>
+          ${unread ? '<div class="unread-dot"></div>' : ''}
+        </div>
+      </div>`;
+    el.addEventListener('click', () => openConversation(convo.id));
+    convoListEl.appendChild(el);
+  });
+}
+
+function openConversation(id) {
+  activeConvoId = id;
+  msgLayout.classList.add('thread-open');
+  threadEmpty.style.display = 'none';
+  threadActive.style.display = 'flex';
+
+  const convo = conversations.find(c => c.id === id);
+  const other = otherPartyLabel(convo || {});
+  threadAvatar.textContent = initials(other.name);
+  threadName.textContent = other.name;
+  threadSub.textContent = other.sub;
+
+  renderConvoList();
+
+  if (unsubMessages) unsubMessages();
+  messagesScroll.innerHTML = '';
+  unsubMessages = EC_CHAT.listenToMessages(id, (msgs) => renderMessages(msgs, id));
+}
+
+function renderMessages(msgs, forConvoId) {
+  if (forConvoId !== activeConvoId) return;
+  messagesScroll.innerHTML = '';
+  let lastSenderId = null;
+
+  msgs.forEach(m => {
+    const mine = m.senderId === user.id;
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (mine ? 'mine' : 'theirs');
+
+    const showLabel = !mine && m.senderId !== lastSenderId;
+    row.innerHTML = `
+      ${showLabel ? `<div class="msg-sender-label">${(m.senderRole || '').toUpperCase()}</div>` : ''}
+      <div class="msg-bubble">${escapeHtml(m.text)}</div>
+      <div class="msg-time">${EC_CHAT.relativeTime(m.sentAt)}</div>`;
+    messagesScroll.appendChild(row);
+    lastSenderId = m.senderId;
+
+    if (!mine && m.id && !(m.readBy || []).includes(user.id)) {
+      EC_CHAT.markRead(activeConvoId, m.id, user.id).catch(() => {});
+    }
+  });
+
+  messagesScroll.scrollTop = messagesScroll.scrollHeight;
+}
+
+function escapeHtml(str) {
+  if (typeof EC_SECURITY !== 'undefined') return EC_SECURITY.sanitizeHtml(str);
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#x27;'}[c]));
+}
+
+backBtn.addEventListener('click', () => {
+  msgLayout.classList.remove('thread-open');
+});
+
+function updateSendState() {
+  sendBtn.disabled = !msgInput.value.trim();
+}
+msgInput.addEventListener('input', () => {
+  updateSendState();
+  msgInput.style.height = 'auto';
+  msgInput.style.height = Math.min(120, msgInput.scrollHeight) + 'px';
+});
+
+async function send() {
+  const text = msgInput.value.trim();
+  if (!text || !activeConvoId) return;
+  msgInput.value = '';
+  updateSendState();
+  msgInput.style.height = 'auto';
+  try {
+    await EC_CHAT.sendMessage(activeConvoId, text);
+  } catch (err) {
+    if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('CHAT_SEND_FAILED', { error: err.message });
+    alert('Failed to send message: ' + err.message);
+  }
+}
+
+sendBtn.addEventListener('click', send);
+msgInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+
+EC_CHAT.listenToConversations(user.id, (list) => {
+  conversations = list;
+  renderConvoList();
+});
+</script>
+</body></html>
