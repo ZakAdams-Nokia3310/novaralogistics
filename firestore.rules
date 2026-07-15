@@ -1,21 +1,74 @@
 rules_version = '2';
 
 // Novara Terra Industrials — Firestore Security Rules
-// Current architecture uses Firebase Data Connect (PostgreSQL), not Firestore.
-// These rules deny all access as a safety net in case Firestore is inadvertently
-// enabled or accessed. When the app migrates to Firestore, replace these rules
-// with role-specific, field-validated rules before enabling any collection.
+//
+// Postgres (via Data Connect) stays the system of record for Organisation,
+// User, Vehicle, RentalApplication, etc. — nothing about that changes here.
+// Firestore is used only for realtime chat between an Organisation and a
+// customer once their rental application is approved.
+//
+// Auth: role/orgId come from Firebase Auth custom claims (see
+// functions/controllers/authController.js's setRole) — the same claims
+// storage.rules already relies on.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ── Deny everything by default ───────────────────────────────────────────
-    // No collection or document is readable or writable from the client.
-    // All data access must go through the Data Connect service using the
-    // @auth directives defined in dataconnect/schema/schema.gql.
     match /{document=**} {
       allow read, write: if false;
     }
 
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isParticipant(conversationData) {
+      return isSignedIn() && request.auth.uid in conversationData.participantUids;
+    }
+
+    function conversationOf(conversationId) {
+      return get(/databases/$(database)/documents/conversations/$(conversationId)).data;
+    }
+
+    // ── conversations/{conversationId} ───────────────────────────────────────
+    // Conversation documents (and their lastMessage* metadata) are entirely
+    // server-managed — created by the approval Cloud Function, kept in sync
+    // by a Cloud Function trigger on new messages. Clients never write to a
+    // conversation document directly, only to its messages subcollection,
+    // so there's no client-side path that can spoof lastMessagePreview etc.
+    match /conversations/{conversationId} {
+      allow read: if isParticipant(resource.data);
+      allow create, update, delete: if false;
+
+      // ── conversations/{conversationId}/messages/{messageId} ────────────────
+      match /messages/{messageId} {
+        allow read: if isParticipant(conversationOf(conversationId));
+
+        allow create: if isParticipant(conversationOf(conversationId))
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.senderRole == request.auth.token.role
+          && request.resource.data.keys().hasAll(['senderId', 'senderRole', 'text', 'sentAt', 'readBy'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 4000
+          // sentAt must be the server's commit time, not a client-supplied
+          // value — the client sends FieldValue.serverTimestamp().
+          && request.resource.data.sentAt == request.time
+          // A message starts as read only by its own sender.
+          && request.resource.data.readBy == [request.auth.uid];
+
+        // Messages are immutable except for readBy, which a participant can
+        // append their own uid to (a read receipt) — nothing else, and no
+        // existing entries can be removed.
+        allow update: if isParticipant(conversationOf(conversationId))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readBy'])
+          && request.resource.data.readBy.hasAll(resource.data.readBy)
+          && request.resource.data.readBy.removeAll(resource.data.readBy) == [request.auth.uid];
+
+        allow delete: if false;
+      }
+    }
   }
 }
