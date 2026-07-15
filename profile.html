@@ -288,9 +288,25 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     var newRole = document.getElementById('fRoleSelect').value;
     if (newRole !== (_targetUser.role || '').toUpperCase()) {
       promises.push(mutate('UpdateUserRole', { id: _targetUser.id, role: newRole }));
+      // Data Connect's role column is just the display copy shown on org
+      // management pages — the role that actually controls what this user
+      // can access lives in their Firebase Auth custom claims, so both
+      // must be updated together or their session and the admin UI disagree.
+      promises.push(EC_API.authFetch('/auth/set-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: _targetUser.email,
+          role: newRole.toLowerCase(),
+          org: currentUser.org || null,
+          orgId: _targetUser.orgId || currentUser.orgId || null,
+        }),
+      }).then(function (r) { if (!r.ok) throw new Error('Failed to update access role'); }));
     }
 
-    // Password change
+    // Password change — a client SDK can only ever change the currently
+    // signed-in user's own password, so resetting someone else's requires
+    // the admin-only backend endpoint (Admin SDK), not a client-side call.
     var newPwd = document.getElementById('fNewPwd').value;
     var confirmPwd = document.getElementById('fConfirmPwd').value;
     if (newPwd) {
@@ -304,10 +320,11 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
         btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">save</span> Save Profile';
         return;
       }
-      // Update local auth password for demo users
-      var regUsers = JSON.parse(localStorage.getItem('ec_registered_users') || '[]');
-      var found = regUsers.find(function(u){ return u.email === _targetUser.email; });
-      if (found) { found.password = newPwd; localStorage.setItem('ec_registered_users', JSON.stringify(regUsers)); }
+      promises.push(EC_API.authFetch('/auth/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: _targetUser.email, newPassword: newPwd }),
+      }).then(function (r) { if (!r.ok) throw new Error('Failed to update password'); }));
     }
   }
 
