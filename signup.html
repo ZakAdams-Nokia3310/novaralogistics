@@ -104,6 +104,9 @@
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
 <script src="security.js"></script>
 <script src="auth.js"></script>
 <script src="frontend/token-client.js"></script>
@@ -159,9 +162,9 @@ form.addEventListener('submit', function(e){
 
   btn.textContent = 'Creating account…'; btn.disabled = true;
 
-  setTimeout(function(){
+  setTimeout(async function(){
     try {
-      var user = EC_AUTH.signup(name, email, pwd);
+      var user = await EC_AUTH.signup(name, email, pwd);
       location.href = EC_AUTH.dashFor(user.role) + '?intro=1';
     } catch (err) {
       showErr(err.message || 'Sign-up failed.');

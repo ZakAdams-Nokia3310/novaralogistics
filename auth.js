@@ -1,35 +1,26 @@
 'use strict';
 // EquipCore — Authentication Module
-// Depends on security.js being loaded first.
+// Depends on security.js, and on the Firebase compat SDK + firebase-config.js
+// being loaded first (see the <script> order at the top of every page).
 
 const EC_AUTH = (() => {
-  // Hardcoded demo users. In production these would be Firebase Auth accounts.
-  // SECURITY NOTE: These credentials are visible in client-side source.
-  // Migrate to Firebase Authentication before sharing with real clients.
-  const USERS = [
-    // Super Admin — sees all organisations
-    { id: 1,  name: 'Alex Carter',      email: 'admin@equipcore.com',    password: 'admin123',   role: 'admin',  org: 'EquipCore HQ',         orgId: null },
-    // Org 1: Vanguard Heavies (Construction)
-    { id: 10, name: 'Sipho Ndlovu',     email: 'admin@vanguard.io',     password: 'vanguard1',  role: 'admin',  org: 'Vanguard Heavies Ltd.', orgId: '00000001-0000-0000-0000-000000000001' },
-    { id: 11, name: 'Lerato Molefe',    email: 'user@vanguard.io',      password: 'vanguard1',  role: 'user',   org: 'Vanguard Heavies Ltd.', orgId: '00000001-0000-0000-0000-000000000001' },
-    { id: 12, name: 'Thabo Kgosi',      email: 'driver@vanguard.io',    password: 'vanguard1',  role: 'driver', org: 'Vanguard Heavies Ltd.', orgId: '00000001-0000-0000-0000-000000000001' },
-    // Org 2: Oceanic Rigging (Maritime Logistics)
-    { id: 20, name: 'Morgan Blake',     email: 'admin@oceanic.com',     password: 'oceanic1',   role: 'admin',  org: 'Oceanic Rigging Corp',  orgId: '00000001-0000-0000-0000-000000000002' },
-    { id: 21, name: 'Taylor Osei',      email: 'user@oceanic.com',      password: 'oceanic1',   role: 'user',   org: 'Oceanic Rigging Corp',  orgId: '00000001-0000-0000-0000-000000000002' },
-    { id: 22, name: 'Casey Drummond',   email: 'driver@oceanic.com',    password: 'oceanic1',   role: 'driver', org: 'Oceanic Rigging Corp',  orgId: '00000001-0000-0000-0000-000000000002' },
-    // Org 3: Aether Power Grid (Energy)
-    { id: 30, name: 'Zanele Mthembu',   email: 'admin@aether.org',      password: 'aether1',    role: 'admin',  org: 'Aether Power Grid',    orgId: '00000001-0000-0000-0000-000000000003' },
-    { id: 31, name: 'Pieter van Wyk',   email: 'user@aether.org',       password: 'aether1',    role: 'user',   org: 'Aether Power Grid',    orgId: '00000001-0000-0000-0000-000000000003' },
-    { id: 32, name: 'Mandla Zulu',      email: 'driver@aether.org',     password: 'aether1',    role: 'driver', org: 'Aether Power Grid',    orgId: '00000001-0000-0000-0000-000000000003' },
-    // Org 4: TerraForming Inc (Agricultural)
-    { id: 40, name: 'Fatima Patel',     email: 'admin@terraform.co',    password: 'terraform1', role: 'admin',  org: 'TerraForming Inc',     orgId: '00000001-0000-0000-0000-000000000004' },
-    { id: 41, name: 'David Botha',      email: 'user@terraform.co',     password: 'terraform1', role: 'user',   org: 'TerraForming Inc',     orgId: '00000001-0000-0000-0000-000000000004' },
-    { id: 42, name: 'Nkosi Dlamini',    email: 'driver@terraform.co',   password: 'terraform1', role: 'driver', org: 'TerraForming Inc',     orgId: '00000001-0000-0000-0000-000000000004' },
-    // Org 5: Ironclad Logistics (Logistics)
-    { id: 50, name: 'Bongani Dube',     email: 'admin@ironclad.co.za',  password: 'ironclad1',  role: 'admin',  org: 'Ironclad Logistics',   orgId: '624ad6b5-3870-43d4-ab35-3d33a1c26d05' },
-    { id: 51, name: 'Amahle Sithole',   email: 'user@ironclad.co.za',   password: 'ironclad1',  role: 'user',   org: 'Ironclad Logistics',   orgId: '624ad6b5-3870-43d4-ab35-3d33a1c26d05' },
-    { id: 52, name: 'Johan Pretorius',  email: 'driver@ironclad.co.za', password: 'ironclad1',  role: 'driver', org: 'Ironclad Logistics',   orgId: '624ad6b5-3870-43d4-ab35-3d33a1c26d05' },
-  ];
+  if (typeof firebase !== 'undefined' && typeof FIREBASE_CONFIG !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(FIREBASE_CONFIG);
+  }
+
+  // Client-side hint only, used to preview which org an email domain
+  // belongs to before sign-in even completes. Real role/org assignment
+  // happens server-side via custom claims (see
+  // functions/controllers/authController.js's setRole) — this map cannot
+  // grant access to anything by itself, it only colors a UI pill.
+  const ORG_DOMAINS = {
+    'vanguard.io'    : 'Vanguard Heavies Ltd.',
+    'oceanic.com'    : 'Oceanic Rigging Corp',
+    'aether.org'     : 'Aether Power Grid',
+    'terraform.co'   : 'TerraForming Inc',
+    'ironclad.co.za' : 'Ironclad Logistics',
+    'equipcore.com'  : 'EquipCore HQ',
+  };
 
   // Extensionless — matches the clean URLs served by firebase.json's
   // "cleanUrls" setting (and server.js's local-dev equivalent).
@@ -41,21 +32,49 @@ const EC_AUTH = (() => {
   };
 
   const KEY = 'ec_session';
-  const REG_KEY = 'ec_registered_users';
 
   function save(user) {
     sessionStorage.setItem(KEY, JSON.stringify(user));
     if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.touchSession();
   }
 
-  function getRegistered() {
-    try { return JSON.parse(localStorage.getItem(REG_KEY)) || []; } catch { return []; }
+  function clear() {
+    sessionStorage.removeItem(KEY);
+    sessionStorage.removeItem('ec_session_ts');
   }
-  function saveRegistered(users) { localStorage.setItem(REG_KEY, JSON.stringify(users)); }
-  function allUsers() { return [...USERS, ...getRegistered()]; }
+
+  // Builds the session object the rest of this app already expects
+  // (guardPage, sidebar, dashboards) from a signed-in Firebase user and
+  // their custom claims.
+  async function sessionFromFirebaseUser(fbUser) {
+    const idTokenResult = await fbUser.getIdTokenResult();
+    const claims = idTokenResult.claims || {};
+    return {
+      id    : fbUser.uid,
+      name  : fbUser.displayName || claims.name || (fbUser.email || '').split('@')[0],
+      email : fbUser.email,
+      role  : claims.role || 'user',
+      org   : claims.org || (claims.role ? '' : 'Independent'),
+      orgId : claims.orgId || null,
+    };
+  }
+
+  // Keeps sessionStorage in sync with Firebase's real auth state across
+  // page loads and token refreshes — e.g. picks up a role change (custom
+  // claims) or a sign-out triggered elsewhere without a manual page action.
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onIdTokenChanged(async (fbUser) => {
+      if (!fbUser) { clear(); return; }
+      try {
+        save(await sessionFromFirebaseUser(fbUser));
+      } catch {
+        clear();
+      }
+    });
+  }
 
   return {
-    signup(name, email, password) {
+    async signup(name, email, password) {
       const cleanName = String(name || '').trim();
       const cleanEmail = (typeof EC_SECURITY !== 'undefined')
         ? EC_SECURITY.sanitizeInput(email, 'email')
@@ -65,23 +84,26 @@ const EC_AUTH = (() => {
       if (!cleanName || !cleanEmail || !cleanPwd) throw new Error('All fields are required.');
       if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.isValidEmail(cleanEmail)) throw new Error('Please enter a valid email address.');
       if (cleanPwd.length < 6) throw new Error('Password must be at least 6 characters.');
-      if (allUsers().find(u => u.email === cleanEmail)) throw new Error('An account with this email already exists.');
 
-      const maxId = Math.max(...allUsers().map(u => u.id || 0), 0);
-      const newUser = { id: maxId + 1, name: cleanName, email: cleanEmail, password: cleanPwd, role: 'user', org: 'Independent', orgId: null };
+      let cred;
+      try {
+        cred = await firebase.auth().createUserWithEmailAndPassword(cleanEmail, cleanPwd);
+      } catch (err) {
+        if (err.code === 'auth/email-already-in-use') throw new Error('An account with this email already exists.');
+        if (err.code === 'auth/weak-password') throw new Error('Password must be at least 6 characters.');
+        throw new Error('Could not create account. Please try again.');
+      }
 
-      const reg = getRegistered();
-      reg.push(newUser);
-      saveRegistered(reg);
+      await cred.user.updateProfile({ displayName: cleanName });
 
-      if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('SIGNUP_SUCCESS', { userId: newUser.id, email: cleanEmail });
+      if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('SIGNUP_SUCCESS', { userId: cred.user.uid, email: cleanEmail });
 
-      const session = { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, org: newUser.org, orgId: newUser.orgId };
+      const session = await sessionFromFirebaseUser(cred.user);
       save(session);
       return session;
     },
 
-    login(email, password) {
+    async login(email, password) {
       // Rate-limit login calls
       if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.checkRateLimit('login')) {
         throw new Error('Too many requests. Please wait a moment and try again.');
@@ -94,17 +116,22 @@ const EC_AUTH = (() => {
         throw new Error(`Account temporarily locked. Try again in ${mins} minute${mins !== 1 ? 's' : ''}.`);
       }
 
-      // Sanitise inputs before comparison
       const cleanEmail = (typeof EC_SECURITY !== 'undefined')
         ? EC_SECURITY.sanitizeInput(email, 'email')
         : String(email || '').toLowerCase().trim();
       const cleanPwd = String(password || '');
 
-      const found = allUsers().find(u => u.email === cleanEmail && u.password === cleanPwd);
+      let cred = null;
+      try {
+        cred = await firebase.auth().signInWithEmailAndPassword(cleanEmail, cleanPwd);
+      } catch {
+        // Fall through with cred === null — handled below the same way as
+        // the old "found" check, so lockout/audit logic is identical.
+      }
 
       if (typeof EC_SECURITY !== 'undefined') {
-        const result = EC_SECURITY.recordLoginAttempt(!!found);
-        if (!found) {
+        const result = EC_SECURITY.recordLoginAttempt(!!cred);
+        if (!cred) {
           if (result.lockedUntil) {
             EC_SECURITY.audit('LOGIN_FAILED_LOCKED', { email: cleanEmail });
             const mins = Math.ceil(EC_SECURITY.lockoutRemainingMs() / 60000);
@@ -116,23 +143,25 @@ const EC_AUTH = (() => {
             : '';
           throw new Error('Invalid email or password.' + warn);
         }
-        EC_SECURITY.audit('LOGIN_SUCCESS', { userId: found.id, role: found.role });
-      } else if (!found) {
+      } else if (!cred) {
         throw new Error('Invalid email or password.');
       }
 
-      const session = { id: found.id, name: found.name, email: found.email, role: found.role, org: found.org, orgId: found.orgId || null };
+      const session = await sessionFromFirebaseUser(cred.user);
+      if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('LOGIN_SUCCESS', { userId: session.id, role: session.role });
       save(session);
       return session;
     },
 
-    logout() {
+    async logout() {
       const user = this.current();
       if (user && typeof EC_SECURITY !== 'undefined') {
         EC_SECURITY.audit('LOGOUT', { userId: user.id, role: user.role });
       }
-      sessionStorage.removeItem(KEY);
-      sessionStorage.removeItem('ec_session_ts');
+      clear();
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        try { await firebase.auth().signOut(); } catch { /* already signed out */ }
+      }
       location.href = 'login';
     },
 
@@ -141,14 +170,13 @@ const EC_AUTH = (() => {
       if (!raw) return null;
       try {
         const user = JSON.parse(raw);
-        // Validate session shape and expiry
         if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.validateSessionObject(user)) {
-          sessionStorage.removeItem(KEY);
+          clear();
           return null;
         }
         return user;
       } catch {
-        sessionStorage.removeItem(KEY);
+        clear();
         return null;
       }
     },
@@ -173,11 +201,11 @@ const EC_AUTH = (() => {
       return DASH[role] || 'dashboard-guest';
     },
 
+    // Client-side hint only — see ORG_DOMAINS above.
     detectOrg(email) {
-      const domain = (email || '').split('@')[1] || '';
-      const match  = allUsers().find(u => u.email.split('@')[1] === domain);
-      if (match) return { name: match.org, role: match.role };
-      return { name: '', role: 'guest' };
+      const domain = (email || '').split('@')[1]?.toLowerCase() || '';
+      const org = ORG_DOMAINS[domain];
+      return org ? { name: org, role: 'user' } : { name: '', role: 'guest' };
     },
   };
 })();
