@@ -84,7 +84,7 @@
         <span style="font-size:20px;flex-shrink:0">⚡</span>
         <span class="sb-label" style="font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;overflow:hidden">EquipCore</span>
       </a>
-      <button class="sb-label sb-toggle" aria-label="Collapse sidebar" title="Collapse sidebar" onclick="toggleSidebarCollapse()"><span class="material-symbols-outlined">chevron_left</span></button>
+      <button class="sb-toggle" aria-label="Collapse sidebar" title="Collapse sidebar" onclick="toggleSidebarCollapse()"><span class="material-symbols-outlined">chevron_left</span></button>
     </div>`;
 
     // ── User card or Sign-In prompt ────────────────────────
