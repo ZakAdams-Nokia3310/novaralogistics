@@ -672,5 +672,6 @@ DC_DATA.init().then(renderAll).catch(err => {
   console.error('[DC_DATA]', err);
   document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${err.message}</div>`);
 });
+DC_DATA.startPolling(renderAll, 5000);
 </script>
 </body></html>
