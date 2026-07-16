@@ -48,6 +48,8 @@ const EC_SECURITY = (() => {
     'dashboard-driver'  : ['driver'],
     'driver-vehicles'   : ['driver', 'admin'],
     'messages'          : ['admin', 'user', 'driver'],
+    'vehicle-detail'    : ['admin'],
+    'rental-detail'     : ['admin'],
   };
 
   // ── Cryptographically secure random ───────────────────────────────────────

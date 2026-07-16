@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Vehicle Details — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="theme.css" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:24px 28px;max-width:920px;}
+  label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+  input[type=text],input[type=number],input[type=date],textarea{width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,.2);}
+  .fg{margin-bottom:18px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .sec{font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#e2e2e8;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:8px;margin-top:28px;}
+  .sec:first-of-type{margin-top:0;}
+  .sec .ms{font-size:18px;color:#00f0ff;}
+  .btnp{display:inline-flex;align-items:center;gap:6px;padding:11px 22px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;border-radius:10px;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 20px rgba(0,240,255,.15);}
+  .btnp:hover{filter:brightness(1.08);}
+  .btnp:disabled{opacity:.5;cursor:default;}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:10px 16px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+  .btnr{display:inline-flex;align-items:center;gap:5px;padding:10px 16px;background:rgba(255,107,107,.08);color:#ff6b6b;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,107,107,.18);cursor:pointer;transition:background .18s;}
+  .btnr:hover{background:rgba(255,107,107,.14);}
+  .photo-preview{height:220px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03);position:relative;margin-bottom:10px;border:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;}
+  .photo-preview img{width:100%;height:100%;object-fit:cover;}
+  .upload-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#b9cacb;font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;transition:all .18s;}
+  .upload-btn:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14);}
+  .err{display:none;padding:10px 14px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:9px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
+  .toast{position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:12px;opacity:0;transform:translateY(-10px);transition:all .3s ease;pointer-events:none;}
+  .toast.show{opacity:1;transform:none;}
+  .toast.ok{background:rgba(0,212,170,.15);border:1px solid rgba(0,212,170,.3);color:#00d4aa;}
+  .toast.err{background:rgba(255,100,100,.1);border:1px solid rgba(255,100,100,.2);color:#ff6b6b;}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  .bblue{background:rgba(0,240,255,.08);color:#00dbe9;}
+  .stat-mini{display:flex;flex-direction:column;gap:2px}
+  .stat-mini .k{font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;letter-spacing:.08em}
+  .stat-mini .v{font-size:13px;font-weight:600}
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);}
+  .tbl td{padding:10px 12px;font-size:12.5px;border-bottom:1px solid rgba(255,255,255,.03);}
+  .tbl tr:last-child td{border-bottom:none;}
+  .tbl tbody tr{cursor:pointer;transition:background .15s}
+  .tbl tbody tr:hover td{background:rgba(0,240,255,.03)}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr!important}.body{padding:14px 14px!important}}
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0">
+      <a href="admin-fleet" class="btng" style="padding:7px 10px">
+        <span class="material-symbols-outlined ms" style="font-size:18px">arrow_back</span>
+      </a>
+      <div style="min-width:0">
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="pgTitle">Vehicle Details</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495" id="pgSub">—</div>
+      </div>
+    </div>
+    <div id="statusBadge"></div>
+  </div>
+
+  <div class="body">
+    <div class="err" id="notFoundBox">This vehicle could not be found. It may have been removed.</div>
+    <div id="toast" class="toast"></div>
+
+    <div id="content" style="display:none">
+
+      <!-- ── At-a-glance ── -->
+      <div class="glass" style="border-radius:13px;padding:16px 18px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px" id="glanceRow"></div>
+
+      <!-- ── Rental status ── -->
+      <div id="rentalBanner" style="display:none;margin-bottom:20px"></div>
+
+      <form id="detailForm">
+        <!-- ── Photo ── -->
+        <div class="sec"><span class="material-symbols-outlined ms">photo_camera</span> Vehicle Photo</div>
+        <div class="fg">
+          <div class="photo-preview" id="photoPreview">
+            <span class="material-symbols-outlined ms" style="font-size:40px;color:#40474a" id="photoPlaceholder">local_shipping</span>
+            <img id="vPhotoImg" src="" alt="" style="display:none"/>
+          </div>
+          <input type="file" id="vPhoto" accept="image/*" style="display:none" onchange="handlePhoto(this)"/>
+          <button type="button" class="upload-btn" onclick="document.getElementById('vPhoto').click()">
+            <span class="material-symbols-outlined ms" style="font-size:18px">add_photo_alternate</span>
+            Change Vehicle Photo
+          </button>
+        </div>
+
+        <!-- ── Identification ── -->
+        <div class="sec"><span class="material-symbols-outlined ms">directions_car</span> Vehicle Identification</div>
+        <div class="grid2">
+          <div class="fg"><label>Make *</label><input id="fMake" type="text" required/></div>
+          <div class="fg"><label>Model *</label><input id="fModel" type="text" required/></div>
+          <div class="fg"><label>Year *</label><input id="fYear" type="number" min="1980" max="2030" required/></div>
+          <div class="fg"><label>Registration Plate *</label><input id="fPlate" type="text" required/></div>
+        </div>
+        <div class="grid2">
+          <div class="fg"><label>VIN Number</label><input id="fVin" type="text" placeholder="Vehicle Identification Number"/></div>
+          <div class="fg"><label>Tracking Company</label><input id="fTracking" type="text" placeholder="e.g. Cartrack, Netstar"/></div>
+        </div>
+        <div class="fg"><label>Description</label><textarea id="fDesc" rows="2" style="resize:vertical"></textarea></div>
+
+        <!-- ── Service ── -->
+        <div class="sec"><span class="material-symbols-outlined ms">build</span> Odometer &amp; Service</div>
+        <div class="grid3">
+          <div class="fg"><label>Current Odometer (km) *</label><input id="fKm" type="number" min="0" required/></div>
+          <div class="fg"><label>Service Interval (km) *</label><input id="fInterval" type="number" min="500" required/></div>
+          <div class="fg"><label>Next Service At (km) *</label><input id="fNextSvc" type="number" min="0" required/></div>
+        </div>
+        <div class="fg" style="max-width:260px"><label>Last Serviced</label><input id="fLastSvc" type="date"/></div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,.05)">
+          <button type="submit" class="btnp" id="saveBtn">
+            <span class="material-symbols-outlined ms" style="font-size:17px">save</span>
+            Save Changes
+          </button>
+          <button type="button" class="btnr" id="deleteBtn" onclick="deleteVehicle()">
+            <span class="material-symbols-outlined ms" style="font-size:16px">delete</span>
+            Delete Vehicle
+          </button>
+        </div>
+      </form>
+
+      <!-- ── Rental history ── -->
+      <div class="sec"><span class="material-symbols-outlined ms">history</span> Rental History</div>
+      <div class="glass" style="border-radius:13px;overflow:hidden;margin-bottom:20px">
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead><tr><th>Client</th><th>Organisation</th><th>Period</th><th>Value</th><th>Status</th></tr></thead>
+            <tbody id="rentalHistBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js"></script>
+<script src="sidebar.js"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('admin-fleet');
+const user = EC_AUTH.require(['admin']);
+DC_DATA.setOrgScope(user.orgId);
+
+const vehicleId = new URLSearchParams(location.search).get('id');
+let _photoData = null;
+let _vehicle = null;
+
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + type; t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function statusBadge(s) {
+  if (s === 'available')   return `<span class="b ba">Available</span>`;
+  if (s === 'on_rent')     return `<span class="b bblue">On Rent</span>`;
+  if (s === 'maintenance') return `<span class="b bp">Maintenance</span>`;
+  return `<span class="b">${s}</span>`;
+}
+
+function rentalBadge(s) {
+  if (s === 'active')   return `<span class="b bblue">Active</span>`;
+  if (s === 'pending')  return `<span class="b bp">Pending</span>`;
+  if (s === 'complete') return `<span class="b ba">Complete</span>`;
+  if (s === 'overdue')  return `<span class="b bo">Overdue</span>`;
+  return `<span class="b">${s}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function handlePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    _photoData = e.target.result;
+    document.getElementById('vPhotoImg').src = _photoData;
+    document.getElementById('vPhotoImg').style.display = 'block';
+    document.getElementById('photoPlaceholder').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function render(v) {
+  _vehicle = v;
+  document.getElementById('pgTitle').textContent = `${v.make} ${v.model}`;
+  document.getElementById('pgSub').textContent = `${v.regPlate} · ${v.year}`;
+  document.getElementById('statusBadge').innerHTML = statusBadge(v.status);
+  document.title = `${v.make} ${v.model} — EquipCore`;
+
+  if (v.imageUrl) {
+    document.getElementById('vPhotoImg').src = v.imageUrl;
+    document.getElementById('vPhotoImg').style.display = 'block';
+    document.getElementById('photoPlaceholder').style.display = 'none';
+  }
+
+  const left = v.nextServiceKm - v.km;
+  const leftColor = left <= 0 ? '#ff6b6b' : left <= 2000 ? '#ffd93d' : '#849495';
+  document.getElementById('glanceRow').innerHTML = [
+    { k: 'Mileage', v: `${v.km.toLocaleString()} km` },
+    { k: 'VIN', v: v.vin || '—' },
+    { k: 'Tracking Co.', v: v.trackingCompany || '—' },
+    { k: 'Last Serviced', v: fmtDate(v.lastServiceDate) },
+    { k: 'Next Service', v: `${v.nextServiceKm.toLocaleString()} km`, color: leftColor },
+    { k: 'Organisation', v: v.orgName || 'Unassigned' },
+  ].map(s => `<div class="stat-mini"><div class="k">${s.k}</div><div class="v" style="${s.color?`color:${s.color}`:''}">${s.v}</div></div>`).join('');
+
+  const rentals = DC_DATA.getRentalsForVehicle(v.id);
+  const active  = rentals.find(r => r.status === 'active');
+  const pending = rentals.find(r => r.status === 'pending');
+  const banner  = document.getElementById('rentalBanner');
+  if (active || pending) {
+    const r = active || pending;
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="glass-lo" style="border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:2px">${active ? 'Currently on rent' : 'Booked'} — ${r.client}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${r.orgName || ''} · ${fmtDate(r.startDate)} → ${fmtDate(r.returnDate)}</div>
+      </div>
+      <a href="rental-detail?id=${r.id}" class="btng" style="font-size:12px;padding:8px 14px">View Rental</a>
+    </div>`;
+  } else {
+    banner.style.display = 'none';
+  }
+
+  document.getElementById('fMake').value     = v.make;
+  document.getElementById('fModel').value    = v.model;
+  document.getElementById('fYear').value     = v.year;
+  document.getElementById('fPlate').value    = v.regPlate;
+  document.getElementById('fVin').value      = v.vin || '';
+  document.getElementById('fTracking').value = v.trackingCompany || '';
+  document.getElementById('fDesc').value     = v.description || '';
+  document.getElementById('fKm').value       = v.km;
+  document.getElementById('fInterval').value = v.serviceIntervalKm;
+  document.getElementById('fNextSvc').value  = v.nextServiceKm;
+  document.getElementById('fLastSvc').value  = v.lastServiceDate ? String(v.lastServiceDate).slice(0, 10) : '';
+
+  const histBody = document.getElementById('rentalHistBody');
+  if (!rentals.length) {
+    histBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px">No rental history for this vehicle yet</td></tr>`;
+  } else {
+    histBody.innerHTML = rentals.slice().sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).map(r => `
+      <tr onclick="location.href='rental-detail?id=${r.id}'">
+        <td>${r.client}</td>
+        <td style="color:#849495">${r.orgName || '—'}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${fmtDate(r.startDate)} – ${fmtDate(r.returnDate)}</td>
+        <td style="font-family:'JetBrains Mono',monospace;color:#00f0ff">R${(r.value || 0).toLocaleString()}</td>
+        <td>${rentalBadge(r.status)}</td>
+      </tr>`).join('');
+  }
+}
+
+document.getElementById('detailForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:17px">hourglass_top</span> Saving…';
+
+  try {
+    const km        = parseInt(document.getElementById('fKm').value) || 0;
+    const interval  = parseInt(document.getElementById('fInterval').value) || 0;
+    const nextSvc   = parseInt(document.getElementById('fNextSvc').value) || 0;
+
+    await DC_DATA.updateVehicleDetails(vehicleId, {
+      make:              document.getElementById('fMake').value.trim(),
+      model:             document.getElementById('fModel').value.trim(),
+      year:              parseInt(document.getElementById('fYear').value),
+      type:              _vehicle.type,
+      regPlate:          document.getElementById('fPlate').value.trim().toUpperCase(),
+      description:       document.getElementById('fDesc').value.trim() || null,
+      km, serviceIntervalKm: interval, nextServiceKm: nextSvc,
+      vin:               document.getElementById('fVin').value.trim() || null,
+      trackingCompany:   document.getElementById('fTracking').value.trim() || null,
+      lastServiceDate:   document.getElementById('fLastSvc').value || null,
+    });
+
+    if (_photoData) {
+      await DC_DATA.updateVehicleImage(vehicleId, _photoData);
+      _photoData = null;
+    }
+
+    showToast('ok', 'Vehicle details saved.');
+    render(DC_DATA.getVehicleById(vehicleId));
+  } catch (err) {
+    showToast('err', 'Failed to save: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:17px">save</span> Save Changes';
+  }
+});
+
+async function deleteVehicle() {
+  if (!confirm(`Delete ${_vehicle.make} ${_vehicle.model} (${_vehicle.regPlate})? This cannot be undone.`)) return;
+  const btn = document.getElementById('deleteBtn');
+  btn.disabled = true;
+  try {
+    await DC_DATA.deleteVehicle(vehicleId);
+    location.href = 'admin-fleet';
+  } catch (err) {
+    showToast('err', 'Failed to delete: ' + err.message);
+    btn.disabled = false;
+  }
+}
+
+(async function init() {
+  if (!vehicleId) { document.getElementById('notFoundBox').style.display = 'block'; return; }
+  await DC_DATA.init();
+  const v = DC_DATA.getVehicleById(vehicleId);
+  if (!v) { document.getElementById('notFoundBox').style.display = 'block'; return; }
+  document.getElementById('content').style.display = 'block';
+  render(v);
+})();
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>

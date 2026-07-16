@@ -217,24 +217,25 @@ function statusBadge(s) {
 
 function actionCell(rental) {
   const id = rental.id;
+  const view = `<button class="btng" style="font-size:11px;padding:4px 8px" onclick="location.href='rental-detail?id=${id}'">View</button>`;
   if (rental.status === 'pending') return `
     <div style="display:flex;gap:5px">
       <button class="btnp" style="font-size:11px;padding:4px 8px" onclick="approveRental('${id}')">Approve</button>
-      <button class="btng" style="font-size:11px;padding:4px 8px">View</button>
+      ${view}
     </div>`;
   if (rental.status === 'overdue' || (rental.status === 'active' && daysLeft(rental.returnDate) < 0)) return `
     <div style="display:flex;gap:5px">
-      <button class="btng" style="font-size:11px;padding:4px 8px">View</button>
+      ${view}
       <button class="btng" style="font-size:11px;padding:4px 8px;color:#ff6b6b;border-color:rgba(255,107,107,.2)" onclick="chaseRental('${id}','${rental.client}')">Chase</button>
     </div>`;
   if (rental.status === 'complete') return `
     <div style="display:flex;gap:5px">
-      <button class="btng" style="font-size:11px;padding:4px 8px">View</button>
+      ${view}
       <button class="btng" style="font-size:11px;padding:4px 8px">Invoice</button>
     </div>`;
   return `
     <div style="display:flex;gap:5px">
-      <button class="btng" style="font-size:11px;padding:4px 8px">View</button>
+      ${view}
       <button class="btng" style="font-size:11px;padding:4px 8px" onclick="markReturned('${id}')">Returned</button>
     </div>`;
 }
@@ -336,13 +337,13 @@ function renderTable() {
 
   tbody.innerHTML = rentals.map(r => {
     const rowBg = isOverdueRow(r) ? 'background:rgba(255,107,107,.025)' : '';
-    return `<tr style="${rowBg}">
+    return `<tr style="${rowBg}cursor:pointer" onclick="location.href='rental-detail?id=${r.id}'">
       <td data-label="Equipment" style="font-weight:600">${r.equipment}</td>
       <td data-label="Client" style="font-size:12px;color:#b9cacb">${r.client}</td>
       <td data-label="Due Back">${returnCell(r)}</td>
       <td data-label="Value" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#00f0ff;font-weight:600">R${(r.value||0).toLocaleString()}</td>
       <td data-label="Status">${statusBadge(r.status)}</td>
-      <td>${actionCell(r)}</td>
+      <td onclick="event.stopPropagation()">${actionCell(r)}</td>
     </tr>`;
   }).join('');
 }

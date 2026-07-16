@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rental Details — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="theme.css" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);backdrop-filter:blur(24px);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:24px 28px;max-width:760px;}
+  label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+  input[type=text],input[type=number],input[type=date],textarea,select{width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,.2);}
+  select option{background:#111317;}
+  .fg{margin-bottom:18px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .sec{font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#e2e2e8;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:8px;margin-top:28px;}
+  .sec:first-of-type{margin-top:0;}
+  .sec .ms{font-size:18px;color:#00f0ff;}
+  .btnp{display:inline-flex;align-items:center;gap:6px;padding:11px 22px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;border-radius:10px;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 20px rgba(0,240,255,.15);}
+  .btnp:hover{filter:brightness(1.08);}
+  .btnp:disabled{opacity:.5;cursor:default;}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:10px 16px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+  .btnr{display:inline-flex;align-items:center;gap:5px;padding:10px 16px;background:rgba(255,107,107,.08);color:#ff6b6b;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,107,107,.18);cursor:pointer;transition:background .18s;}
+  .btnr:hover{background:rgba(255,107,107,.14);}
+  .err{display:none;padding:10px 14px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:9px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
+  .toast{position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:12px;opacity:0;transform:translateY(-10px);transition:all .3s ease;pointer-events:none;}
+  .toast.show{opacity:1;transform:none;}
+  .toast.ok{background:rgba(0,212,170,.15);border:1px solid rgba(0,212,170,.3);color:#00d4aa;}
+  .toast.err{background:rgba(255,100,100,.1);border:1px solid rgba(255,100,100,.2);color:#ff6b6b;}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  .bblue{background:rgba(0,240,255,.08);color:#00dbe9;}
+  .stat-mini{display:flex;flex-direction:column;gap:2px}
+  .stat-mini .k{font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;letter-spacing:.08em}
+  .stat-mini .v{font-size:13px;font-weight:600}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr!important}.body{padding:14px 14px!important}}
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px;min-width:0">
+      <a href="admin-rentals" class="btng" style="padding:7px 10px">
+        <span class="material-symbols-outlined ms" style="font-size:18px">arrow_back</span>
+      </a>
+      <div style="min-width:0">
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="pgTitle">Rental Details</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495" id="pgSub">—</div>
+      </div>
+    </div>
+    <div id="statusBadge"></div>
+  </div>
+
+  <div class="body">
+    <div class="err" id="notFoundBox">This rental could not be found. It may have been removed.</div>
+    <div id="toast" class="toast"></div>
+
+    <div id="content" style="display:none">
+
+      <div class="glass" style="border-radius:13px;padding:16px 18px;margin-bottom:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px" id="glanceRow"></div>
+
+      <div id="vehicleBanner" style="display:none;margin-bottom:20px"></div>
+
+      <form id="detailForm">
+        <div class="sec"><span class="material-symbols-outlined ms">assignment</span> Rental Details</div>
+        <div class="grid2">
+          <div class="fg"><label>Client</label><div class="stat-mini"><div class="v" id="dClient" style="font-size:14px">—</div></div></div>
+          <div class="fg"><label>Equipment</label><div class="stat-mini"><div class="v" id="dEquip" style="font-size:14px">—</div></div></div>
+        </div>
+        <div class="grid2">
+          <div class="fg"><label>Start Date</label><input id="fStart" type="date" required/></div>
+          <div class="fg"><label>Return Date</label><input id="fReturn" type="date" required/></div>
+        </div>
+        <div class="grid2">
+          <div class="fg"><label>Value (ZAR)</label><input id="fValue" type="number" min="0" step="0.01" required/></div>
+          <div class="fg">
+            <label>Status</label>
+            <select id="fStatus">
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="overdue">Overdue</option>
+              <option value="complete">Complete</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg"><label>Notes</label><textarea id="fNotes" rows="3" style="resize:vertical"></textarea></div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,.05)">
+          <button type="submit" class="btnp" id="saveBtn">
+            <span class="material-symbols-outlined ms" style="font-size:17px">save</span>
+            Save Changes
+          </button>
+          <button type="button" class="btnr" id="deleteBtn" onclick="deleteRental()">
+            <span class="material-symbols-outlined ms" style="font-size:16px">delete</span>
+            Delete Rental
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js"></script>
+<script src="sidebar.js"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('admin-rentals');
+const user = EC_AUTH.require(['admin']);
+DC_DATA.setOrgScope(user.orgId);
+
+const rentalId = new URLSearchParams(location.search).get('id');
+let _rental = null;
+
+function showToast(type, msg) {
+  const t = document.getElementById('toast');
+  t.className = 'toast ' + type; t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function statusBadge(s) {
+  if (s === 'active')   return `<span class="b bblue">Active</span>`;
+  if (s === 'pending')  return `<span class="b bp">Pending</span>`;
+  if (s === 'complete') return `<span class="b ba">Complete</span>`;
+  if (s === 'overdue')  return `<span class="b bo">Overdue</span>`;
+  return `<span class="b">${s}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function daysLeft(d) {
+  return Math.ceil((new Date(d) - new Date()) / 86400000);
+}
+
+function render(r) {
+  _rental = r;
+  document.getElementById('pgTitle').textContent = r.equipment;
+  document.getElementById('pgSub').textContent = r.client;
+  document.getElementById('statusBadge').innerHTML = statusBadge(r.status);
+  document.title = `${r.equipment} — EquipCore`;
+
+  const left = daysLeft(r.returnDate);
+  document.getElementById('glanceRow').innerHTML = [
+    { k: 'Organisation', v: r.orgName || '—' },
+    { k: 'Value', v: `R${(r.value || 0).toLocaleString()}` },
+    { k: 'Start Date', v: fmtDate(r.startDate) },
+    { k: 'Return Date', v: fmtDate(r.returnDate), color: left < 0 && r.status !== 'complete' ? '#ff6b6b' : null },
+    { k: 'Days Left', v: r.status === 'complete' ? '—' : (left < 0 ? `${Math.abs(left)}d overdue` : `${left}d`), color: left < 0 && r.status !== 'complete' ? '#ff6b6b' : null },
+  ].map(s => `<div class="stat-mini"><div class="k">${s.k}</div><div class="v" style="${s.color?`color:${s.color}`:''}">${s.v}</div></div>`).join('');
+
+  const banner = document.getElementById('vehicleBanner');
+  if (r.vehicleId) {
+    const v = DC_DATA.getVehicleById(r.vehicleId);
+    if (v) {
+      banner.style.display = 'block';
+      banner.innerHTML = `<div class="glass-lo" style="border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-weight:700;font-size:13.5px;margin-bottom:2px">${v.make} ${v.model}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${v.regPlate} · ${v.km.toLocaleString()} km</div>
+        </div>
+        <a href="vehicle-detail?id=${v.id}" class="btng" style="font-size:12px;padding:8px 14px">View Vehicle</a>
+      </div>`;
+    }
+  } else {
+    banner.style.display = 'none';
+  }
+
+  document.getElementById('dClient').textContent = r.client;
+  document.getElementById('dEquip').textContent  = r.equipment;
+  document.getElementById('fStart').value  = r.startDate ? String(r.startDate).slice(0, 10) : '';
+  document.getElementById('fReturn').value = r.returnDate ? String(r.returnDate).slice(0, 10) : '';
+  document.getElementById('fValue').value  = r.value || 0;
+  document.getElementById('fStatus').value = r.status;
+  document.getElementById('fNotes').value  = r.notes || '';
+}
+
+document.getElementById('detailForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:17px">hourglass_top</span> Saving…';
+
+  try {
+    await DC_DATA.updateRental(rentalId, {
+      startDate:  document.getElementById('fStart').value,
+      returnDate: document.getElementById('fReturn').value,
+      value:      document.getElementById('fValue').value,
+      status:     document.getElementById('fStatus').value,
+      notes:      document.getElementById('fNotes').value.trim(),
+    });
+    showToast('ok', 'Rental details saved.');
+    render(DC_DATA.getRentalById(rentalId));
+  } catch (err) {
+    showToast('err', 'Failed to save: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:17px">save</span> Save Changes';
+  }
+});
+
+async function deleteRental() {
+  if (!confirm(`Delete this rental for ${_rental.client}? This cannot be undone.`)) return;
+  const btn = document.getElementById('deleteBtn');
+  btn.disabled = true;
+  try {
+    await DC_DATA.deleteRental(rentalId);
+    location.href = 'admin-rentals';
+  } catch (err) {
+    showToast('err', 'Failed to delete: ' + err.message);
+    btn.disabled = false;
+  }
+}
+
+(async function init() {
+  if (!rentalId) { document.getElementById('notFoundBox').style.display = 'block'; return; }
+  await DC_DATA.init();
+  const r = DC_DATA.getRentalById(rentalId);
+  if (!r) { document.getElementById('notFoundBox').style.display = 'block'; return; }
+  document.getElementById('content').style.display = 'block';
+  render(r);
+})();
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>

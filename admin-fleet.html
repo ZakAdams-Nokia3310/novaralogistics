@@ -183,24 +183,10 @@
       </select>
     </div>
 
-    <!-- Table -->
-    <div class="glass" style="border-radius:13px;overflow:hidden">
-      <div style="overflow-x:auto">
-        <table class="tbl">
-          <thead><tr>
-            <th>Vehicle</th>
-            <th>Type</th>
-            <th>Plate</th>
-            <th>Odometer</th>
-            <th>Next Service At</th>
-            <th>Svc Status</th>
-            <th>Fleet Status</th>
-            <th>Added</th>
-            <th></th>
-          </tr></thead>
-          <tbody id="vBody"></tbody>
-        </table>
-      </div>
+    <!-- Fleet cards -->
+    <div id="vGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px"></div>
+    <div class="glass" id="vEmpty" style="display:none;border-radius:13px;padding:40px;text-align:center;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">
+      No vehicles match your filters
     </div>
   </div>
 </div>
@@ -462,7 +448,22 @@ function renderStats() {
   </div>`).join('');
 }
 
-// ─── Table ────────────────────────────────────────────────────────────────────
+// ─── Cards ────────────────────────────────────────────────────────────────────
+function rentalStateFor(v) {
+  const rentals = DC_DATA.getRentalsForVehicle(v.id);
+  const active  = rentals.find(r => r.status === 'active');
+  if (active) return { label: 'On rent', client: active.client, returnDate: active.returnDate, color: '#00dbe9' };
+  const booked = rentals.find(r => r.status === 'pending');
+  if (booked) return { label: 'Booked', client: booked.client, startDate: booked.startDate, color: '#ffd93d' };
+  return null;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 function renderTable() {
   const q      = (document.getElementById('vSearch').value || '').toLowerCase();
   const sf     = document.getElementById('vStatus').value;
@@ -474,15 +475,19 @@ function renderTable() {
     if (svcf === 'due' && left > 2000)  return false;
     if (svcf === 'ok'  && left <= 2000) return false;
     if (typef !== 'all' && v.type !== typef) return false;
-    if (q && !`${v.make} ${v.model} ${v.regPlate} ${typeLabel(v.type)}`.toLowerCase().includes(q)) return false;
+    if (q && !`${v.make} ${v.model} ${v.regPlate} ${v.vin||''} ${typeLabel(v.type)}`.toLowerCase().includes(q)) return false;
     return true;
   });
-  const tbody = document.getElementById('vBody');
+  const grid  = document.getElementById('vGrid');
+  const empty = document.getElementById('vEmpty');
   if (!veh.length) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No vehicles match your filters</td></tr>`;
+    grid.innerHTML = '';
+    empty.style.display = 'block';
     return;
   }
-  tbody.innerHTML = veh.map(v => {
+  empty.style.display = 'none';
+
+  grid.innerHTML = veh.map(v => {
     const left = v.nextServiceKm - v.km;
     const leftColor = left <= 0 ? '#ff6b6b' : left <= 2000 ? '#ffd93d' : '#849495';
     const leftLabel = left <= 0
@@ -490,37 +495,50 @@ function renderTable() {
       : `${left.toLocaleString()} km remaining`;
     const canToggle = v.status !== 'on_rent';
     const toggleLabel = v.status === 'maintenance' ? 'Set Available' : 'Maintenance';
-    return `<tr>
-      <td data-label="Vehicle">
-        <div style="display:flex;align-items:center;gap:10px">
-          ${v.imageUrl
-            ? `<img src="${v.imageUrl}" alt="" style="width:38px;height:38px;border-radius:7px;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.08)"/>`
-            : `<div style="width:38px;height:38px;border-radius:7px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span class="material-symbols-outlined ms" style="font-size:17px;color:#849495">local_shipping</span></div>`}
+    const rental = rentalStateFor(v);
+
+    return `<div class="glass" style="border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .18s,border-color .18s" onclick="location.href='vehicle-detail?id=${v.id}'" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(0,240,255,.25)'" onmouseout="this.style.transform='';this.style.borderColor=''">
+      <div style="height:150px;background:rgba(255,255,255,.03);position:relative;overflow:hidden">
+        ${v.imageUrl
+          ? `<img src="${v.imageUrl}" alt="" style="width:100%;height:100%;object-fit:cover"/>`
+          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:36px;color:#40474a">local_shipping</span></div>`}
+        <div style="position:absolute;top:9px;right:9px">${fleetBadge(v.status)}</div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font-weight:700;font-size:14.5px;margin-bottom:2px">${v.make} ${v.model}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495;margin-bottom:11px">${v.year} · ${typeLabel(v.type)}</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;font-size:11.5px;margin-bottom:11px">
+          <div><div style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Registration</div><div style="font-family:'JetBrains Mono',monospace">${v.regPlate}</div></div>
+          <div><div style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Mileage</div><div style="font-family:'JetBrains Mono',monospace">${v.km.toLocaleString()} km</div></div>
+          <div><div style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">VIN</div><div style="font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.vin || '—'}</div></div>
+          <div><div style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Tracking Co.</div><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${v.trackingCompany || '—'}</div></div>
+        </div>
+
+        ${rental ? `<div style="background:rgba(0,219,233,.06);border:1px solid rgba(0,219,233,.15);border-radius:9px;padding:8px 10px;margin-bottom:11px">
+          <div style="font-size:11.5px;font-weight:600;color:${rental.color}">${rental.label} — ${rental.client}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:1px">${rental.returnDate ? `Returns ${fmtDate(rental.returnDate)}` : `Starts ${fmtDate(rental.startDate)}`}</div>
+        </div>` : ''}
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid rgba(255,255,255,.05);margin-bottom:11px">
           <div>
-            <div style="font-weight:600">${v.make} ${v.model}</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${v.regPlate} · ${v.year}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;letter-spacing:.06em">Last Serviced</div>
+            <div style="font-size:11.5px">${fmtDate(v.lastServiceDate)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;letter-spacing:.06em">Next Service</div>
+            <div style="font-size:11.5px;color:${leftColor}">${v.nextServiceKm.toLocaleString()} km <span style="opacity:.7">(${leftLabel})</span></div>
           </div>
         </div>
-      </td>
-      <td data-label="Type" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${typeLabel(v.type)}</td>
-      <td data-label="Plate" style="font-family:'JetBrains Mono',monospace;font-size:12px">${v.regPlate}</td>
-      <td data-label="Odometer" style="font-family:'JetBrains Mono',monospace;font-size:12px">${v.km.toLocaleString()} km</td>
-      <td data-label="Next Svc">
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px">${v.nextServiceKm.toLocaleString()} km</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${leftColor}">${leftLabel}</div>
-      </td>
-      <td data-label="Svc Status">${svcBadge(v)}</td>
-      <td data-label="Status">${fleetBadge(v.status)}</td>
-      <td data-label="Added" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${v.addedAt}</td>
-      <td>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btng" style="font-size:12px;padding:8px 12px" onclick="openEditSvc('${v.id}')">
+
+        <div style="display:flex;gap:6px;flex-wrap:wrap" onclick="event.stopPropagation()">
+          <button class="btng" style="font-size:11.5px;padding:7px 11px;flex:1" onclick="openEditSvc('${v.id}')">
             <span class="material-symbols-outlined ms" style="font-size:14px">build</span>Service
           </button>
-          ${canToggle ? `<button class="btng" style="font-size:12px;padding:8px 12px" onclick="toggleStatus('${v.id}')">${toggleLabel}</button>` : ''}
+          ${canToggle ? `<button class="btng" style="font-size:11.5px;padding:7px 11px;flex:1" onclick="toggleStatus('${v.id}')">${toggleLabel}</button>` : ''}
         </div>
-      </td>
-    </tr>`;
+      </div>
+    </div>`;
   }).join('');
 }
 

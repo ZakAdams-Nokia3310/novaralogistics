@@ -216,6 +216,42 @@ mutation UpdateVehicleOrg($id: UUID!, $organisationId: UUID) @auth(level: PUBLIC
   vehicle_update(id: $id, data: { organisationId: $organisationId, updatedAt_expr: "request.time" })
 }
 
+# Consolidated update for the vehicle-detail page's edit form — covers every
+# field editable there in one save, rather than chaining the per-field
+# mutations above (which stay in place for the smaller inline edits already
+# using them elsewhere, e.g. admin-fleet.html's quick km/status updates).
+mutation UpdateVehicleDetails(
+  $id: UUID!
+  $make: String!
+  $model: String!
+  $year: Int!
+  $type: VehicleType!
+  $regPlate: String!
+  $description: String
+  $km: Int!
+  $serviceIntervalKm: Int!
+  $nextServiceKm: Int!
+  $vin: String
+  $trackingCompany: String
+  $lastServiceDate: Date
+) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+  vehicle_update(id: $id, data: {
+    make: $make
+    model: $model
+    year: $year
+    type: $type
+    regPlate: $regPlate
+    description: $description
+    km: $km
+    serviceIntervalKm: $serviceIntervalKm
+    nextServiceKm: $nextServiceKm
+    vin: $vin
+    trackingCompany: $trackingCompany
+    lastServiceDate: $lastServiceDate
+    updatedAt_expr: "request.time"
+  })
+}
+
 mutation UpdateVehicleImage($id: UUID!, $imageUrl: String!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
   vehicle_update(id: $id, data: { imageUrl: $imageUrl, updatedAt_expr: "request.time" })
 }

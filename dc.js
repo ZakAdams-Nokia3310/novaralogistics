@@ -151,17 +151,23 @@ const DC_DATA = (() => {
     return {
       id:               v.id,
       orgId:            v.organisation?.id || v.orgId || null,
+      orgName:          v.organisation?.name || null,
       make:             v.make,
       model:            v.model,
       year:             v.year,
       type:             v.type,
       regPlate:         v.regPlate,
+      description:      v.description || null,
       km:               v.km,
       serviceIntervalKm: v.serviceIntervalKm,
       nextServiceKm:    v.nextServiceKm,
       status:           lo(v.status),
       imageUrl:         v.imageUrl || null,
+      vin:              v.vin || null,
+      trackingCompany:  v.trackingCompany || null,
+      lastServiceDate:  v.lastServiceDate || null,
       addedAt:          toDate(v.createdAt),
+      updatedAt:        toDate(v.updatedAt),
     };
   }
 
@@ -403,6 +409,27 @@ const DC_DATA = (() => {
     // Bust cache (call after any mutation to keep data fresh)
     bustCache() { try { sessionStorage.removeItem(CACHE_KEY); } catch(_) {} },
 
+    // ── Polling (opt-in, per-page) ───────────────────────────────────────────
+    // NOT wired into any page by default — call from a page's own script to
+    // enable periodic refetch (e.g. for admin pages several people may be
+    // editing at once). Bypasses the sessionStorage cache on every tick.
+    _pollTimer: null,
+    startPolling(onUpdate, intervalMs = 5000) {
+      this.stopPolling();
+      this._pollTimer = setInterval(async () => {
+        try {
+          this.bustCache();
+          _ready = false;
+          await this.init();
+          onUpdate?.();
+        } catch (_) { /* keep polling even if one tick fails */ }
+      }, intervalMs);
+      return this._pollTimer;
+    },
+    stopPolling() {
+      if (this._pollTimer) { clearInterval(this._pollTimer); this._pollTimer = null; }
+    },
+
     // ── Org scoping ───────────────────────────────────────────────────────
     setOrgScope(orgId) { _orgScope = orgId || null; },
     getOrgScope()      { return _orgScope; },
@@ -417,6 +444,8 @@ const DC_DATA = (() => {
     getUsersByOrg(orgId)    { return _users.filter(u => u.orgId === orgId); },
     getVehicles()           { return _orgScope ? _vehicles.filter(v => v.orgId === _orgScope) : _vehicles; },
     getAllVehicles()         { return _vehicles; },
+    getVehicleById(id)      { return _vehicles.find(v => v.id === id) || null; },
+    getRentalsForVehicle(vehicleId) { return _rentals.filter(r => r.vehicleId === vehicleId); },
     getMaintenanceQueries() {
       if (!_orgScope) return _maintenance;
       const ids = new Set(_vehicles.filter(v => v.orgId === _orgScope).map(v => v.id));
@@ -424,6 +453,7 @@ const DC_DATA = (() => {
     },
     getRentals()            { return _orgScope ? _rentals.filter(r => r.org === _orgScope) : _rentals; },
     getAllRentals()          { return _rentals; },
+    getRentalById(id)       { return _rentals.find(r => r.id === id) || null; },
     getCatalogItems()       { return _catalogItems; },
     // Note: RentalApplication records aren't org-tagged in the schema, so this
     // is intentionally unscoped (same precedent as getOrgRequests()).
@@ -542,6 +572,31 @@ const DC_DATA = (() => {
       await _loadVehicles(); saveCache();
     },
 
+    async deleteVehicle(id) {
+      await mutate('DeleteVehicle', { id });
+      await _loadVehicles(); saveCache();
+    },
+
+    // Full-form save used by vehicle-detail.html's edit panel.
+    async updateVehicleDetails(id, data) {
+      await mutate('UpdateVehicleDetails', {
+        id,
+        make:              data.make,
+        model:             data.model,
+        year:              +data.year,
+        type:              VEHICLE_TYPE[data.type] || data.type,
+        regPlate:          data.regPlate,
+        description:       data.description || null,
+        km:                +data.km,
+        serviceIntervalKm: +data.serviceIntervalKm,
+        nextServiceKm:     +data.nextServiceKm,
+        vin:               data.vin || null,
+        trackingCompany:   data.trackingCompany || null,
+        lastServiceDate:   data.lastServiceDate || null,
+      });
+      await _loadVehicles(); saveCache();
+    },
+
     // ── Maintenance mutations ────────────────────────────────────────────────
     async addMaintenanceQuery(data) {
       const vehicleId = data.vehicleId;
@@ -591,6 +646,24 @@ const DC_DATA = (() => {
         id,
         status: RENTAL_STATUS[status] || status.toUpperCase(),
       });
+      await _loadRentals(); saveCache();
+    },
+
+    // Full-form save used by rental-detail.html's edit panel.
+    async updateRental(id, data) {
+      await mutate('UpdateRental', {
+        id,
+        startDate:  data.startDate,
+        returnDate: data.returnDate,
+        valueZar:   +data.value,
+        status:     RENTAL_STATUS[data.status] || data.status.toUpperCase(),
+        notes:      data.notes || null,
+      });
+      await _loadRentals(); saveCache();
+    },
+
+    async deleteRental(id) {
+      await mutate('DeleteRental', { id });
       await _loadRentals(); saveCache();
     },
   };

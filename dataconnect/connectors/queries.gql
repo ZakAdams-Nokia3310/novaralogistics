@@ -14,11 +14,15 @@ query ListAllVehicles @auth(level: PUBLIC, insecureReason: "Admin pages handle t
     year
     type
     regPlate
+    description
     km
     serviceIntervalKm
     nextServiceKm
     status
     imageUrl
+    vin
+    trackingCompany
+    lastServiceDate
     createdAt
     updatedAt
   }
@@ -27,16 +31,24 @@ query ListAllVehicles @auth(level: PUBLIC, insecureReason: "Admin pages handle t
 query GetVehicleById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
   vehicle(id: $id) {
     id
+    organisation {
+      id
+      name
+    }
     make
     model
     year
     type
     regPlate
+    description
     km
     serviceIntervalKm
     nextServiceKm
     status
     imageUrl
+    vin
+    trackingCompany
+    lastServiceDate
     createdAt
     updatedAt
   }

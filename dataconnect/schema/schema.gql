@@ -229,6 +229,9 @@ type Vehicle @table(name: "vehicles") {
   nextServiceKm: Int!
   status: VehicleStatus! @default(value: AVAILABLE)
   imageUrl: String
+  vin: String @col(dataType: "varchar(50)")
+  trackingCompany: String @col(dataType: "varchar(100)")
+  lastServiceDate: Date
   createdAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
 }
