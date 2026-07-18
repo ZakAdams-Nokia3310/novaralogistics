@@ -19,6 +19,27 @@
     html { background: #080a0e !important; }
     body { background: transparent !important; }
 
+    /* ══ App-shell pages: paint the atmosphere directly on <html> instead of
+       a position:fixed sibling div. Reference comparison (a well-regarded
+       Tailwind admin template, and our own landing page) confirmed a real
+       structural difference: dashboards were the only pages carrying a
+       persistent position:fixed, full-viewport gradient layer that the
+       browser must keep compositing independently of normal page paint on
+       every scroll frame, on top of the sidebar/topbar/glass-card layers.
+       A background painted on <html> is just part of its ordinary paint —
+       no extra compositor layer, and (unlike background-attachment:fixed,
+       which reintroduces the same per-frame repaint cost, notably on
+       mobile Safari) it scrolls with the document like any other paint. */
+    html.ec-appshell {
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(0,240,255,0.06) 0%, transparent 55%),
+        radial-gradient(ellipse at 100% 100%, rgba(112,0,255,0.05) 0%, transparent 50%),
+        linear-gradient(rgba(0,240,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,240,255,0.022) 1px, transparent 1px),
+        #080a0e !important;
+      background-size: auto, auto, 80px 80px, 80px 80px;
+    }
+
     /* ══ GLOBAL SELECT / DROPDOWN STYLING ══ */
     select {
       -webkit-appearance: none;
@@ -292,18 +313,27 @@
      animating, blurred, blend-mode layer sitting directly behind several
      backdrop-filter glass panels, forcing the browser to recomposite all of
      them together on every frame. Marketing-ish pages (catalog, marketplace,
-     calculator, profile, login…) keep the atmosphere. */
+     calculator, profile, login…) keep the atmosphere.
+
+     App-shell pages also skip the position:fixed #ec-bg div entirely (see
+     the html.ec-appshell rule above) — that div was the one persistent
+     full-viewport compositor layer every dashboard page carried that the
+     landing page, and the reference template that prompted this pass,
+     don't have. */
   var isAppShell = !!(document.getElementById('sidebar-root') || document.querySelector('.sidebar'));
-  var bg = document.createElement('div');
-  bg.id = 'ec-bg';
-  bg.innerHTML =
-    (isAppShell ? '' :
-    '<div style="position:absolute;inset:0;overflow:hidden;isolation:isolate;-webkit-mask-image:linear-gradient(180deg,#000 60%,transparent 100%);mask-image:linear-gradient(180deg,#000 60%,transparent 100%)">' +
-      '<div class="ec-aurora-blob" style="width:640px;height:520px;top:-160px;right:-100px;background:radial-gradient(circle at 50% 50%,rgba(0,240,255,0.22),transparent 66%);animation:ec-aurora-a 27s ease-in-out infinite"></div>' +
-      '<div class="ec-aurora-blob" style="width:560px;height:480px;top:-110px;left:-140px;background:radial-gradient(circle at 50% 50%,rgba(112,0,255,0.18),transparent 66%);animation:ec-aurora-b 33s ease-in-out infinite"></div>' +
-    '</div>') +
-    '<div id="ec-bg-vignette"></div><div id="ec-bg-grid"></div>';
-  document.body.insertBefore(bg, document.body.firstChild);
+  if (isAppShell) {
+    document.documentElement.classList.add('ec-appshell');
+  } else {
+    var bg = document.createElement('div');
+    bg.id = 'ec-bg';
+    bg.innerHTML =
+      '<div style="position:absolute;inset:0;overflow:hidden;isolation:isolate;-webkit-mask-image:linear-gradient(180deg,#000 60%,transparent 100%);mask-image:linear-gradient(180deg,#000 60%,transparent 100%)">' +
+        '<div class="ec-aurora-blob" style="width:640px;height:520px;top:-160px;right:-100px;background:radial-gradient(circle at 50% 50%,rgba(0,240,255,0.22),transparent 66%);animation:ec-aurora-a 27s ease-in-out infinite"></div>' +
+        '<div class="ec-aurora-blob" style="width:560px;height:480px;top:-110px;left:-140px;background:radial-gradient(circle at 50% 50%,rgba(112,0,255,0.18),transparent 66%);animation:ec-aurora-b 33s ease-in-out infinite"></div>' +
+      '</div>' +
+      '<div id="ec-bg-vignette"></div><div id="ec-bg-grid"></div>';
+    document.body.insertBefore(bg, document.body.firstChild);
+  }
 
   /* ── Content stagger helper ──
      First screenful animates in immediately on load (.ec-load-in); anything
