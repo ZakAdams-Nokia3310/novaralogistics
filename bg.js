@@ -62,18 +62,17 @@
     /* Scrollable table wrapper */
     .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-    /* Scroll-perf: promote sticky/fixed blurred chrome onto their own
-       compositor layer so the browser doesn't recompute backdrop-filter
-       against the whole page on every scroll frame (this is what causes
-       scrolling to stall/catch up on mobile and low-power laptops). */
+    /* Scroll-perf: promote sticky/fixed chrome onto their own compositor
+       layer. .topbar/#sidebar-root no longer carry backdrop-filter at all
+       (see theme.css) so this is now just cheap transform promotion, not
+       blur mitigation. */
     .topbar, #sidebar-root, #sb-overlay {
       transform: translateZ(0);
       will-change: transform;
     }
     @media (max-width: 768px) {
-      /* Blur radius is the dominant cost — cut it on mobile where GPU
-         headroom is lowest, instead of removing the glass look entirely. */
-      .topbar { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+      /* Blur radius is the dominant cost for the cards that do still use
+         it — cut it on mobile where GPU headroom is lowest. */
       .glass, .glass-lo, .glass-card, .glass-float {
         backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       }
@@ -402,21 +401,7 @@
     tick = false;
   }
 
-  /* ── Scroll-perf: the fixed sidebar/topbar use backdrop-filter blur, which
-     the browser re-samples every frame the content behind it moves — that
-     per-frame blur recompute (not the tint update above) is what causes
-     scroll stutter. Swap to a solid, un-blurred background for the duration
-     of an active scroll burst, then restore the blur once scrolling settles;
-     see the body.is-scrolling rules in theme.css. ── */
-  var scrollStopTimer = null;
-  function onScrollPerf() {
-    document.body.classList.add('is-scrolling');
-    clearTimeout(scrollStopTimer);
-    scrollStopTimer = setTimeout(function () { document.body.classList.remove('is-scrolling'); }, 160);
-  }
-
   window.addEventListener('scroll', function () {
-    onScrollPerf();
     if (!tick) { requestAnimationFrame(upd); tick = true; }
   }, { passive: true });
   upd();

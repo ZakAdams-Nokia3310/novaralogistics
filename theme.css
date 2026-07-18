@@ -239,12 +239,15 @@ select option:checked { background-color: rgba(0,240,255,.12); }
    Applies to both #sidebar-root (buildSidebar/inline paths) and .sidebar
    (EC_SHELL path) — mobile show/hide mechanics for each are left to their
    existing owning script (sidebar.js for #sidebar-root, bg.js for .sidebar)
-   so this only changes appearance, not behavior. */
+   so this only changes appearance, not behavior.
+   No backdrop-filter here — see the scroll-perf note near .topbar below for
+   why it's deliberately gone rather than merely reduced. The gradient is
+   already 92-96% opaque, so a blur behind it was buying almost no visible
+   effect for a real per-frame cost. */
 #sidebar-root, .sidebar {
   width: 220px; height: 100vh; position: fixed; left: 0; top: 0; z-index: 50;
   display: flex; flex-direction: column;
   background: linear-gradient(180deg, rgba(16,18,25,.92), rgba(8,9,13,.96));
-  backdrop-filter: blur(var(--blur-lg)); -webkit-backdrop-filter: blur(var(--blur-lg));
   border-right: 1px solid var(--border);
   overflow: hidden; /* clip anything that still overflows the fixed box, see nav rule below */
 }
@@ -260,9 +263,14 @@ select option:checked { background-color: rgba(0,240,255,.12); }
   overscroll-behavior: contain;
 }
 .main { margin-left: 220px; min-height: 100vh; max-width: 100vw; overflow-x: hidden; }
+/* No backdrop-filter here either (see note above) — this is `position:
+   sticky`, so it sits directly over scrolling page content on every page
+   that has one; that's exactly the element that made the landing page
+   (whose nav is a normal in-flow element, never sticky) feel categorically
+   smoother than every other page. */
 .topbar {
   height: 56px; position: sticky; top: 0; z-index: 40;
-  background: rgba(10,10,15,.82); backdrop-filter: blur(var(--blur-lg)); -webkit-backdrop-filter: blur(var(--blur-lg));
+  background: rgba(10,10,15,.94);
   border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
   padding: 0 26px; max-width: 100vw; overflow-x: hidden;
 }
@@ -275,21 +283,22 @@ select option:checked { background-color: rgba(0,240,255,.12); }
 }
 .topbar, #sidebar-root, .sidebar, #sb-overlay { transform: translateZ(0); will-change: transform; }
 
-/* ══ Scroll-perf: suspend backdrop-filter blur during an active scroll burst ══
-   backdrop-filter forces the browser to re-sample whatever sits behind the
-   element on every frame that content moves — the .topbar is `sticky` with
-   real page content scrolling under it, so that resample runs on every
-   scroll tick and is the actual source of scroll stutter (not the scroll-tint
-   handler in bg.js, which is already rAF-throttled). bg.js toggles
-   body.is-scrolling for ~160ms after the last scroll event; swap to a solid
-   background for that window instead of paying the blur cost, then restore
-   it once scrolling settles. */
-body.is-scrolling .topbar, body.is-scrolling #sidebar-root, body.is-scrolling .sidebar {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-body.is-scrolling .topbar { background: rgba(10,10,15,.97); }
-body.is-scrolling #sidebar-root, body.is-scrolling .sidebar { background: rgba(10,11,16,.98); }
+/* ══ Scroll boundary jerk fix ══
+   The previous approach here toggled backdrop-filter on/off for ~160ms
+   around every scroll event (via a body.is-scrolling class from bg.js) to
+   dodge the per-frame blur-resample cost of a sticky/fixed element sitting
+   over moving content. That toggle fired right as a scroll gesture started
+   and again right as it settled — i.e. exactly at rest, exactly where a
+   user starts or stops scrolling (the top/bottom of the page) — so the
+   fix itself produced a visible pop at precisely the moments it was meant
+   to smooth out. Removing backdrop-filter from .topbar/#sidebar-root/
+   .sidebar entirely (above) removes the cost AND the toggle it required —
+   there's nothing left to switch on scroll start/stop, so no pop.
+   overscroll-behavior-y still matters independently: it stops the browser
+   from chaining a rubber-band bounce at the very top/bottom of the page
+   into the sidebar nav's own inner scroll (which already sets
+   overscroll-behavior: contain — see the nav rule above) or vice versa. */
+html { overscroll-behavior-y: contain; }
 
 /* ══ Nav item — active state uses a left accent bar + soft glow instead of a
    solid fill block. sidebar.js still sets the base inline styles per item;
