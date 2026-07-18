@@ -276,15 +276,6 @@
       }
     }
 
-    /* ══ Scroll-reveal system — same mechanics as the landing page: gentle
-       rise + fade, opacity/transform only (no filter), IntersectionObserver
-       fires each element once. Deliberately not scroll-linked. ══ */
-    .sr { opacity: 0; transform: translateY(26px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
-    .sr.visible { opacity: 1; transform: none; }
-    @media (prefers-reduced-motion: reduce) {
-      .sr { transition: opacity .3s linear !important; transform: none !important; }
-    }
-
     /* ══ Scroll-progress indicator — 2px fixed bar, transform-only (scaleX),
        updated via a passive + rAF-throttled listener. This is the same
        pattern the landing page already uses safely for its nav .scrolled
@@ -335,40 +326,13 @@
     document.body.insertBefore(bg, document.body.firstChild);
   }
 
-  /* ── Content stagger helper ──
-     First screenful animates in immediately on load (.ec-load-in); anything
-     further down gets .sr instead so it reveals on scroll, same as the
-     landing page, rather than animating off-screen where it's never seen. */
+  /* ── Content stagger helper ── */
   function stagger() {
     var els = document.querySelectorAll('.main > *, .body > *, .sidebar + * > *, [data-ec-animate]');
-    for (var i = 0; i < els.length; i++) {
-      if (i < 8) {
-        els[i].classList.add('ec-load-in');
-        els[i].style.animationDelay = (i * 50) + 'ms';
-      } else if (i < 24) {
-        els[i].classList.add('sr');
-      }
+    for (var i = 0; i < els.length && i < 24; i++) {
+      els[i].classList.add('ec-load-in');
+      els[i].style.animationDelay = (i * 50) + 'ms';
     }
-    observeReveal();
-  }
-
-  /* ── Scroll-reveal observer (mirrors index.html's .sr system) ── */
-  var revealObs = null;
-  function observeReveal() {
-    if (!('IntersectionObserver' in window)) {
-      document.querySelectorAll('.sr').forEach(function (el) { el.classList.add('visible'); });
-      return;
-    }
-    if (!revealObs) {
-      revealObs = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add('visible');
-          revealObs.unobserve(entry.target);
-        });
-      }, { threshold: 0.15 });
-    }
-    document.querySelectorAll('.sr:not(.visible)').forEach(function (el) { revealObs.observe(el); });
   }
 
   /* ── Scroll-progress bar — passive listener, rAF-throttled, transform-only ── */
