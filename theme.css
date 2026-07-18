@@ -256,11 +256,18 @@ select option:checked { background-color: rgba(0,240,255,.12); }
    never actually overflowed itself, its own overflow-y:auto never engaged,
    and scrolling over the sidebar fell through to the main content instead.
    min-height:0 lets it be constrained to the remaining flex space instead of
-   growing to fit every link; overscroll-behavior:contain stops scroll
-   chaining into the page once the nav reaches its own top/bottom. */
+   growing to fit every link, so overflow-y:auto actually engages when the
+   nav's content is taller than its slot.
+
+   Deliberately NOT setting overscroll-behavior:contain here (a previous
+   attempt at this did): on most pages the nav list fits without overflowing
+   at all, and `contain` on a non-overflowing scroll container swallows the
+   scroll gesture entirely instead of letting it chain through — confirmed
+   by direct testing that pointer-over-sidebar scroll produced zero movement
+   on the page. Default (auto) chaining is what we actually want: scroll the
+   nav first if it has room, then continue into the page once it doesn't. */
 #sidebar-root nav, .sidebar nav {
   min-height: 0;
-  overscroll-behavior: contain;
 }
 .main { margin-left: 220px; min-height: 100vh; max-width: 100vw; overflow-x: hidden; }
 /* No backdrop-filter here either (see note above) — this is `position:
@@ -294,10 +301,9 @@ select option:checked { background-color: rgba(0,240,255,.12); }
    to smooth out. Removing backdrop-filter from .topbar/#sidebar-root/
    .sidebar entirely (above) removes the cost AND the toggle it required —
    there's nothing left to switch on scroll start/stop, so no pop.
-   overscroll-behavior-y still matters independently: it stops the browser
-   from chaining a rubber-band bounce at the very top/bottom of the page
-   into the sidebar nav's own inner scroll (which already sets
-   overscroll-behavior: contain — see the nav rule above) or vice versa. */
+   overscroll-behavior-y still matters independently: it stops the page
+   itself from rubber-band bouncing/chaining into browser-level gestures
+   (e.g. swipe navigation) at the very top/bottom. */
 html { overscroll-behavior-y: contain; }
 
 /* ══ Nav item — active state uses a left accent bar + soft glow instead of a
