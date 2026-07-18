@@ -156,7 +156,11 @@ mapboxgl.accessToken = (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFI
 const uMap = new mapboxgl.Map({
   container: 'userFleetMap',
   style: 'mapbox://styles/mapbox/dark-v11',
-  center: [28.0473, -26.2041], zoom: 9
+  center: [28.0473, -26.2041], zoom: 9,
+  // Otherwise a page scroll that passes over the map is captured to zoom
+  // the map instead — requiring Ctrl/Cmd+scroll to zoom lets a plain scroll
+  // gesture pass through to the page like it does everywhere else.
+  cooperativeGestures: true,
 });
 uMap.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
 
