@@ -145,7 +145,6 @@
                          linear-gradient(90deg, rgba(0,240,255,1) 1px, transparent 1px);
       background-size: 80px 80px;
     }
-    #ec-bg-tint { position: absolute; inset: 0; transition: background 2.5s cubic-bezier(0.4,0,0.2,1); }
 
     /* ── Full-screen video intro ── */
     #ec-vid-intro {
@@ -278,7 +277,7 @@
       '<div class="ec-aurora-blob" style="width:640px;height:520px;top:-160px;right:-100px;background:radial-gradient(circle at 50% 50%,rgba(0,240,255,0.22),transparent 66%);animation:ec-aurora-a 27s ease-in-out infinite"></div>' +
       '<div class="ec-aurora-blob" style="width:560px;height:480px;top:-110px;left:-140px;background:radial-gradient(circle at 50% 50%,rgba(112,0,255,0.18),transparent 66%);animation:ec-aurora-b 33s ease-in-out infinite"></div>' +
     '</div>') +
-    '<div id="ec-bg-vignette"></div><div id="ec-bg-grid"></div><div id="ec-bg-tint"></div>';
+    '<div id="ec-bg-vignette"></div><div id="ec-bg-grid"></div>';
   document.body.insertBefore(bg, document.body.firstChild);
 
   /* ── Content stagger helper ── */
@@ -390,19 +389,4 @@
   });
   }
 
-  /* ── Scroll tint ── */
-  var tint = document.getElementById('ec-bg-tint');
-  var TINTS = ['rgba(0,240,255,0.025)','rgba(112,0,255,0.030)','rgba(0,240,255,0.020)','rgba(255,180,162,0.022)','rgba(0,240,255,0.032)'];
-  var zone = -1, tick = false;
-  function upd() {
-    var y = window.pageYOffset, mx = document.body.scrollHeight - window.innerHeight || 1;
-    var z = Math.min(TINTS.length - 1, Math.floor((y / mx) * TINTS.length));
-    if (z !== zone && tint) { tint.style.background = TINTS[z]; zone = z; }
-    tick = false;
-  }
-
-  window.addEventListener('scroll', function () {
-    if (!tick) { requestAnimationFrame(upd); tick = true; }
-  }, { passive: true });
-  upd();
 })();
