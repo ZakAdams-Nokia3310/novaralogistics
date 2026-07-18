@@ -254,6 +254,31 @@
         -webkit-backdrop-filter: blur(12px) !important;
       }
     }
+
+    /* ══ Scroll-reveal system — same mechanics as the landing page: gentle
+       rise + fade, opacity/transform only (no filter), IntersectionObserver
+       fires each element once. Deliberately not scroll-linked. ══ */
+    .sr { opacity: 0; transform: translateY(26px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+    .sr.visible { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .sr { transition: opacity .3s linear !important; transform: none !important; }
+    }
+
+    /* ══ Scroll-progress indicator — 2px fixed bar, transform-only (scaleX),
+       updated via a passive + rAF-throttled listener. This is the same
+       pattern the landing page already uses safely for its nav .scrolled
+       toggle; the earlier jank came from backdrop-filter recompositing and
+       the scroll-tint background transition, both already removed, not from
+       having a scroll listener at all. ══ */
+    #ec-scroll-progress {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 300;
+      background: linear-gradient(90deg, #00f0ff, #7df4ff);
+      transform: scaleX(0); transform-origin: left;
+      will-change: transform; pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #ec-scroll-progress { display: none; }
+    }
   `;
 
   var s = document.createElement('style');
@@ -280,14 +305,62 @@
     '<div id="ec-bg-vignette"></div><div id="ec-bg-grid"></div>';
   document.body.insertBefore(bg, document.body.firstChild);
 
-  /* ── Content stagger helper ── */
+  /* ── Content stagger helper ──
+     First screenful animates in immediately on load (.ec-load-in); anything
+     further down gets .sr instead so it reveals on scroll, same as the
+     landing page, rather than animating off-screen where it's never seen. */
   function stagger() {
     var els = document.querySelectorAll('.main > *, .body > *, .sidebar + * > *, [data-ec-animate]');
-    for (var i = 0; i < els.length && i < 24; i++) {
-      els[i].classList.add('ec-load-in');
-      els[i].style.animationDelay = (i * 50) + 'ms';
+    for (var i = 0; i < els.length; i++) {
+      if (i < 8) {
+        els[i].classList.add('ec-load-in');
+        els[i].style.animationDelay = (i * 50) + 'ms';
+      } else if (i < 24) {
+        els[i].classList.add('sr');
+      }
     }
+    observeReveal();
   }
+
+  /* ── Scroll-reveal observer (mirrors index.html's .sr system) ── */
+  var revealObs = null;
+  function observeReveal() {
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.sr').forEach(function (el) { el.classList.add('visible'); });
+      return;
+    }
+    if (!revealObs) {
+      revealObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('visible');
+          revealObs.unobserve(entry.target);
+        });
+      }, { threshold: 0.15 });
+    }
+    document.querySelectorAll('.sr:not(.visible)').forEach(function (el) { revealObs.observe(el); });
+  }
+
+  /* ── Scroll-progress bar — passive listener, rAF-throttled, transform-only ── */
+  (function initScrollProgress() {
+    var bar = document.createElement('div');
+    bar.id = 'ec-scroll-progress';
+    document.body.appendChild(bar);
+    var ticking = false;
+    function update() {
+      ticking = false;
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      var pct = max > 0 ? Math.min(h.scrollTop / max, 1) : 0;
+      bar.style.transform = 'scaleX(' + pct + ')';
+    }
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }, { passive: true });
+    update();
+  })();
 
   /* ═══ VIDEO INTRO ═══ */
   if (showIntro) {
