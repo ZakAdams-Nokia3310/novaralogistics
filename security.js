@@ -41,6 +41,7 @@ const EC_SECURITY = (() => {
     'admin-maintenance' : ['admin'],
     'admin-orgs'        : ['admin'],
     'admin-audit'       : ['admin'],
+    'add-vehicle'       : ['admin'],
     'dashboard-user'    : ['user'],
     'user-dashboard'    : ['user'],
     'my-rentals'        : ['user', 'driver', 'admin'],
@@ -50,6 +51,7 @@ const EC_SECURITY = (() => {
     'messages'          : ['admin', 'user', 'driver'],
     'vehicle-detail'    : ['admin'],
     'rental-detail'     : ['admin'],
+    'profile'           : ['admin', 'user', 'driver'],
   };
 
   // ── Cryptographically secure random ───────────────────────────────────────

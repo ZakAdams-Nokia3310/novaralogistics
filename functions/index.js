@@ -22,6 +22,7 @@ const helmet = require('helmet');
 admin.initializeApp();
 
 const authRoutes = require('./routes/authRoutes');
+const dataRoutes = require('./routes/dataRoutes');
 const { rateLimiter } = require('./middlewares/rateLimiter');
 
 const ALLOWED_ORIGINS = new Set([
@@ -32,6 +33,11 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 
 const app = express();
+
+// Cloud Functions always sits behind Firebase Hosting's proxy — without
+// this, req.ip (used by rateLimiter and auditLog) would resolve to the
+// proxy's address for every caller instead of the real client IP.
+app.set('trust proxy', true);
 
 app.use(helmet());
 app.use(cors({
@@ -44,14 +50,22 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 app.use(rateLimiter);
 
-// Mounted at /api/auth to match the full path Firebase Hosting forwards.
+// Mounted at /api/auth and /api/data to match the full paths Firebase
+// Hosting forwards.
 app.use('/api/auth', authRoutes);
+app.use('/api/data', dataRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err.message);
-  res.status(err.status || 500).json({ error: err.message || 'Server error' });
+  // err.status set means this is a deliberately-thrown, client-facing
+  // validation/auth error (see authController.js) — safe to pass through.
+  // Anything else is unexpected (e.g. a raw Admin SDK/GCP error) and could
+  // contain internal details, so the client only gets a generic message;
+  // the real one is already logged above.
+  const status = err.status || 500;
+  res.status(status).json({ error: status < 500 ? err.message : 'Server error' });
 });
 
 exports.api = functions.https.onRequest(app);

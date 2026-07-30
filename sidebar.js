@@ -110,7 +110,7 @@
     }
 
     // ── Nav links ──────────────────────────────────────────
-    h += `<nav style="flex:1;min-height:0;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">`;
+    h += `<nav style="flex:1;min-height:0;overscroll-behavior:contain;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">`;
     links.forEach(item => {
       if (item.section) {
         h += `<div class="sb-section" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted, #849495);text-transform:uppercase;letter-spacing:.18em;padding:10px 10px 4px;margin-top:4px">${item.section}</div>`;

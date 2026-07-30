@@ -2,7 +2,7 @@
 
 # ─── Vehicles ─────────────────────────────────────────────────────────────────
 
-query ListAllVehicles @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllVehicles @auth(level: NO_ACCESS) {
   vehicles(orderBy: { updatedAt: DESC }) {
     id
     organisation {
@@ -28,7 +28,7 @@ query ListAllVehicles @auth(level: PUBLIC, insecureReason: "Admin pages handle t
   }
 }
 
-query GetVehicleById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetVehicleById($id: UUID!) @auth(level: NO_ACCESS) {
   vehicle(id: $id) {
     id
     organisation {
@@ -54,7 +54,7 @@ query GetVehicleById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pag
   }
 }
 
-query ListVehiclesByStatus($status: VehicleStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListVehiclesByStatus($status: VehicleStatus!) @auth(level: NO_ACCESS) {
   vehicles(where: { status: { eq: $status } }, orderBy: { make: ASC }) {
     id
     make
@@ -68,7 +68,7 @@ query ListVehiclesByStatus($status: VehicleStatus!) @auth(level: PUBLIC, insecur
   }
 }
 
-query ListVehiclesByType($type: VehicleType!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListVehiclesByType($type: VehicleType!) @auth(level: NO_ACCESS) {
   vehicles(where: { type: { eq: $type } }, orderBy: { make: ASC }) {
     id
     make
@@ -81,9 +81,39 @@ query ListVehiclesByType($type: VehicleType!) @auth(level: PUBLIC, insecureReaso
   }
 }
 
+# Added for the "user" dashboard's org-scoped vehicle count — the caller's
+# own organisationId is enforced server-side (see
+# functions/registry/dataOperations.js's orgField), never trusted from the
+# client, so a non-admin can only ever see their own org's vehicles.
+query ListVehiclesByOrg($organisationId: UUID!) @auth(level: NO_ACCESS) {
+  vehicles(where: { organisationId: { eq: $organisationId } }, orderBy: { make: ASC }) {
+    id
+    organisation {
+      id
+      name
+    }
+    make
+    model
+    year
+    type
+    regPlate
+    description
+    km
+    serviceIntervalKm
+    nextServiceKm
+    status
+    imageUrl
+    vin
+    trackingCompany
+    lastServiceDate
+    createdAt
+    updatedAt
+  }
+}
+
 # ─── Rentals ──────────────────────────────────────────────────────────────────
 
-query ListAllRentals @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllRentals @auth(level: NO_ACCESS) {
   rentals(orderBy: { updatedAt: DESC }) {
     id
     vehicle {
@@ -108,7 +138,7 @@ query ListAllRentals @auth(level: PUBLIC, insecureReason: "Admin pages handle th
   }
 }
 
-query GetRentalById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetRentalById($id: UUID!) @auth(level: NO_ACCESS) {
   rental(id: $id) {
     id
     vehicle {
@@ -136,7 +166,7 @@ query GetRentalById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin page
   }
 }
 
-query ListRentalsByStatus($status: RentalStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListRentalsByStatus($status: RentalStatus!) @auth(level: NO_ACCESS) {
   rentals(
     where: { status: { eq: $status } }
     orderBy: { startDate: DESC }
@@ -161,7 +191,7 @@ query ListRentalsByStatus($status: RentalStatus!) @auth(level: PUBLIC, insecureR
   }
 }
 
-query ListRentalsByOrg($organisationId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListRentalsByOrg($organisationId: UUID!) @auth(level: NO_ACCESS) {
   rentals(
     where: { organisationId: { eq: $organisationId } }
     orderBy: { startDate: DESC }
@@ -183,7 +213,7 @@ query ListRentalsByOrg($organisationId: UUID!) @auth(level: PUBLIC, insecureReas
 
 # ─── Organisations ────────────────────────────────────────────────────────────
 
-query ListAllOrganisations @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllOrganisations @auth(level: NO_ACCESS) {
   organisations(orderBy: { name: ASC }) {
     id
     name
@@ -198,7 +228,7 @@ query ListAllOrganisations @auth(level: PUBLIC, insecureReason: "Admin pages han
   }
 }
 
-query GetOrganisationById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetOrganisationById($id: UUID!) @auth(level: NO_ACCESS) {
   organisation(id: $id) {
     id
     name
@@ -213,7 +243,7 @@ query GetOrganisationById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admi
   }
 }
 
-query ListOrganisationsByStatus($status: OrgStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListOrganisationsByStatus($status: OrgStatus!) @auth(level: NO_ACCESS) {
   organisations(
     where: { status: { eq: $status } }
     orderBy: { name: ASC }
@@ -228,7 +258,7 @@ query ListOrganisationsByStatus($status: OrgStatus!) @auth(level: PUBLIC, insecu
 
 # ─── Organisation Requests ────────────────────────────────────────────────────
 
-query ListAllOrgRequests @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllOrgRequests @auth(level: NO_ACCESS) {
   orgRequests(orderBy: { submittedAt: DESC }) {
     id
     orgName
@@ -248,7 +278,7 @@ query ListAllOrgRequests @auth(level: PUBLIC, insecureReason: "Admin pages handl
   }
 }
 
-query GetOrgRequestById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetOrgRequestById($id: UUID!) @auth(level: NO_ACCESS) {
   orgRequest(id: $id) {
     id
     orgName
@@ -265,7 +295,7 @@ query GetOrgRequestById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin 
   }
 }
 
-query ListOrgRequestsByStatus($status: OrgRequestStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListOrgRequestsByStatus($status: OrgRequestStatus!) @auth(level: NO_ACCESS) {
   orgRequests(
     where: { status: { eq: $status } }
     orderBy: { submittedAt: DESC }
@@ -281,7 +311,7 @@ query ListOrgRequestsByStatus($status: OrgRequestStatus!) @auth(level: PUBLIC, i
 
 # ─── Users ────────────────────────────────────────────────────────────────────
 
-query ListAllUsers @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllUsers @auth(level: NO_ACCESS) {
   users(orderBy: { name: ASC }) {
     id
     name
@@ -302,7 +332,7 @@ query ListAllUsers @auth(level: PUBLIC, insecureReason: "Admin pages handle thei
   }
 }
 
-query GetUserById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetUserById($id: UUID!) @auth(level: NO_ACCESS) {
   user(id: $id) {
     id
     name
@@ -319,7 +349,7 @@ query GetUserById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages 
   }
 }
 
-query ListUsersByOrg($organisationId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListUsersByOrg($organisationId: UUID!) @auth(level: NO_ACCESS) {
   users(
     where: { organisationId: { eq: $organisationId } }
     orderBy: { name: ASC }
@@ -332,7 +362,7 @@ query ListUsersByOrg($organisationId: UUID!) @auth(level: PUBLIC, insecureReason
   }
 }
 
-query GetUserByEmail($email: String!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetUserByEmail($email: String!) @auth(level: NO_ACCESS) {
   users(where: { email: { eq: $email } }, limit: 1) {
     id
     name
@@ -349,7 +379,7 @@ query GetUserByEmail($email: String!) @auth(level: PUBLIC, insecureReason: "Admi
   }
 }
 
-query ListUsersByRole($role: UserRole!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListUsersByRole($role: UserRole!) @auth(level: NO_ACCESS) {
   users(
     where: { role: { eq: $role } }
     orderBy: { name: ASC }
@@ -365,7 +395,7 @@ query ListUsersByRole($role: UserRole!) @auth(level: PUBLIC, insecureReason: "Ad
 
 # ─── Maintenance ──────────────────────────────────────────────────────────────
 
-query ListAllMaintenanceQueries @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllMaintenanceQueries @auth(level: NO_ACCESS) {
   maintenanceQueries(orderBy: { updatedAt: DESC }) {
     id
     vehicle {
@@ -389,7 +419,7 @@ query ListAllMaintenanceQueries @auth(level: PUBLIC, insecureReason: "Admin page
   }
 }
 
-query GetMaintenanceById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetMaintenanceById($id: UUID!) @auth(level: NO_ACCESS) {
   maintenanceQuery(id: $id) {
     id
     vehicle {
@@ -415,7 +445,7 @@ query GetMaintenanceById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin
   }
 }
 
-query ListMaintenanceByVehicle($vehicleId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListMaintenanceByVehicle($vehicleId: UUID!) @auth(level: NO_ACCESS) {
   maintenanceQueries(
     where: { vehicleId: { eq: $vehicleId } }
     orderBy: { updatedAt: DESC }
@@ -431,7 +461,7 @@ query ListMaintenanceByVehicle($vehicleId: UUID!) @auth(level: PUBLIC, insecureR
   }
 }
 
-query ListMaintenanceByStatus($status: MaintenanceStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListMaintenanceByStatus($status: MaintenanceStatus!) @auth(level: NO_ACCESS) {
   maintenanceQueries(
     where: { status: { eq: $status } }
     orderBy: { priority: DESC }
@@ -451,7 +481,7 @@ query ListMaintenanceByStatus($status: MaintenanceStatus!) @auth(level: PUBLIC, 
   }
 }
 
-query ListMaintenanceByPriority($priority: MaintenancePriority!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListMaintenanceByPriority($priority: MaintenancePriority!) @auth(level: NO_ACCESS) {
   maintenanceQueries(
     where: {
       _and: [
@@ -478,7 +508,7 @@ query ListMaintenanceByPriority($priority: MaintenancePriority!) @auth(level: PU
 
 # ─── Rental Applications ──────────────────────────────────────────────────────
 
-query ListAllRentalApplications @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllRentalApplications @auth(level: NO_ACCESS) {
   rentalApplications(orderBy: { submittedAt: DESC }) {
     id
     firstName
@@ -499,7 +529,7 @@ query ListAllRentalApplications @auth(level: PUBLIC, insecureReason: "Admin page
   }
 }
 
-query GetRentalApplicationById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetRentalApplicationById($id: UUID!) @auth(level: NO_ACCESS) {
   rentalApplication(id: $id) {
     id
     applicantUser {
@@ -542,7 +572,7 @@ query GetRentalApplicationById($id: UUID!) @auth(level: PUBLIC, insecureReason: 
   }
 }
 
-query ListRentalApplicationsByStatus($status: ApplicationStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListRentalApplicationsByStatus($status: ApplicationStatus!) @auth(level: NO_ACCESS) {
   rentalApplications(
     where: { status: { eq: $status } }
     orderBy: { submittedAt: DESC }
@@ -561,7 +591,7 @@ query ListRentalApplicationsByStatus($status: ApplicationStatus!) @auth(level: P
 
 # ─── Audit Logs ───────────────────────────────────────────────────────────────
 
-query ListAuditLogs($limit: Int) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAuditLogs($limit: Int) @auth(level: NO_ACCESS) {
   auditLogs(orderBy: { createdAt: DESC }, limit: $limit) {
     id
     user { id name }
@@ -575,7 +605,7 @@ query ListAuditLogs($limit: Int) @auth(level: PUBLIC, insecureReason: "Admin pag
   }
 }
 
-query ListAuditLogsByAction($action: String!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAuditLogsByAction($action: String!) @auth(level: NO_ACCESS) {
   auditLogs(
     where: { action: { eq: $action } }
     orderBy: { createdAt: DESC }
@@ -590,7 +620,7 @@ query ListAuditLogsByAction($action: String!) @auth(level: PUBLIC, insecureReaso
   }
 }
 
-query ListAuditLogsByUser($userId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAuditLogsByUser($userId: UUID!) @auth(level: NO_ACCESS) {
   auditLogs(
     where: { userId: { eq: $userId } }
     orderBy: { createdAt: DESC }
@@ -672,7 +702,7 @@ query ListAvailableCatalogItems @auth(level: PUBLIC, insecureReason: "Catalog is
 
 # ─── Vehicle Images ───────────────────────────────────────────────────────────
 
-query ListVehicleImages($vehicleId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListVehicleImages($vehicleId: UUID!) @auth(level: NO_ACCESS) {
   vehicleImages(
     where: { vehicleId: { eq: $vehicleId } }
     orderBy: { sortOrder: ASC }
@@ -702,7 +732,7 @@ query ListCatalogImages($catalogItemId: UUID!) @auth(level: PUBLIC, insecureReas
 
 # ─── Waitlist ─────────────────────────────────────────────────────────────────
 
-query ListAllWaitlistEntries @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllWaitlistEntries @auth(level: NO_ACCESS) {
   waitlistEntries(orderBy: { submittedAt: DESC }) {
     id
     catalogItem { id name }
@@ -716,7 +746,7 @@ query ListAllWaitlistEntries @auth(level: PUBLIC, insecureReason: "Admin pages h
   }
 }
 
-query ListWaitlistByItem($catalogItemId: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListWaitlistByItem($catalogItemId: UUID!) @auth(level: NO_ACCESS) {
   waitlistEntries(
     where: { catalogItemId: { eq: $catalogItemId } }
     orderBy: { submittedAt: ASC }
@@ -731,7 +761,7 @@ query ListWaitlistByItem($catalogItemId: UUID!) @auth(level: PUBLIC, insecureRea
   }
 }
 
-query ListWaitlistByStatus($status: WaitlistStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListWaitlistByStatus($status: WaitlistStatus!) @auth(level: NO_ACCESS) {
   waitlistEntries(
     where: { status: { eq: $status } }
     orderBy: { submittedAt: ASC }
@@ -747,7 +777,7 @@ query ListWaitlistByStatus($status: WaitlistStatus!) @auth(level: PUBLIC, insecu
 
 # ─── Contact Inquiries ────────────────────────────────────────────────────────
 
-query ListAllContactInquiries @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListAllContactInquiries @auth(level: NO_ACCESS) {
   contactInquiries(orderBy: { submittedAt: DESC }) {
     id
     referenceId
@@ -762,7 +792,7 @@ query ListAllContactInquiries @auth(level: PUBLIC, insecureReason: "Admin pages 
   }
 }
 
-query GetContactInquiryById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query GetContactInquiryById($id: UUID!) @auth(level: NO_ACCESS) {
   contactInquiry(id: $id) {
     id
     referenceId
@@ -777,7 +807,7 @@ query GetContactInquiryById($id: UUID!) @auth(level: PUBLIC, insecureReason: "Ad
   }
 }
 
-query ListContactInquiriesByStatus($status: InquiryStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+query ListContactInquiriesByStatus($status: InquiryStatus!) @auth(level: NO_ACCESS) {
   contactInquiries(
     where: { status: { eq: $status } }
     orderBy: { submittedAt: DESC }

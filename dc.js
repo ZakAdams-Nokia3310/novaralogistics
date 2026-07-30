@@ -60,7 +60,14 @@ const DC_DATA = (() => {
     } catch(_) { return false; }
   }
 
-  // ─── Core fetch ─────────────────────────────────────────────────────────────
+  // ─── Core fetch (genuinely public operations only) ─────────────────────────
+  // Data Connect's connector denies every OTHER operation to every client
+  // (@auth(level: NO_ACCESS) in dataconnect/connectors/*.gql) — only the
+  // read-only catalog browse and anonymous-submission forms in
+  // PUBLIC_QUERIES/PUBLIC_MUTATIONS below are still reachable this way.
+  // Everything else goes through authProxy(), which calls this project's
+  // own authenticated backend (functions/routes/dataRoutes.js), the same
+  // way /api/auth/* already works.
   async function dc(url, operationName, variables = {}) {
     let res;
     try {
@@ -92,8 +99,86 @@ const DC_DATA = (() => {
     return json.data || {};
   }
 
-  function query(operationName, variables = {})  { return dc(QUERY_URL, operationName, variables); }
-  function mutate(operationName, variables = {}) { return dc(MUT_URL,   operationName, variables); }
+  // ─── Authenticated proxy (everything else) ─────────────────────────────────
+  async function authProxy(operationName, variables = {}) {
+    if (typeof EC_API === 'undefined') {
+      throw new Error('Not signed in.');
+    }
+    let res;
+    try {
+      res = await EC_API.authFetch('/data/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operationName, variables }),
+      });
+    } catch {
+      if (_ready) window.showToast?.('error', 'Network error. Check your connection and try again.');
+      throw new Error('Network error. Check your connection and try again.');
+    }
+    if (!res.ok) {
+      let body = '';
+      try { body = await res.text(); } catch { /**/ }
+      console.error('[DC]', operationName, res.status, body);
+      if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
+      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+    }
+    const json = await res.json();
+    return json.data || {};
+  }
+
+  // Anonymous-submission forms — org registration, rental application,
+  // waitlist join, contact inquiry. Routed through the backend (not Data
+  // Connect directly, unlike the read-only catalog queries below) so
+  // server-side schema validation (functions/validation/dataSchemas.js's
+  // PUBLIC_SCHEMAS) runs before anything reaches the database — these
+  // accept input from visitors who were never asked to sign in, so there's
+  // no auth token to rely on as a first line of defence the way
+  // authProxy() has. Deliberately plain fetch(), not EC_API.authFetch —
+  // this must work identically whether or not anyone happens to be signed
+  // in, and must not depend on frontend/token-client.js being loaded.
+  async function publicSubmit(operationName, variables = {}) {
+    let res;
+    try {
+      res = await fetch('/api/data/public-submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operationName, variables }),
+      });
+    } catch {
+      if (_ready) window.showToast?.('error', 'Network error. Check your connection and try again.');
+      throw new Error('Network error. Check your connection and try again.');
+    }
+    if (!res.ok) {
+      let body = '';
+      try { body = await res.text(); } catch { /**/ }
+      console.error('[DC]', operationName, res.status, body);
+      if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
+      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+    }
+    const json = await res.json();
+    return json.data || {};
+  }
+
+  // Operations still declared @auth(level: PUBLIC) in the connector —
+  // read-only catalog browsing, safe to call directly.
+  const PUBLIC_QUERIES = new Set([
+    'ListAllCatalogItems', 'ListCatalogItemsByCategory',
+    'GetCatalogItemById', 'ListAvailableCatalogItems', 'ListCatalogImages',
+  ]);
+  const PUBLIC_MUTATIONS = new Set([
+    'CreateOrgRequest', 'CreateRentalApplication', 'JoinWaitlist', 'CreateContactInquiry',
+  ]);
+
+  function query(operationName, variables = {}) {
+    return PUBLIC_QUERIES.has(operationName)
+      ? dc(QUERY_URL, operationName, variables)
+      : authProxy(operationName, variables);
+  }
+  function mutate(operationName, variables = {}) {
+    return PUBLIC_MUTATIONS.has(operationName)
+      ? publicSubmit(operationName, variables)
+      : authProxy(operationName, variables);
+  }
 
   // ─── Normalizers ────────────────────────────────────────────────────────────
   const lo = v => (v || '').toLowerCase();
@@ -406,6 +491,26 @@ const DC_DATA = (() => {
       }
     },
 
+    // Narrow, non-admin-safe alternative to init() — used by pages a
+    // "user"/"driver" role can reach (e.g. dashboard-user.html). init()
+    // above loads the full admin dataset (ListAllUsers, ListAllVehicles,
+    // etc.), all of which are admin-only server-side now — a non-admin
+    // calling init() would 403 on the very first request. This instead
+    // calls the org-scoped queries that any signed-in role may use, and
+    // which the backend forces to the caller's OWN org regardless of what
+    // orgId is passed here (see registry/dataOperations.js's orgRoles).
+    async initForOrg(orgId) {
+      _orgScope = orgId || null;
+      if (!orgId) { _rentals = []; _vehicles = []; _ready = true; return; }
+      const [rd, vd] = await Promise.all([
+        query('ListRentalsByOrg', { organisationId: orgId }),
+        query('ListVehiclesByOrg', { organisationId: orgId }),
+      ]);
+      _rentals = (rd.rentals || []).map(normRental);
+      _vehicles = (vd.vehicles || []).map(normVehicle);
+      _ready = true;
+    },
+
     // Bust cache (call after any mutation to keep data fresh)
     bustCache() { try { sessionStorage.removeItem(CACHE_KEY); } catch(_) {} },
 
@@ -458,6 +563,54 @@ const DC_DATA = (() => {
     // Note: RentalApplication records aren't org-tagged in the schema, so this
     // is intentionally unscoped (same precedent as getOrgRequests()).
     getRentalApplications() { return _rentalApplications; },
+
+    // ── Auth-time verification (deliberately bypasses the cache/init()
+    //    flow above) ────────────────────────────────────────────────────────
+    // Used by auth.js right after a Firebase Auth login/signup succeeds, to
+    // confirm the account actually has a row in the real database — not the
+    // in-memory cache other pages read after DC_DATA.init(), since that could
+    // be up to CACHE_TTL stale and this needs a fresh answer at the moment
+    // of sign-in. Bridges Firebase Auth to Postgres by email — the same key
+    // functions/controllers/authController.js's resolveTargetUid uses,
+    // since Data Connect has no notion of a Firebase UID to query by.
+    // Uses the dedicated /api/data/user-by-email endpoint rather than the
+    // generic authProxy() above — GetUserByEmail is admin-only in
+    // registry/dataOperations.js, but this specific lookup also needs to
+    // work for a non-admin checking their OWN email (e.g. right after
+    // login/signup, before any role is established) — a rule that doesn't
+    // fit the flat role-list the generic proxy enforces, so the backend
+    // gives it its own route with an "own email, or admin" check instead.
+    async getUserByEmailLive(email) {
+      if (typeof EC_API === 'undefined') throw new Error('Not signed in.');
+      const res = await EC_API.authFetch('/data/user-by-email?email=' + encodeURIComponent(email));
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json.user || null;
+    },
+
+    // Creates the Postgres User row for a brand-new Firebase Auth signup —
+    // Firebase Auth account creation alone never touched the database
+    // before this, so a self-signup had no corresponding row for
+    // getUserByEmailLive to find on their very next login. Goes through
+    // /api/data/register-self rather than the generic CreateUser proxy
+    // (admin-only in the registry) — that endpoint hardcodes role USER and
+    // no organisation server-side, so this can never be used to self-grant
+    // anything more than a bare account; an admin assigns both afterward.
+    async createUserLive(name, email) {
+      if (typeof EC_API === 'undefined') throw new Error('Not signed in.');
+      const res = await EC_API.authFetch('/data/register-self', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        let body = '';
+        try { body = await res.text(); } catch { /**/ }
+        throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+      }
+      const json = await res.json();
+      return json.user || (await this.getUserByEmailLive(email));
+    },
 
     // ── Org Request mutations ───────────────────────────────────────────────
     async addOrgRequest(data) {
@@ -529,6 +682,28 @@ const DC_DATA = (() => {
       if (!u) return;
       const newStatus = u.status === 'active' ? 'INACTIVE' : 'ACTIVE';
       await mutate('UpdateUserStatus', { id, status: newStatus });
+      await _loadUsers(); saveCache();
+    },
+
+    // Self-service (own profile) or admin (editing another user) — the
+    // backend's ownField check in registry/dataOperations.js allows both;
+    // it rejects anyone else's id for a non-admin caller.
+    async updateUserProfile(id, data) {
+      await mutate('UpdateUserProfile', {
+        id,
+        name:       data.name       ?? null,
+        bio:        data.bio        ?? null,
+        position:   data.position   ?? null,
+        department: data.department ?? null,
+        phone:      data.phone      ?? null,
+        avatarUrl:  data.avatarUrl  ?? null,
+      });
+      await _loadUsers(); saveCache();
+    },
+
+    // Admin-only — enforced server-side by registry/dataOperations.js.
+    async updateUserRole(id, role) {
+      await mutate('UpdateUserRole', { id, role });
       await _loadUsers(); saveCache();
     },
 

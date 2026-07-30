@@ -63,8 +63,17 @@ node_modules/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
+# dotenv environment variables file (and any .env.local / .env.production / etc.)
 .env
+.env.*
+!.env.example
+
+# Service account / credential keys (none checked in today — Cloud Functions
+# supplies its runtime service account automatically, see functions/index.js
+# — but ignored defensively in case a local key is ever added for scripts).
+*serviceAccountKey*.json
+*service-account*.json
+functions/.env
 
 # dataconnect generated files
 .dataconnect

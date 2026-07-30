@@ -91,14 +91,6 @@
       transform: translateZ(0);
       will-change: transform;
     }
-    @media (max-width: 768px) {
-      /* Blur radius is the dominant cost for the cards that do still use
-         it — cut it on mobile where GPU headroom is lowest. */
-      .glass, .glass-lo, .glass-card, .glass-float {
-        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      }
-    }
-
     /* Mobile-safe stats grids */
     @media (max-width: 600px) {
       [style*="grid-template-columns:repeat(4"] {
@@ -209,8 +201,35 @@
     .vid-bar { width: 140px; height: 2px; background: rgba(255,255,255,0.12); border-radius: 2px; overflow: hidden; margin: 0 auto; }
     .vid-fill { height: 100%; background: linear-gradient(90deg, #00f0ff, #7df4ff); border-radius: 2px; width: 0%; }
 
-    .ec-load-in { opacity: 0; transform: translateY(20px); animation: ec-in 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
-    @keyframes ec-in { to { opacity: 1; transform: none; } }
+    /* Named ec-load-in-kf, not ec-in: transitions.js also defines a
+       @keyframes ec-in (opacity-only, for its own unrelated .ec-enter class)
+       and loads after this file, so its definition silently replaced this
+       one wholesale — CSS keyframe names aren't scoped per-file, last one
+       parsed wins outright, they don't merge. Since the winning definition
+       never mentioned transform, every .ec-load-in element's initial
+       translateY(20px) was never animated back to none: confirmed via
+       computed style that it stayed there permanently, well past the
+       animation's 0.5s duration. That's every one of up to 24 top-level
+       children of .main/.body on every dashboard/app page (topbar, cards,
+       charts, tables, the map) sitting 20px off and pinned to its own
+       compositor layer, indefinitely, on every single page load. */
+    .ec-load-in { opacity: 0; transform: translateY(20px); animation: ec-load-in-kf 0.5s cubic-bezier(0.4,0,0.2,1) forwards; }
+    @keyframes ec-load-in-kf { to { opacity: 1; transform: none; } }
+
+    /* ══ Scroll-reveal system — identical values to index.html's .sr (the
+       landing page), which never had this problem. This exact system was
+       tried here before and reverted for a suspected "momentum-scroll
+       regression" — but that revert happened before the @keyframes ec-in
+       collision above was found and fixed, and .ec-load-in (corrupted by
+       that collision) was active on the same pages at the same time. The
+       landing page's own IntersectionObserver batches multiple simultaneous
+       reveals with no stagger either (checked directly), so there's nothing
+       about this system itself that differs from the working reference. ══ */
+    .sr { opacity: 0; transform: translateY(26px); transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+    .sr.visible { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .sr { transition: opacity .3s linear !important; transform: none !important; }
+    }
 
     .cs-wrap{position:relative;display:block}
     .cs-trigger{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;cursor:pointer;transition:border-color .18s,background .18s;user-select:none;min-height:40px}
@@ -268,14 +287,6 @@
     @media (max-width: 768px) { .ec-aurora-blob { filter: blur(24px); } }
     @media (prefers-reduced-motion: reduce) { .ec-aurora-blob { animation: none !important; } }
 
-    /* ══ GLOBAL: cheaper glass blur on desktop too (mobile already reduced above) ══ */
-    @media (min-width: 769px) {
-      .glass, .glass-lo, .glass-card, .glass-float {
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
-      }
-    }
-
     /* ══ Scroll-progress indicator — 2px fixed bar, transform-only (scaleX),
        updated via a passive + rAF-throttled listener. This is the same
        pattern the landing page already uses safely for its nav .scrolled
@@ -328,11 +339,39 @@
 
   /* ── Content stagger helper ── */
   function stagger() {
+    // First screenful animates in immediately on load (.ec-load-in);
+    // anything further down gets .sr instead so it reveals on scroll, same
+    // as the landing page, rather than animating off-screen where it's
+    // never seen.
     var els = document.querySelectorAll('.main > *, .body > *, .sidebar + * > *, [data-ec-animate]');
-    for (var i = 0; i < els.length && i < 24; i++) {
-      els[i].classList.add('ec-load-in');
-      els[i].style.animationDelay = (i * 50) + 'ms';
+    for (var i = 0; i < els.length; i++) {
+      if (i < 8) {
+        els[i].classList.add('ec-load-in');
+        els[i].style.animationDelay = (i * 50) + 'ms';
+      } else if (i < 24) {
+        els[i].classList.add('sr');
+      }
     }
+    observeReveal();
+  }
+
+  /* ── Scroll-reveal observer (mirrors index.html's .sr system) ── */
+  var revealObs = null;
+  function observeReveal() {
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.sr').forEach(function (el) { el.classList.add('visible'); });
+      return;
+    }
+    if (!revealObs) {
+      revealObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('visible');
+          revealObs.unobserve(entry.target);
+        });
+      }, { threshold: 0.15 });
+    }
+    document.querySelectorAll('.sr:not(.visible)').forEach(function (el) { revealObs.observe(el); });
   }
 
   /* ── Scroll-progress bar — passive listener, rAF-throttled, transform-only ── */

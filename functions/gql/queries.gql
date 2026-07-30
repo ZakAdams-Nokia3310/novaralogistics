@@ -1,0 +1,235 @@
+# EquipCore — server-only Data Connect queries.
+#
+# Executed exclusively via the Firebase Admin SDK (services/dataConnect.js),
+# which runs with full service-account trust and bypasses the deployed
+# connector's @auth levels entirely — the SAME operations are declared
+# @auth(level: NO_ACCESS) in dataconnect/connectors/queries.gql, so no
+# client (signed in or not) can ever reach them directly. All real
+# authorization for these operations happens in registry/dataOperations.js
+# + controllers/dataController.js, not here.
+#
+# Bodies are kept in lockstep with dataconnect/connectors/queries.gql minus
+# the @auth clause — if you change a query's shape there, mirror it here.
+
+query ListAllOrganisations {
+  organisations(orderBy: { name: ASC }) {
+    id
+    name
+    sector
+    regId
+    contactEmail
+    domain
+    logoUrl
+    status
+    createdAt
+    updatedAt
+  }
+}
+
+query ListAllOrgRequests {
+  orgRequests(orderBy: { submittedAt: DESC }) {
+    id
+    orgName
+    sector
+    regId
+    contactName
+    contactEmail
+    domain
+    status
+    adminNotes
+    resultingOrg {
+      id
+      name
+    }
+    submittedAt
+    updatedAt
+  }
+}
+
+query ListAllUsers {
+  users(orderBy: { name: ASC }) {
+    id
+    name
+    email
+    role
+    organisation {
+      id
+      name
+    }
+    status
+    avatarUrl
+    bio
+    position
+    department
+    phone
+    createdAt
+    updatedAt
+  }
+}
+
+query ListAllVehicles {
+  vehicles(orderBy: { updatedAt: DESC }) {
+    id
+    organisation {
+      id
+      name
+    }
+    make
+    model
+    year
+    type
+    regPlate
+    description
+    km
+    serviceIntervalKm
+    nextServiceKm
+    status
+    imageUrl
+    vin
+    trackingCompany
+    lastServiceDate
+    createdAt
+    updatedAt
+  }
+}
+
+query ListAllMaintenanceQueries {
+  maintenanceQueries(orderBy: { updatedAt: DESC }) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    vehicleLabel
+    loggedByName
+    loggedByUser {
+      id
+      name
+    }
+    type
+    description
+    priority
+    status
+    resolvedAt
+    updatedAt
+  }
+}
+
+query ListAllRentals {
+  rentals(orderBy: { updatedAt: DESC }) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    equipmentName
+    clientName
+    organisation {
+      id
+      name
+    }
+    startDate
+    returnDate
+    valueZar
+    status
+    notes
+    createdAt
+    updatedAt
+  }
+}
+
+query ListRentalsByOrg($organisationId: UUID!) {
+  rentals(
+    where: { organisationId: { eq: $organisationId } }
+    orderBy: { startDate: DESC }
+  ) {
+    id
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    equipmentName
+    clientName
+    organisation {
+      id
+      name
+    }
+    startDate
+    returnDate
+    valueZar
+    status
+    notes
+    createdAt
+    updatedAt
+  }
+}
+
+query ListVehiclesByOrg($organisationId: UUID!) {
+  vehicles(where: { organisationId: { eq: $organisationId } }, orderBy: { make: ASC }) {
+    id
+    organisation {
+      id
+      name
+    }
+    make
+    model
+    year
+    type
+    regPlate
+    description
+    km
+    serviceIntervalKm
+    nextServiceKm
+    status
+    imageUrl
+    vin
+    trackingCompany
+    lastServiceDate
+    createdAt
+    updatedAt
+  }
+}
+
+query ListAllRentalApplications {
+  rentalApplications(orderBy: { submittedAt: DESC }) {
+    id
+    firstName
+    lastName
+    email
+    phone
+    equipmentName
+    vehicle {
+      id
+      make
+      model
+    }
+    startDate
+    endDate
+    status
+    submittedAt
+    updatedAt
+  }
+}
+
+query GetUserByEmail($email: String!) {
+  users(where: { email: { eq: $email } }, limit: 1) {
+    id
+    name
+    email
+    role
+    organisation { id name }
+    status
+    avatarUrl
+    bio
+    position
+    department
+    phone
+    createdAt
+  }
+}

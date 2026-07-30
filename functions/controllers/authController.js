@@ -1,6 +1,8 @@
 'use strict';
 
 const admin = require('firebase-admin');
+const { logEvent } = require('../services/auditLog');
+const { runQuery } = require('../services/dataConnect');
 
 // RegEx whitelist for the fields accepted here — same defence-in-depth
 // style used elsewhere in this project (see security.js's isValid* functions).
@@ -26,7 +28,76 @@ async function resolveTargetUid(body) {
 }
 
 exports.whoAmI = (req, res) => {
-  res.status(200).json({ user: req.user });
+  res.status(200).json({ success: true, user: req.user });
+};
+
+// Called by auth.js right after a successful login/signup, and on logout —
+// these have a valid token to authenticate the log call itself with. A
+// small fixed whitelist (not an arbitrary client-supplied action string)
+// so this can't be used to write fake entries under a made-up action name.
+const SESSION_EVENTS = new Set(['LOGIN_SUCCESS', 'SIGNUP_SUCCESS', 'LOGOUT']);
+exports.logSessionEvent = async (req, res) => {
+  const event = (req.body && req.body.event) || '';
+  if (!SESSION_EVENTS.has(event)) {
+    return res.status(400).json({ error: 'Invalid event' });
+  }
+  await logEvent(req, event, {});
+  res.status(200).json({ success: true });
+};
+
+// Self-service claims resync — brings the CALLER's OWN custom claims in
+// line with their OWN database row. Safe to expose to any signed-in user
+// with no role check: it can only ever mirror a role/org the database
+// already says this exact account has (bridged by their own verified
+// email, never a client-supplied target), so it can't grant anything —
+// only correct drift. Needed because custom claims and the database are
+// two separate systems (see auth.js's sessionFromFirebaseUser comment):
+// pre-existing/seeded accounts may have a database role with no matching
+// claim ever set, which server-side authorization (registry/dataOperations.js)
+// depends on — without this, such an account can log in (the database
+// still grants the right client-side session) but then get rejected by
+// every actual data request.
+exports.syncOwnClaims = async (req, res) => {
+  try {
+    const data = await runQuery('GetUserByEmail', { email: req.user.email });
+    const dbUser = data.users && data.users[0];
+    if (!dbUser) {
+      return res.status(200).json({ synced: false, reason: 'no-db-row' });
+    }
+
+    const claimRole = dbUser.role ? dbUser.role.toLowerCase() : 'user';
+    const claimOrg = dbUser.organisation ? dbUser.organisation.name : null;
+    const claimOrgId = dbUser.organisation ? dbUser.organisation.id : null;
+
+    // Data Connect returns UUIDs without hyphens; existing custom claims
+    // (set via /auth/set-role) store them hyphenated — same value, two
+    // string forms. Compare on the normalized form so this doesn't treat
+    // every org-affiliated login as "out of sync" and resync it needlessly.
+    const norm = (v) => (v == null ? v : String(v).replace(/-/g, ''));
+    const alreadyInSync = req.user.role === claimRole
+      && req.user.org === claimOrg
+      && norm(req.user.orgId) === norm(claimOrgId);
+    if (alreadyInSync) {
+      return res.status(200).json({ synced: false, reason: 'already-in-sync' });
+    }
+
+    await admin.auth().setCustomUserClaims(req.user.id, { role: claimRole, org: claimOrg, orgId: claimOrgId });
+    await logEvent(req, 'CLAIMS_SYNCED', { from: req.user.role, to: claimRole });
+    res.status(200).json({ synced: true, role: claimRole });
+  } catch (err) {
+    console.error('syncOwnClaims:', err.message);
+    res.status(500).json({ error: 'Unable to sync claims' });
+  }
+};
+
+// Called by auth.js right after Firebase Auth rejects a sign-in attempt —
+// deliberately unauthenticated (a failed login has no token to send), so
+// this is rate-limited hard at the route level and only ever writes a log
+// entry, never touches account state.
+exports.logFailedLogin = async (req, res) => {
+  const email = String((req.body && req.body.email) || '').trim().slice(0, 200);
+  await logEvent(req, 'LOGIN_FAILED', { email });
+  res.status(200).json({ success: true });
 };
 
 // Admin-only: assigns role/org custom claims to another account. Custom
@@ -46,9 +117,13 @@ exports.setRole = async (req, res) => {
       org: org || null,
       orgId: orgId || null,
     });
-    res.status(200).json({ success: true });
+    await logEvent(req, 'ROLE_CHANGED', { targetUid: uid, newRole: role });
+    res.status(200).json({ success: true, message: 'Role updated' });
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || 'Failed to set role' });
+    console.error('setRole:', err.message);
+    await logEvent(req, 'ROLE_CHANGE_FAILED', { reason: err.message });
+    const status = err.status || 500;
+    res.status(status).json({ error: status < 500 ? err.message : 'Failed to set role' });
   }
 };
 
@@ -67,8 +142,12 @@ exports.setPassword = async (req, res) => {
     }
 
     await admin.auth().updateUser(uid, { password: newPassword });
-    res.status(200).json({ success: true });
+    await logEvent(req, 'PASSWORD_CHANGED', { targetUid: uid });
+    res.status(200).json({ success: true, message: 'Password updated' });
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.message || 'Failed to set password' });
+    console.error('setPassword:', err.message);
+    await logEvent(req, 'PASSWORD_CHANGE_FAILED', { reason: err.message });
+    const status = err.status || 500;
+    res.status(status).json({ error: status < 500 ? err.message : 'Failed to set password' });
   }
 };

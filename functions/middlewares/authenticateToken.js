@@ -5,10 +5,12 @@
 // as the reference project's authenticateToken.js.
 
 const admin = require('firebase-admin');
+const { logEvent } = require('../services/auditLog');
 
 async function authenticateToken(req, res, next) {
   const header = req.headers.authorization;
   if (!header || !header.startsWith('Bearer ')) {
+    logEvent(req, 'ACCESS_DENIED_NO_TOKEN', {});
     return res.status(401).json({ error: 'Not authorized, no token provided' });
   }
 
@@ -28,6 +30,7 @@ async function authenticateToken(req, res, next) {
     next();
   } catch (err) {
     const message = err.code === 'auth/id-token-expired' ? 'Token expired' : 'Not authorized, invalid token';
+    logEvent(req, 'ACCESS_DENIED_BAD_TOKEN', { reason: err.code || 'unknown' });
     res.status(401).json({ error: message });
   }
 }

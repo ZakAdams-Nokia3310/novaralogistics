@@ -83,7 +83,7 @@
     +'<div style="font-family:\'JetBrains Mono\',monospace;font-size:10px;color:#849495">'+u.id+'</div></div>'
     +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;background:rgba(0,240,255,.08);color:'+rc+';padding:2px 6px;border-radius:999px;border:1px solid rgba(0,240,255,.15);flex-shrink:0;letter-spacing:.06em">'+(u.role||'').toUpperCase()+'</span>'
     +'</div></div>';
-  h+='<nav style="flex:1;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">';
+  h+='<nav style="flex:1;min-height:0;overscroll-behavior:contain;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px">';
   var baseA='display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;text-decoration:none;transition:all .18s;border:1px solid transparent;';
   NAV.forEach(function(item){
     if(item.s){
@@ -347,10 +347,13 @@ const map = new mapboxgl.Map({
   zoom: 6,
   attributionControl: false,
   logoPosition: 'bottom-left',
-  // Otherwise a page scroll that passes over the map is captured to zoom
-  // the map instead — requiring Ctrl/Cmd+scroll to zoom lets a plain scroll
-  // gesture pass through to the page like it does everywhere else.
-  cooperativeGestures: true,
+  // cooperativeGestures still ran Mapbox's wheel handler (modifier-key check
+  // + hint-overlay DOM work) on every single scroll tick — traced at ~70ms
+  // per event, the actual cause of the still-reported scroll jank on this
+  // page. This map is a small overview widget with its own +/- zoom
+  // control, so scroll-to-zoom isn't needed at all: disabling it outright
+  // removes Mapbox from the scroll hot path instead of just gating it.
+  scrollZoom: false,
 });
 map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
 map.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');

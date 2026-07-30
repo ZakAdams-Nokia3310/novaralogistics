@@ -9,7 +9,7 @@ mutation CreateOrganisation(
   $contactEmail: String!
   $domain: String!
   $logoUrl: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   organisation_insert(data: {
     name: $name
     sector: $sector
@@ -21,7 +21,7 @@ mutation CreateOrganisation(
   })
 }
 
-mutation UpdateOrgStatus($id: UUID!, $status: OrgStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateOrgStatus($id: UUID!, $status: OrgStatus!) @auth(level: NO_ACCESS) {
   organisation_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
 }
 
@@ -32,7 +32,7 @@ mutation UpdateOrganisation(
   $contactEmail: String
   $domain: String
   $logoUrl: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   organisation_update(id: $id, data: {
     name: $name
     sector: $sector
@@ -43,7 +43,7 @@ mutation UpdateOrganisation(
   })
 }
 
-mutation DeleteOrganisation($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteOrganisation($id: UUID!) @auth(level: NO_ACCESS) {
   organisation_delete(id: $id)
 }
 
@@ -56,7 +56,7 @@ mutation CreateOrgRequest(
   $contactName: String!
   $contactEmail: String!
   $domain: String!
-) @auth(level: PUBLIC, insecureReason: "Anyone can submit an org registration request.") {
+) @auth(level: NO_ACCESS) {
   orgRequest_insert(data: {
     orgName: $orgName
     sector: $sector
@@ -68,7 +68,7 @@ mutation CreateOrgRequest(
   })
 }
 
-mutation ApproveOrgRequest($id: UUID!, $resultingOrgId: UUID!, $adminNotes: String) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation ApproveOrgRequest($id: UUID!, $resultingOrgId: UUID!, $adminNotes: String) @auth(level: NO_ACCESS) {
   orgRequest_update(id: $id, data: {
     status: APPROVED
     resultingOrgId: $resultingOrgId
@@ -77,7 +77,7 @@ mutation ApproveOrgRequest($id: UUID!, $resultingOrgId: UUID!, $adminNotes: Stri
   })
 }
 
-mutation RejectOrgRequest($id: UUID!, $adminNotes: String) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation RejectOrgRequest($id: UUID!, $adminNotes: String) @auth(level: NO_ACCESS) {
   orgRequest_update(id: $id, data: {
     status: REJECTED
     adminNotes: $adminNotes
@@ -85,7 +85,7 @@ mutation RejectOrgRequest($id: UUID!, $adminNotes: String) @auth(level: PUBLIC, 
   })
 }
 
-mutation DeleteOrgRequest($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteOrgRequest($id: UUID!) @auth(level: NO_ACCESS) {
   orgRequest_delete(id: $id)
 }
 
@@ -97,7 +97,7 @@ mutation CreateUser(
   $role: UserRole!
   $organisationId: UUID
   $avatarUrl: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   user_insert(data: {
     name: $name
     email: $email
@@ -110,11 +110,11 @@ mutation CreateUser(
   })
 }
 
-mutation UpdateUserStatus($id: UUID!, $status: UserStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateUserStatus($id: UUID!, $status: UserStatus!) @auth(level: NO_ACCESS) {
   user_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
 }
 
-mutation UpdateUserRole($id: UUID!, $role: UserRole!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateUserRole($id: UUID!, $role: UserRole!) @auth(level: NO_ACCESS) {
   user_update(id: $id, data: { role: $role, updatedAt_expr: "request.time" })
 }
 
@@ -126,7 +126,7 @@ mutation UpdateUserProfile(
   $department: String
   $phone: String
   $avatarUrl: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   user_update(id: $id, data: {
     name: $name
     bio: $bio
@@ -138,11 +138,11 @@ mutation UpdateUserProfile(
   })
 }
 
-mutation UpdateUserAvatar($id: UUID!, $avatarUrl: String!) @auth(level: USER) {
+mutation UpdateUserAvatar($id: UUID!, $avatarUrl: String!) @auth(level: NO_ACCESS) {
   user_update(id: $id, data: { avatarUrl: $avatarUrl, updatedAt_expr: "request.time" })
 }
 
-mutation RecordUserLogin($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation RecordUserLogin($id: UUID!) @auth(level: NO_ACCESS) {
   user_update(id: $id, data: {
     lastLoginAt_expr: "request.time"
     failedAttempts: 0
@@ -150,7 +150,7 @@ mutation RecordUserLogin($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin
   })
 }
 
-mutation RecordFailedLogin($id: UUID!, $failedAttempts: Int!, $lockedUntil: Timestamp) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation RecordFailedLogin($id: UUID!, $failedAttempts: Int!, $lockedUntil: Timestamp) @auth(level: NO_ACCESS) {
   user_update(id: $id, data: {
     failedAttempts: $failedAttempts
     lockedUntil: $lockedUntil
@@ -158,7 +158,7 @@ mutation RecordFailedLogin($id: UUID!, $failedAttempts: Int!, $lockedUntil: Time
   })
 }
 
-mutation DeleteUser($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteUser($id: UUID!) @auth(level: NO_ACCESS) {
   user_delete(id: $id)
 }
 
@@ -176,7 +176,7 @@ mutation CreateVehicle(
   $nextServiceKm: Int!
   $imageUrl: String
   $organisationId: UUID
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   vehicle_insert(data: {
     make: $make
     model: $model
@@ -193,18 +193,18 @@ mutation CreateVehicle(
   })
 }
 
-mutation UpdateVehicleStatus($id: UUID!, $status: VehicleStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateVehicleStatus($id: UUID!, $status: VehicleStatus!) @auth(level: NO_ACCESS) {
   vehicle_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
 }
 
-mutation UpdateVehicleKm($id: UUID!, $km: Int!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateVehicleKm($id: UUID!, $km: Int!) @auth(level: NO_ACCESS) {
   vehicle_update(id: $id, data: {
     km: $km
     updatedAt_expr: "request.time"
   })
 }
 
-mutation UpdateVehicleService($id: UUID!, $nextServiceKm: Int!, $serviceIntervalKm: Int!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateVehicleService($id: UUID!, $nextServiceKm: Int!, $serviceIntervalKm: Int!) @auth(level: NO_ACCESS) {
   vehicle_update(id: $id, data: {
     nextServiceKm: $nextServiceKm
     serviceIntervalKm: $serviceIntervalKm
@@ -212,7 +212,7 @@ mutation UpdateVehicleService($id: UUID!, $nextServiceKm: Int!, $serviceInterval
   })
 }
 
-mutation UpdateVehicleOrg($id: UUID!, $organisationId: UUID) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateVehicleOrg($id: UUID!, $organisationId: UUID) @auth(level: NO_ACCESS) {
   vehicle_update(id: $id, data: { organisationId: $organisationId, updatedAt_expr: "request.time" })
 }
 
@@ -234,7 +234,7 @@ mutation UpdateVehicleDetails(
   $vin: String
   $trackingCompany: String
   $lastServiceDate: Date
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   vehicle_update(id: $id, data: {
     make: $make
     model: $model
@@ -252,17 +252,17 @@ mutation UpdateVehicleDetails(
   })
 }
 
-mutation UpdateVehicleImage($id: UUID!, $imageUrl: String!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateVehicleImage($id: UUID!, $imageUrl: String!) @auth(level: NO_ACCESS) {
   vehicle_update(id: $id, data: { imageUrl: $imageUrl, updatedAt_expr: "request.time" })
 }
 
-mutation DeleteVehicle($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteVehicle($id: UUID!) @auth(level: NO_ACCESS) {
   vehicle_delete(id: $id)
 }
 
 # ─── Vehicle Images ───────────────────────────────────────────────────────────
 
-mutation AddVehicleImage($vehicleId: UUID!, $imageUrl: String!, $caption: String, $sortOrder: Int) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation AddVehicleImage($vehicleId: UUID!, $imageUrl: String!, $caption: String, $sortOrder: Int) @auth(level: NO_ACCESS) {
   vehicleImage_insert(data: {
     vehicleId: $vehicleId
     imageUrl: $imageUrl
@@ -271,7 +271,7 @@ mutation AddVehicleImage($vehicleId: UUID!, $imageUrl: String!, $caption: String
   })
 }
 
-mutation DeleteVehicleImage($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteVehicleImage($id: UUID!) @auth(level: NO_ACCESS) {
   vehicleImage_delete(id: $id)
 }
 
@@ -286,7 +286,7 @@ mutation CreateMaintenanceQuery(
   $loggedByName: String!
   $loggedByUserId: UUID
   $issueImageUrl: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   maintenanceQuery_insert(data: {
     vehicleId: $vehicleId
     vehicleLabel: $vehicleLabel
@@ -300,11 +300,11 @@ mutation CreateMaintenanceQuery(
   })
 }
 
-mutation UpdateMaintenanceStatus($id: UUID!, $status: MaintenanceStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateMaintenanceStatus($id: UUID!, $status: MaintenanceStatus!) @auth(level: NO_ACCESS) {
   maintenanceQuery_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
 }
 
-mutation ResolveMaintenanceQuery($id: UUID!, $resolvedById: UUID!, $resolutionNotes: String) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation ResolveMaintenanceQuery($id: UUID!, $resolvedById: UUID!, $resolutionNotes: String) @auth(level: NO_ACCESS) {
   maintenanceQuery_update(id: $id, data: {
     status: RESOLVED
     resolvedById: $resolvedById
@@ -314,11 +314,11 @@ mutation ResolveMaintenanceQuery($id: UUID!, $resolvedById: UUID!, $resolutionNo
   })
 }
 
-mutation UpdateMaintenancePriority($id: UUID!, $priority: MaintenancePriority!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateMaintenancePriority($id: UUID!, $priority: MaintenancePriority!) @auth(level: NO_ACCESS) {
   maintenanceQuery_update(id: $id, data: { priority: $priority, updatedAt_expr: "request.time" })
 }
 
-mutation DeleteMaintenanceQuery($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteMaintenanceQuery($id: UUID!) @auth(level: NO_ACCESS) {
   maintenanceQuery_delete(id: $id)
 }
 
@@ -334,7 +334,7 @@ mutation CreateRental(
   $valueZar: Float!
   $status: RentalStatus
   $notes: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   rental_insert(data: {
     vehicleId: $vehicleId
     equipmentName: $equipmentName
@@ -348,7 +348,7 @@ mutation CreateRental(
   })
 }
 
-mutation UpdateRentalStatus($id: UUID!, $status: RentalStatus!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateRentalStatus($id: UUID!, $status: RentalStatus!) @auth(level: NO_ACCESS) {
   rental_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
 }
 
@@ -359,7 +359,7 @@ mutation UpdateRental(
   $valueZar: Float
   $status: RentalStatus
   $notes: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   rental_update(id: $id, data: {
     startDate: $startDate
     returnDate: $returnDate
@@ -370,7 +370,7 @@ mutation UpdateRental(
   })
 }
 
-mutation DeleteRental($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteRental($id: UUID!) @auth(level: NO_ACCESS) {
   rental_delete(id: $id)
 }
 
@@ -414,7 +414,7 @@ mutation CreateRentalApplication(
   $consentCreditCheck: Boolean!
   $consentTerms: Boolean!
   $consentUnderstanding: Boolean!
-) @auth(level: PUBLIC, insecureReason: "Anyone can submit a rental application.") {
+) @auth(level: NO_ACCESS) {
   rentalApplication_insert(data: {
     ref: $ref
     applicantUserId: $applicantUserId
@@ -458,7 +458,7 @@ mutation ReviewRentalApplication(
   $status: ApplicationStatus!
   $reviewedById: UUID!
   $rejectionReason: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   rentalApplication_update(id: $id, data: {
     status: $status
     reviewedById: $reviewedById
@@ -473,7 +473,7 @@ mutation AttachApplicationDocuments(
   $idDocumentUrl: String
   $proofOfIncomeUrl: String
   $supportingDocUrl: String
-) @auth(level: USER) {
+) @auth(level: NO_ACCESS) {
   rentalApplication_update(id: $id, data: {
     idDocumentUrl: $idDocumentUrl
     proofOfIncomeUrl: $proofOfIncomeUrl
@@ -482,7 +482,7 @@ mutation AttachApplicationDocuments(
   })
 }
 
-mutation DeleteRentalApplication($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteRentalApplication($id: UUID!) @auth(level: NO_ACCESS) {
   rentalApplication_delete(id: $id)
 }
 
@@ -498,7 +498,7 @@ mutation CreateCatalogItem(
   $status: VehicleStatus
   $availableFrom: Date
   $imageUrl: String!
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   catalogItem_insert(data: {
     name: $name
     subtitle: $subtitle
@@ -520,7 +520,7 @@ mutation UpdateCatalogItem(
   $specs: String
   $dailyRate: Float
   $imageUrl: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   catalogItem_update(id: $id, data: {
     name: $name
     subtitle: $subtitle
@@ -532,7 +532,7 @@ mutation UpdateCatalogItem(
   })
 }
 
-mutation UpdateCatalogItemStatus($id: UUID!, $status: VehicleStatus!, $availableFrom: Date) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateCatalogItemStatus($id: UUID!, $status: VehicleStatus!, $availableFrom: Date) @auth(level: NO_ACCESS) {
   catalogItem_update(id: $id, data: {
     status: $status
     availableFrom: $availableFrom
@@ -540,13 +540,13 @@ mutation UpdateCatalogItemStatus($id: UUID!, $status: VehicleStatus!, $available
   })
 }
 
-mutation DeleteCatalogItem($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteCatalogItem($id: UUID!) @auth(level: NO_ACCESS) {
   catalogItem_delete(id: $id)
 }
 
 # ─── Catalog Images ───────────────────────────────────────────────────────────
 
-mutation AddCatalogImage($catalogItemId: UUID!, $imageUrl: String!, $caption: String, $sortOrder: Int) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation AddCatalogImage($catalogItemId: UUID!, $imageUrl: String!, $caption: String, $sortOrder: Int) @auth(level: NO_ACCESS) {
   catalogImage_insert(data: {
     catalogItemId: $catalogItemId
     imageUrl: $imageUrl
@@ -555,7 +555,7 @@ mutation AddCatalogImage($catalogItemId: UUID!, $imageUrl: String!, $caption: St
   })
 }
 
-mutation DeleteCatalogImage($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteCatalogImage($id: UUID!) @auth(level: NO_ACCESS) {
   catalogImage_delete(id: $id)
 }
 
@@ -567,7 +567,7 @@ mutation JoinWaitlist(
   $name: String!
   $email: String!
   $phone: String
-) @auth(level: PUBLIC, insecureReason: "Anyone can join a waitlist.") {
+) @auth(level: NO_ACCESS) {
   waitlistEntry_insert(data: {
     catalogItemId: $catalogItemId
     userId: $userId
@@ -578,18 +578,18 @@ mutation JoinWaitlist(
   })
 }
 
-mutation NotifyWaitlistEntry($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation NotifyWaitlistEntry($id: UUID!) @auth(level: NO_ACCESS) {
   waitlistEntry_update(id: $id, data: {
     status: NOTIFIED
     notifiedAt_expr: "request.time"
   })
 }
 
-mutation ExpireWaitlistEntry($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation ExpireWaitlistEntry($id: UUID!) @auth(level: NO_ACCESS) {
   waitlistEntry_update(id: $id, data: { status: EXPIRED })
 }
 
-mutation DeleteWaitlistEntry($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteWaitlistEntry($id: UUID!) @auth(level: NO_ACCESS) {
   waitlistEntry_delete(id: $id)
 }
 
@@ -601,7 +601,7 @@ mutation CreateContactInquiry(
   $email: String!
   $subject: String!
   $message: String!
-) @auth(level: PUBLIC, insecureReason: "Anyone can submit a contact inquiry.") {
+) @auth(level: NO_ACCESS) {
   contactInquiry_insert(data: {
     referenceId: $referenceId
     name: $name
@@ -612,7 +612,7 @@ mutation CreateContactInquiry(
   })
 }
 
-mutation UpdateInquiryStatus($id: UUID!, $status: InquiryStatus!, $repliedById: UUID) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation UpdateInquiryStatus($id: UUID!, $status: InquiryStatus!, $repliedById: UUID) @auth(level: NO_ACCESS) {
   contactInquiry_update(id: $id, data: {
     status: $status
     repliedById: $repliedById
@@ -620,7 +620,7 @@ mutation UpdateInquiryStatus($id: UUID!, $status: InquiryStatus!, $repliedById: 
   })
 }
 
-mutation DeleteContactInquiry($id: UUID!) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+mutation DeleteContactInquiry($id: UUID!) @auth(level: NO_ACCESS) {
   contactInquiry_delete(id: $id)
 }
 
@@ -635,7 +635,7 @@ mutation CreateAuditLog(
   $page: String
   $ipAddress: String
   $userAgent: String
-) @auth(level: PUBLIC, insecureReason: "Admin pages handle their own session guard.") {
+) @auth(level: NO_ACCESS) {
   auditLog_insert(data: {
     userId: $userId
     userName: $userName

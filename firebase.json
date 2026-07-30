@@ -17,6 +17,8 @@
       "firebase.json",
       "firestore.rules",
       "firestore.indexes.json",
+      "firestore.rules.test.js",
+      "seed-db.js",
       "**/.*",
       "**/node_modules/**",
       "dataconnect/**",

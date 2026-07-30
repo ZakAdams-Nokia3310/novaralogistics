@@ -232,28 +232,38 @@ function fillForm(u) {
   document.getElementById('fStatus').textContent = (u.status || 'active').charAt(0).toUpperCase() + (u.status || 'active').slice(1);
 }
 
-// Load from DB
-DC_DATA.init().then(function() {
-  var users = DC_DATA.getAllUsers ? DC_DATA.getAllUsers() : [];
-  if (!users.length) {
-    // Fallback: try unscoped
-    var old = DC_DATA.getOrgScope ? DC_DATA.getOrgScope() : null;
-    if (DC_DATA.setOrgScope) DC_DATA.setOrgScope(null);
-    users = DC_DATA.getUsers();
-    if (DC_DATA.setOrgScope && old) DC_DATA.setOrgScope(old);
-  }
-
-  if (isAdminEditingOther) {
+// Load from DB. ListAllUsers (behind DC_DATA.init()) is admin-only
+// server-side, so a non-admin viewing their own profile uses the
+// dedicated self/admin-scoped lookup instead — see dc.js's
+// getUserByEmailLive comment and functions/controllers/dataController.js's
+// getUserByEmail (own email, or any email if admin).
+if (isAdminEditingOther) {
+  DC_DATA.init().then(function() {
+    var users = DC_DATA.getAllUsers ? DC_DATA.getAllUsers() : [];
     _targetUser = users.find(function(u){ return u.id === viewingId; });
-  } else {
-    _targetUser = users.find(function(u){ return u.email === currentUser.email; });
-  }
-
-  if (_targetUser) fillForm(_targetUser);
-  else fillForm(currentUser);
-}).catch(function() {
-  fillForm(currentUser);
-});
+    if (_targetUser) fillForm(_targetUser);
+    else fillForm(currentUser);
+  }).catch(function() {
+    fillForm(currentUser);
+  });
+} else {
+  DC_DATA.getUserByEmailLive(currentUser.email).then(function(u) {
+    if (u) {
+      _targetUser = {
+        id: u.id, name: u.name, email: u.email,
+        role: (u.role || 'USER').toLowerCase(),
+        orgName: u.organisation ? u.organisation.name : null,
+        orgId: u.organisation ? u.organisation.id : null,
+        status: (u.status || 'ACTIVE').toLowerCase(),
+        avatarUrl: u.avatarUrl, bio: u.bio, position: u.position,
+        department: u.department, phone: u.phone, createdAt: u.createdAt,
+      };
+    }
+    fillForm(_targetUser || currentUser);
+  }).catch(function() {
+    fillForm(currentUser);
+  });
+}
 
 // ── Save ──
 document.getElementById('profileForm').addEventListener('submit', function(e) {
@@ -273,23 +283,17 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     bio: document.getElementById('fBio').value.trim() || null,
   };
 
-  var API_KEY = (typeof FIREBASE_CONFIG !== 'undefined') ? FIREBASE_CONFIG.apiKey : '';
-  var C = 'projects/' + ((typeof FIREBASE_CONFIG !== 'undefined') ? FIREBASE_CONFIG.projectId : 'novara-f985b') + '/locations/us-east1/services/novara-f985b-service/connectors/equipcore';
-  var MUT_URL = 'https://firebasedataconnect.googleapis.com/v1/' + C + ':executeMutation?key=' + API_KEY;
-
-  function mutate(op, v) {
-    return fetch(MUT_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name:C, operationName:op, variables:v}) })
-      .then(function(r){ return r.json(); })
-      .then(function(j){ if (j.errors && j.errors.length) throw new Error(j.errors[0].message); return j; });
-  }
-
-  var promises = [mutate('UpdateUserProfile', vars)];
+  // Goes through DC_DATA's authenticated backend proxy (see dc.js /
+  // functions/controllers/dataController.js) — not a direct Data Connect
+  // call, since UpdateUserProfile/UpdateUserRole are no longer reachable
+  // with just the public API key.
+  var promises = [DC_DATA.updateUserProfile(vars.id, vars)];
 
   // Role change (admin only)
   if (isAdminEditingOther) {
     var newRole = document.getElementById('fRoleSelect').value;
     if (newRole !== (_targetUser.role || '').toUpperCase()) {
-      promises.push(mutate('UpdateUserRole', { id: _targetUser.id, role: newRole }));
+      promises.push(DC_DATA.updateUserRole(_targetUser.id, newRole));
       // Data Connect's role column is just the display copy shown on org
       // management pages — the role that actually controls what this user
       // can access lives in their Firebase Auth custom claims, so both

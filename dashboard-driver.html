@@ -43,7 +43,7 @@
       <span class="sb-label" style="font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(255,180,162,.1);color:#ffb4a2;padding:2px 6px;border-radius:999px;border:1px solid rgba(255,180,162,.2);flex-shrink:0">DRIVER</span>
     </div>
   </div>
-  <nav id="sh-nav" style="flex:1;min-height:0;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px"></nav>
+  <nav id="sh-nav" style="flex:1;min-height:0;overscroll-behavior:contain;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px"></nav>
   <div style="padding:9px 7px;border-top:1px solid rgba(255,255,255,0.04)">
     <button onclick="EC_AUTH.logout()" class="nl" title="Sign Out" style="color:#849495"><span class="material-symbols-outlined ms">logout</span><span class="sb-label">Sign Out</span></button>
   </div>
@@ -193,7 +193,12 @@ if (user) {
 }
 
 // Route map
-const rm=L.map('routeMap',{zoomControl:false,attributionControl:false}).setView([-26.0,27.8],8);
+// scrollWheelZoom:false — same fix as dashboard-admin's Mapbox map: Leaflet's
+// default scroll-wheel-zoom otherwise captures a plain page-scroll gesture
+// over the map and zooms it instead, which is exactly what reads as
+// "scrolling doesn't work here." zoomControl is already off for this
+// small route-preview map, so there's no zoom UI being taken away.
+const rm=L.map('routeMap',{zoomControl:false,attributionControl:false,scrollWheelZoom:false}).setView([-26.0,27.8],8);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20}).addTo(rm);
 L.control.zoom({position:'topright'}).addTo(rm);
 const route=[[-26.2041,28.0473],[-25.95,27.9],[-25.78,27.6],[-25.6677,27.2424]];

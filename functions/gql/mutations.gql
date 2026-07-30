@@ -1,0 +1,408 @@
+# EquipCore — server-only Data Connect mutations.
+#
+# Executed exclusively via the Firebase Admin SDK (services/dataConnect.js).
+# See queries.gql's header comment — same trust model applies here.
+#
+# Bodies are kept in lockstep with dataconnect/connectors/mutations.gql
+# minus the @auth clause — if you change a mutation's shape there, mirror
+# it here.
+
+mutation CreateOrgRequest(
+  $orgName: String!
+  $sector: String!
+  $regId: String!
+  $contactName: String!
+  $contactEmail: String!
+  $domain: String!
+) {
+  orgRequest_insert(data: {
+    orgName: $orgName
+    sector: $sector
+    regId: $regId
+    contactName: $contactName
+    contactEmail: $contactEmail
+    domain: $domain
+    status: PENDING
+  })
+}
+
+mutation JoinWaitlist(
+  $catalogItemId: UUID!
+  $userId: UUID
+  $name: String!
+  $email: String!
+  $phone: String
+) {
+  waitlistEntry_insert(data: {
+    catalogItemId: $catalogItemId
+    userId: $userId
+    name: $name
+    email: $email
+    phone: $phone
+    status: PENDING
+  })
+}
+
+mutation CreateContactInquiry(
+  $referenceId: String!
+  $name: String!
+  $email: String!
+  $subject: String!
+  $message: String!
+) {
+  contactInquiry_insert(data: {
+    referenceId: $referenceId
+    name: $name
+    email: $email
+    subject: $subject
+    message: $message
+    status: NEW
+  })
+}
+
+mutation CreateRentalApplication(
+  $ref: String!
+  $applicantUserId: UUID
+  $organisationId: UUID
+  $firstName: String!
+  $lastName: String!
+  $idNumber: String!
+  $dateOfBirth: Date!
+  $email: String!
+  $phone: String!
+  $address: String!
+  $city: String
+  $province: SaProvince
+  $postalCode: String
+  $employmentStatus: EmploymentStatus!
+  $employerName: String!
+  $monthlyIncome: Float!
+  $yearsEmployed: Int
+  $bank: BankName!
+  $accountType: AccountType
+  $outstandingCredit: Float
+  $creditCheckConsent: Boolean
+  $vehicleId: UUID
+  $equipmentName: String!
+  $dailyRate: Float
+  $startDate: Date!
+  $endDate: Date!
+  $estimatedCost: Float
+  $deliveryAddress: String!
+  $purpose: RentalPurpose
+  $rentalNotes: String
+  $consentCreditCheck: Boolean!
+  $consentTerms: Boolean!
+  $consentUnderstanding: Boolean!
+) {
+  rentalApplication_insert(data: {
+    ref: $ref
+    applicantUserId: $applicantUserId
+    organisationId: $organisationId
+    status: PENDING
+    firstName: $firstName
+    lastName: $lastName
+    idNumber: $idNumber
+    dateOfBirth: $dateOfBirth
+    email: $email
+    phone: $phone
+    address: $address
+    city: $city
+    province: $province
+    postalCode: $postalCode
+    employmentStatus: $employmentStatus
+    employerName: $employerName
+    monthlyIncome: $monthlyIncome
+    yearsEmployed: $yearsEmployed
+    bank: $bank
+    accountType: $accountType
+    outstandingCredit: $outstandingCredit
+    creditCheckConsent: $creditCheckConsent
+    vehicleId: $vehicleId
+    equipmentName: $equipmentName
+    dailyRate: $dailyRate
+    startDate: $startDate
+    endDate: $endDate
+    estimatedCost: $estimatedCost
+    deliveryAddress: $deliveryAddress
+    purpose: $purpose
+    rentalNotes: $rentalNotes
+    consentCreditCheck: $consentCreditCheck
+    consentTerms: $consentTerms
+    consentUnderstanding: $consentUnderstanding
+  })
+}
+
+mutation CreateOrganisation(
+  $name: String!
+  $sector: String!
+  $regId: String!
+  $contactEmail: String!
+  $domain: String!
+  $logoUrl: String
+) {
+  organisation_insert(data: {
+    name: $name
+    sector: $sector
+    regId: $regId
+    contactEmail: $contactEmail
+    domain: $domain
+    logoUrl: $logoUrl
+    status: ACTIVE
+  })
+}
+
+mutation UpdateOrgStatus($id: UUID!, $status: OrgStatus!) {
+  organisation_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation ApproveOrgRequest($id: UUID!, $resultingOrgId: UUID!, $adminNotes: String) {
+  orgRequest_update(id: $id, data: {
+    status: APPROVED
+    resultingOrgId: $resultingOrgId
+    adminNotes: $adminNotes
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation RejectOrgRequest($id: UUID!, $adminNotes: String) {
+  orgRequest_update(id: $id, data: {
+    status: REJECTED
+    adminNotes: $adminNotes
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation CreateUser(
+  $name: String!
+  $email: String!
+  $role: UserRole!
+  $organisationId: UUID
+  $avatarUrl: String
+) {
+  user_insert(data: {
+    name: $name
+    email: $email
+    role: $role
+    organisationId: $organisationId
+    status: ACTIVE
+    avatarUrl: $avatarUrl
+    emailVerified: false
+    failedAttempts: 0
+  })
+}
+
+mutation UpdateUserStatus($id: UUID!, $status: UserStatus!) {
+  user_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateUserRole($id: UUID!, $role: UserRole!) {
+  user_update(id: $id, data: { role: $role, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateUserProfile(
+  $id: UUID!
+  $name: String
+  $bio: String
+  $position: String
+  $department: String
+  $phone: String
+  $avatarUrl: String
+) {
+  user_update(id: $id, data: {
+    name: $name
+    bio: $bio
+    position: $position
+    department: $department
+    phone: $phone
+    avatarUrl: $avatarUrl
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateUserAvatar($id: UUID!, $avatarUrl: String!) {
+  user_update(id: $id, data: { avatarUrl: $avatarUrl, updatedAt_expr: "request.time" })
+}
+
+mutation CreateVehicle(
+  $make: String!
+  $model: String!
+  $year: Int!
+  $type: VehicleType!
+  $regPlate: String!
+  $description: String
+  $km: Int!
+  $serviceIntervalKm: Int!
+  $nextServiceKm: Int!
+  $imageUrl: String
+  $organisationId: UUID
+) {
+  vehicle_insert(data: {
+    make: $make
+    model: $model
+    year: $year
+    type: $type
+    regPlate: $regPlate
+    description: $description
+    km: $km
+    serviceIntervalKm: $serviceIntervalKm
+    nextServiceKm: $nextServiceKm
+    status: AVAILABLE
+    imageUrl: $imageUrl
+    organisationId: $organisationId
+  })
+}
+
+mutation UpdateVehicleStatus($id: UUID!, $status: VehicleStatus!) {
+  vehicle_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateVehicleKm($id: UUID!, $km: Int!) {
+  vehicle_update(id: $id, data: {
+    km: $km
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateVehicleService($id: UUID!, $nextServiceKm: Int!, $serviceIntervalKm: Int!) {
+  vehicle_update(id: $id, data: {
+    nextServiceKm: $nextServiceKm
+    serviceIntervalKm: $serviceIntervalKm
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateVehicleDetails(
+  $id: UUID!
+  $make: String!
+  $model: String!
+  $year: Int!
+  $type: VehicleType!
+  $regPlate: String!
+  $description: String
+  $km: Int!
+  $serviceIntervalKm: Int!
+  $nextServiceKm: Int!
+  $vin: String
+  $trackingCompany: String
+  $lastServiceDate: Date
+) {
+  vehicle_update(id: $id, data: {
+    make: $make
+    model: $model
+    year: $year
+    type: $type
+    regPlate: $regPlate
+    description: $description
+    km: $km
+    serviceIntervalKm: $serviceIntervalKm
+    nextServiceKm: $nextServiceKm
+    vin: $vin
+    trackingCompany: $trackingCompany
+    lastServiceDate: $lastServiceDate
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteVehicle($id: UUID!) {
+  vehicle_delete(id: $id)
+}
+
+mutation CreateMaintenanceQuery(
+  $vehicleId: UUID!
+  $vehicleLabel: String!
+  $type: MaintenanceType!
+  $description: String!
+  $priority: MaintenancePriority!
+  $loggedByName: String!
+  $loggedByUserId: UUID
+  $issueImageUrl: String
+) {
+  maintenanceQuery_insert(data: {
+    vehicleId: $vehicleId
+    vehicleLabel: $vehicleLabel
+    type: $type
+    description: $description
+    priority: $priority
+    status: OPEN
+    loggedByName: $loggedByName
+    loggedByUserId: $loggedByUserId
+    issueImageUrl: $issueImageUrl
+  })
+}
+
+mutation UpdateMaintenanceStatus($id: UUID!, $status: MaintenanceStatus!) {
+  maintenanceQuery_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation CreateRental(
+  $vehicleId: UUID
+  $equipmentName: String!
+  $clientName: String!
+  $organisationId: UUID
+  $startDate: Date!
+  $returnDate: Date!
+  $valueZar: Float!
+  $status: RentalStatus
+  $notes: String
+) {
+  rental_insert(data: {
+    vehicleId: $vehicleId
+    equipmentName: $equipmentName
+    clientName: $clientName
+    organisationId: $organisationId
+    startDate: $startDate
+    returnDate: $returnDate
+    valueZar: $valueZar
+    status: $status
+    notes: $notes
+  })
+}
+
+mutation UpdateRentalStatus($id: UUID!, $status: RentalStatus!) {
+  rental_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateRental(
+  $id: UUID!
+  $startDate: Date
+  $returnDate: Date
+  $valueZar: Float
+  $status: RentalStatus
+  $notes: String
+) {
+  rental_update(id: $id, data: {
+    startDate: $startDate
+    returnDate: $returnDate
+    valueZar: $valueZar
+    status: $status
+    notes: $notes
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteRental($id: UUID!) {
+  rental_delete(id: $id)
+}
+
+mutation CreateAuditLog(
+  $userId: UUID
+  $userName: String
+  $userRole: String
+  $action: String!
+  $details: String
+  $page: String
+  $ipAddress: String
+  $userAgent: String
+) {
+  auditLog_insert(data: {
+    userId: $userId
+    userName: $userName
+    userRole: $userRole
+    action: $action
+    details: $details
+    page: $page
+    ipAddress: $ipAddress
+    userAgent: $userAgent
+  })
+}
