@@ -429,6 +429,7 @@ query ListAllMaintenanceQueries @auth(level: NO_ACCESS) {
     priority
     status
     resolvedAt
+    createdAt
     updatedAt
   }
 }

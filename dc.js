@@ -315,77 +315,23 @@ const DC_DATA = (() => {
   }
 
   // ─── Enum converters ────────────────────────────────────────────────────────
+  // Must match dataconnect/schema/schema.gql's VehicleType enum exactly —
+  // any key not listed there makes CreateVehicle/UpdateVehicleDetails fail
+  // server-side with a 500.
   const VEHICLE_TYPE = {
-    // Earth Moving
-    'Excavator':                 'EXCAVATOR',
-    'Mini Excavator':            'MINI_EXCAVATOR',
-    'Backhoe Loader':            'BACKHOE_LOADER',
-    'Wheel Loader':              'WHEEL_LOADER',
-    'Compact Track Loader':      'COMPACT_TRACK_LOADER',
-    'Skid Steer Loader':         'SKID_STEER_LOADER',
-    'Bulldozer':                 'BULLDOZER',
-    'Motor Grader':              'MOTOR_GRADER',
-    'Compactor':                 'COMPACTOR',
-    // Trucks (On-Road)
-    'Heavy Truck':               'HEAVY_TRUCK',
-    'Rigid Truck':               'RIGID_TRUCK',
-    'Tipper Truck':              'TIPPER_TRUCK',
-    'Flatbed Truck':             'FLATBED_TRUCK',
-    'Curtainsider Truck':        'CURTAINSIDER_TRUCK',
-    'Refrigerated Truck':        'REFRIGERATED_TRUCK',
-    'Tanker Truck':              'TANKER_TRUCK',
-    'Concrete Mixer':            'CONCRETE_MIXER',
-    'Car Transporter':           'CAR_TRANSPORTER',
-    'Crane Truck':               'CRANE_TRUCK',
-    // Trailers
-    'Flatbed Trailer':           'FLATBED_TRAILER',
-    'Curtainsider Trailer':      'CURTAINSIDER_TRAILER',
-    'Refrigerated Trailer':      'REFRIGERATED_TRAILER',
-    'Tanker Trailer':            'TANKER_TRAILER',
-    'Tipper Trailer':            'TIPPER_TRAILER',
-    'Lowboy Trailer':            'LOWBOY_TRAILER',
-    'Skeletal Trailer':          'SKELETAL_TRAILER',
-    'Car Transporter Trailer':   'CAR_TRANSPORTER_TRAILER',
-    // Mining & Heavy Haul
-    'Drill Rig':                 'DRILL_RIG',
-    'Rigid Dump Truck':          'RIGID_DUMP_TRUCK',
-    'Articulated Hauler':        'ARTICULATED_HAULER',
-    // Cranes & Lifting
-    'Crane':                     'CRANE',
-    'Mobile Crane':              'MOBILE_CRANE',
-    'Tower Crane':               'TOWER_CRANE',
-    'Crawler Crane':             'CRAWLER_CRANE',
-    'Overhead Crane':            'OVERHEAD_CRANE',
-    'Boom Truck':                'BOOM_TRUCK',
-    'Container Reachstacker':    'CONTAINER_REACHSTACKER',
-    'Straddle Carrier':          'STRADDLE_CARRIER',
-    'High Reach Truck':          'HIGH_REACH_TRUCK',
-    // Forklifts & Warehouse
-    'Forklift':                  'FORKLIFT',
-    'Rough Terrain Forklift':    'ROUGH_TERRAIN_FORKLIFT',
-    'Order Picker':              'ORDER_PICKER',
-    'Pallet Jack':               'PALLET_JACK',
-    'Telehandler':               'TELEHANDLER',
-    // Aerial Work Platforms
-    'Scissor Lift':              'SCISSOR_LIFT',
-    'Boom Lift':                 'BOOM_LIFT',
-    // Power & Utilities
-    'Generator':                 'GENERATOR',
-    'Compressor':                'COMPRESSOR',
-    'Light Tower':               'LIGHT_TOWER',
-    'Water Pump':                'WATER_PUMP',
-    // Specialty & Road
-    'Road Sweeper':              'ROAD_SWEEPER',
-    'Water Bowser':              'WATER_BOWSER',
-    'Concrete Pump':             'CONCRETE_PUMP',
-    'Asphalt Paver':             'ASPHALT_PAVER',
-    'Cold Planer':               'COLD_PLANER',
-    // Light Vehicles
-    'Van':                       'VAN',
-    'Pickup Truck':              'PICKUP_TRUCK',
-    'Minibus':                   'MINIBUS',
-    // Other
-    'Other':                     'OTHER',
+    'Excavator':              'EXCAVATOR',
+    'Backhoe Loader':         'BACKHOE_LOADER',
+    'Wheel Loader':           'WHEEL_LOADER',
+    'Heavy Truck':            'HEAVY_TRUCK',
+    'Articulated Hauler':     'ARTICULATED_HAULER',
+    'Drill Rig':              'DRILL_RIG',
+    'Crane':                  'CRANE',
+    'Container Reachstacker': 'CONTAINER_REACHSTACKER',
+    'High Reach Truck':       'HIGH_REACH_TRUCK',
+    'Forklift':               'FORKLIFT',
+    'Generator':              'GENERATOR',
+    'Van':                    'VAN',
+    'Other':                  'OTHER',
   };
 
   const VEHICLE_STATUS = {
@@ -461,6 +407,24 @@ const DC_DATA = (() => {
 
   // ─── Public API ──────────────────────────────────────────────────────────────
   return {
+
+    // Guest-safe alternative to init() — used by pages an anonymous visitor
+    // can reach (catalog/marketplace/dashboard-guest/apply-rental). init()
+    // bundles in ListAllUsers/ListAllVehicles/etc, all admin-only server-side
+    // now; calling it unauthenticated 403s on the very first request. This
+    // loads only the catalog, which is genuinely public (@auth(level: PUBLIC)).
+    async initPublicCatalog() {
+      if (_catalogItems.length) return;
+      await _loadCatalog();
+    },
+
+    async submitRentalApplication(data) {
+      await mutate('CreateRentalApplication', data);
+    },
+
+    async submitContactInquiry(data) {
+      await mutate('CreateContactInquiry', data);
+    },
 
     async init() {
       if (_ready) return;
@@ -558,6 +522,23 @@ const DC_DATA = (() => {
     // Note: RentalApplication records aren't org-tagged in the schema, so this
     // is intentionally unscoped (same precedent as getOrgRequests()).
     getRentalApplications() { return _rentalApplications; },
+
+    // Full detail (ID number, address, employment/financial info) for the
+    // review modal — not in the list-shaped _rentalApplications cache, and
+    // deliberately fetched fresh each time rather than cached, since this
+    // is only opened right before a review decision.
+    async getRentalApplicationDetail(id) {
+      const d = await query('GetRentalApplicationById', { id });
+      return d.rentalApplication || null;
+    },
+
+    // reviewedById is intentionally not a parameter here — the server
+    // resolves and injects the caller's own user id (dataController.js's
+    // injectOwnIdAs), so it can never be spoofed as a different admin.
+    async reviewRentalApplication(id, status, rejectionReason) {
+      await mutate('ReviewRentalApplication', { id, status, rejectionReason: rejectionReason || null });
+      await _loadRentalApplications();
+    },
 
     // ── Auth-time verification (deliberately bypasses the cache/init()
     //    flow above) ────────────────────────────────────────────────────────
@@ -691,7 +672,12 @@ const DC_DATA = (() => {
         phone:      data.phone      ?? null,
         avatarUrl:  data.avatarUrl  ?? null,
       });
-      await _loadUsers(); saveCache();
+      // Refreshes the cached admin user list so admin-orgs.html-style views
+      // reflect the edit immediately — but this mutation is also callable by
+      // any signed-in user editing their own profile (ownField-authorized),
+      // for whom ListAllUsers is admin-only and would 403. Only refresh when
+      // the admin dataset was already loaded (i.e. an admin context).
+      if (_users.length) { try { await _loadUsers(); saveCache(); } catch {} }
     },
 
     // Admin-only — enforced server-side by registry/dataOperations.js.

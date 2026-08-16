@@ -451,3 +451,18 @@ mutation CreateAuditLog(
     userAgent: $userAgent
   })
 }
+
+mutation ReviewRentalApplication(
+  $id: UUID!
+  $status: ApplicationStatus!
+  $reviewedById: UUID!
+  $rejectionReason: String
+) {
+  rentalApplication_update(id: $id, data: {
+    status: $status
+    reviewedById: $reviewedById
+    rejectionReason: $rejectionReason
+    reviewedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}

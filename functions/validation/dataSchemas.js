@@ -9,8 +9,14 @@
 
 const { z } = require('zod');
 
-const uuid = () => z.string().uuid();
-const optUuid = () => z.string().uuid().nullish();
+// Data Connect returns/accepts UUIDs as bare 32-char hex (no dashes), not
+// the canonical dashed form z.string().uuid() expects — that mismatch made
+// every mutation referencing an existing row's id (approve/reject, status
+// updates, deletes, reviews, ...) reject with 400 in production. Accept
+// both forms.
+const UUID_RE = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{32})$/i;
+const uuid = () => z.string().regex(UUID_RE, 'Invalid uuid');
+const optUuid = () => z.string().regex(UUID_RE, 'Invalid uuid').nullish();
 const str = (max) => z.string().trim().min(1).max(max);
 const optStr = (max) => z.string().trim().max(max).nullish();
 const int32 = () => z.number().int().min(0).max(2147483647);
@@ -40,6 +46,7 @@ const MAINT_TYPE = z.enum(['DRIVER_ISSUE', 'ROADSIDE', 'TYRES', 'WINDSCREEN', 'S
 const MAINT_PRIORITY = z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
 const MAINT_STATUS = z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED']);
 const RENTAL_STATUS = z.enum(['PENDING', 'ACTIVE', 'OVERDUE', 'COMPLETE', 'CANCELLED']);
+const APPLICATION_STATUS = z.enum(['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']);
 
 const EMPTY = z.object({}).strict();
 
@@ -115,6 +122,15 @@ const SCHEMAS = {
     status: RENTAL_STATUS.nullish(), notes: optStr(4000),
   }).strict(),
   DeleteRental: z.object({ id: uuid() }).strict(),
+
+  // ── Rental applications (admin review) ──
+  // reviewedById is deliberately NOT accepted here — dataController.js's
+  // injectOwnIdAs overrides it server-side with the caller's own resolved
+  // user id, so it isn't even a client-supplied field in the first place.
+  GetRentalApplicationById: z.object({ id: uuid() }).strict(),
+  ReviewRentalApplication: z.object({
+    id: uuid(), status: APPLICATION_STATUS, rejectionReason: optStr(1000),
+  }).strict(),
 };
 
 const PROVINCE = z.enum([

@@ -32,6 +32,14 @@ const EC_SECURITY = (() => {
     '', 'index', 'login', 'about', 'contact',
     'catalog', 'marketplace', 'calculator',
     'dashboard-guest', 'dashboard', 'privacy',
+    // Anonymous rental applications are a deliberately-supported path
+    // server-side (CreateRentalApplication is in PUBLIC_SCHEMAS, submitted
+    // via submitPublic with no auth token) — dashboard-guest.html's own
+    // "Apply to Rent" button sends guests straight here. Gating this page
+    // behind login would silently strand every prospective customer who
+    // isn't already an org member, which is exactly the case this form
+    // exists for.
+    'apply-rental',
   ]);
 
   const PAGE_ROLES = {
@@ -45,7 +53,6 @@ const EC_SECURITY = (() => {
     'dashboard-user'    : ['user'],
     'user-dashboard'    : ['user'],
     'my-rentals'        : ['user', 'driver', 'admin'],
-    'apply-rental'      : ['user', 'admin'],
     'dashboard-driver'  : ['driver'],
     'driver-vehicles'   : ['driver', 'admin'],
     'messages'          : ['admin', 'user', 'driver'],

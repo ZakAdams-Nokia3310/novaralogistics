@@ -116,6 +116,7 @@
 <script src="security.js"></script>
 <script src="auth.js"></script>
 <script src="frontend/token-client.js"></script>
+<script src="dc.js?v=2"></script>
 <script src="sidebar.js?v=2"></script>
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
@@ -139,7 +140,7 @@ if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.turnstileSiteKey) 
   document.head.appendChild(s);
 }
 
-document.getElementById('contactForm').addEventListener('submit', e => {
+document.getElementById('contactForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
 
@@ -168,16 +169,20 @@ document.getElementById('contactForm').addEventListener('submit', e => {
   // Cryptographically secure reference number
   const ref = 'REF-' + EC_SECURITY.secureRandHex(3).toUpperCase();
 
-  EC_SECURITY.audit('CONTACT_FORM_SUBMITTED', { subject, email: EC_SECURITY.maskEmail(email) });
-
-  setTimeout(() => {
+  try {
+    await DC_DATA.submitContactInquiry({ referenceId: ref, name, email, subject, message });
+    EC_SECURITY.audit('CONTACT_FORM_SUBMITTED', { subject, email: EC_SECURITY.maskEmail(email) });
     document.getElementById('successRef').textContent = 'Your message was received. Ref: ' + ref;
     document.getElementById('successBox').style.display = 'flex';
     setTimeout(() => { document.getElementById('successBox').style.display = 'none'; }, 5000);
     form.reset();
     btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:18px">send</span>Send Message';
     btn.disabled = false;
-  }, 1200);
+  } catch (err) {
+    alert(EC_SECURITY.safeErrMsg(err, 'Could not send your message. Please try again.'));
+    btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:18px">send</span>Send Message';
+    btn.disabled = false;
+  }
 });
 
 const s=document.createElement('style');s.textContent='@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}';document.head.appendChild(s);

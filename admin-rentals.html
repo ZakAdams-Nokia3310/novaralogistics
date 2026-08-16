@@ -39,6 +39,9 @@
   label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:5px;}
   .btnr{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;background:rgba(255,107,107,.08);color:#ff6b6b;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,107,107,.18);cursor:pointer;transition:background .18s;}
   .btnr:hover{background:rgba(255,107,107,.14);}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;padding:8px 16px;border-radius:9px;border:1px solid rgba(255,255,255,.07);background:none;color:#849495;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:7px;}
+  .tab-btn.active{background:rgba(0,240,255,.09);color:#00f0ff;border-color:rgba(0,240,255,.2);}
+  .badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;}
   .modal-bg{display:none;position:fixed;inset:0;background:rgba(8,10,14,.85);backdrop-filter:blur(12px);z-index:900;align-items:center;justify-content:center;}
   .modal-bg.show{display:flex;}
   @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -75,50 +78,113 @@
   </div>
 
   <div class="body">
-    <!-- KPIs (rendered by JS) -->
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px" id="kpiRow"></div>
-
-    <!-- Filter bar -->
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-      <div style="position:relative;flex:1;min-width:200px">
-        <span class="material-symbols-outlined ms" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:#849495;pointer-events:none">search</span>
-        <input id="rSearch" placeholder="Search rental ID, equipment, or client…" style="padding-left:36px;width:100%;" oninput="renderTable()"/>
-      </div>
-      <select id="rStatus" onchange="renderTable()" style="width:160px">
-        <option value="all">All Statuses</option>
-        <option value="active">Active</option>
-        <option value="pending">Pending</option>
-        <option value="overdue">Overdue</option>
-        <option value="complete">Complete</option>
-      </select>
-      <select id="rDue" onchange="renderTable()" style="width:180px">
-        <option value="all">All Return Dates</option>
-        <option value="overdue">Overdue Now</option>
-        <option value="today">Due Today</option>
-        <option value="soon">Due Within 3 Days</option>
-        <option value="week">Due This Week</option>
-      </select>
+    <!-- Tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap">
+      <button class="tab-btn active" id="tabRentalsBtn" onclick="switchRentalTab('rentals')">
+        <span class="material-symbols-outlined ms" style="font-size:15px">local_shipping</span>Rentals
+      </button>
+      <button class="tab-btn" id="tabApplicationsBtn" onclick="switchRentalTab('applications')">
+        <span class="material-symbols-outlined ms" style="font-size:15px">mark_email_unread</span>Applications
+        <span class="badge" id="pendingAppBadge" style="background:rgba(255,217,61,.18);color:#ffd93d;display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700">0</span>
+      </button>
     </div>
 
-    <!-- Table -->
-    <div class="glass" style="border-radius:13px;overflow:hidden">
-      <div style="overflow-x:auto">
-        <table class="tbl" id="rTable">
-          <thead><tr>
-            <th>Equipment</th>
-            <th>Client</th>
-            <th>Due Back</th>
-            <th>Value</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr></thead>
-          <tbody id="rBody"></tbody>
-        </table>
+    <!-- ── Rentals panel ─────────────────────────────────────────────────── -->
+    <div id="panelRentals">
+      <!-- KPIs (rendered by JS) -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin-bottom:18px" id="kpiRow"></div>
+
+      <!-- Filter bar -->
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+        <div style="position:relative;flex:1;min-width:200px">
+          <span class="material-symbols-outlined ms" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:#849495;pointer-events:none">search</span>
+          <input id="rSearch" placeholder="Search rental ID, equipment, or client…" style="padding-left:36px;width:100%;" oninput="renderTable()"/>
+        </div>
+        <select id="rStatus" onchange="renderTable()" style="width:160px">
+          <option value="all">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="pending">Pending</option>
+          <option value="overdue">Overdue</option>
+          <option value="complete">Complete</option>
+        </select>
+        <select id="rDue" onchange="renderTable()" style="width:180px">
+          <option value="all">All Return Dates</option>
+          <option value="overdue">Overdue Now</option>
+          <option value="today">Due Today</option>
+          <option value="soon">Due Within 3 Days</option>
+          <option value="week">Due This Week</option>
+        </select>
       </div>
-      <div style="padding:13px 16px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">Showing <span id="showing">0</span> rentals</span>
-        <span id="overdueAlert" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ff6b6b;display:none"></span>
+
+      <!-- Table -->
+      <div class="glass" style="border-radius:13px;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="tbl" id="rTable">
+            <thead><tr>
+              <th>Equipment</th>
+              <th>Client</th>
+              <th>Due Back</th>
+              <th>Value</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="rBody"></tbody>
+          </table>
+        </div>
+        <div style="padding:13px 16px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">Showing <span id="showing">0</span> rentals</span>
+          <span id="overdueAlert" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ff6b6b;display:none"></span>
+        </div>
       </div>
+    </div>
+
+    <!-- ── Applications panel ────────────────────────────────────────────── -->
+    <div id="panelApplications" style="display:none">
+      <div class="glass" style="border-radius:13px;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table class="tbl" id="appTable">
+            <thead><tr>
+              <th>Applicant</th>
+              <th>Equipment</th>
+              <th>Dates</th>
+              <th>Submitted</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="appBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Review Application Modal -->
+<div class="modal-bg" id="reviewAppModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:560px;border-color:rgba(0,240,255,.14);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:#00f0ff">description</span>
+      </div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Review Application</div>
+        <div style="font-size:12px;color:#849495" id="reviewAppSub">—</div>
+      </div>
+      <button onclick="closeReviewApp()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:22px;line-height:1">×</button>
+    </div>
+    <div id="reviewAppContent" style="font-size:13px;color:#b9cacb;line-height:1.9;margin-bottom:18px"></div>
+    <div id="rejectReasonWrap" style="display:none;margin-bottom:14px">
+      <label>Decline Reason <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#849495">(optional, shown to applicant)</span></label>
+      <textarea id="rejectReasonInput" rows="2" placeholder="e.g. Credit check did not meet requirements"></textarea>
+    </div>
+    <div id="reviewAppErr" style="display:none;margin-bottom:14px;padding:9px 12px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:8px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+    <div style="display:flex;gap:10px" id="reviewAppActions">
+      <button class="btnp" style="flex:1;justify-content:center;padding:11px" onclick="submitReview('APPROVED')">
+        <span class="material-symbols-outlined ms" style="font-size:16px">check</span>Approve
+      </button>
+      <button class="btnr" style="flex:1;justify-content:center;padding:11px" onclick="beginReject()">
+        <span class="material-symbols-outlined ms" style="font-size:16px">close</span>Decline
+      </button>
     </div>
   </div>
 </div>
@@ -418,7 +484,107 @@ document.getElementById('addRentalForm').addEventListener('submit', async e => {
   renderAll();
 });
 
-function renderAll() { renderKPIs(); renderTable(); }
+function renderAll() { renderKPIs(); renderTable(); renderApplications(); }
+
+// ── Applications tab ─────────────────────────────────────────────────────
+function switchRentalTab(tab) {
+  document.getElementById('panelRentals').style.display = tab === 'rentals' ? '' : 'none';
+  document.getElementById('panelApplications').style.display = tab === 'applications' ? '' : 'none';
+  document.getElementById('tabRentalsBtn').classList.toggle('active', tab === 'rentals');
+  document.getElementById('tabApplicationsBtn').classList.toggle('active', tab === 'applications');
+}
+
+function appStatusBadge(s) {
+  if (s === 'pending')   return `<span class="b bp">Pending</span>`;
+  if (s === 'approved')  return `<span class="b ba">Approved</span>`;
+  if (s === 'rejected')  return `<span class="b bo">Declined</span>`;
+  if (s === 'cancelled') return `<span class="b">Cancelled</span>`;
+  return `<span class="b">${esc(s)}</span>`;
+}
+
+function renderApplications() {
+  const apps = DC_DATA.getRentalApplications();
+  const pending = apps.filter(a => a.status === 'pending');
+  document.getElementById('pendingAppBadge').textContent = pending.length;
+
+  const tbody = document.getElementById('appBody');
+  if (!apps.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No applications yet</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = apps.map(a => `<tr>
+    <td data-label="Applicant"><div style="font-weight:600">${esc(a.applicantName)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(a.email)}</div></td>
+    <td data-label="Equipment">${esc(a.equipment)}</td>
+    <td data-label="Dates" style="font-family:'JetBrains Mono',monospace;font-size:11px">${fmtDate(a.startDate)} – ${fmtDate(a.endDate)}</td>
+    <td data-label="Submitted" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${a.submittedAt ? fmtDate(a.submittedAt) : '—'}</td>
+    <td data-label="Status">${appStatusBadge(a.status)}</td>
+    <td><button class="btng" style="font-size:11px;padding:5px 10px" onclick="openReviewApp('${escA(a.id)}')">${a.status === 'pending' ? 'Review' : 'View'}</button></td>
+  </tr>`).join('');
+}
+
+let _reviewingAppId = null;
+async function openReviewApp(id) {
+  _reviewingAppId = id;
+  document.getElementById('reviewAppErr').style.display = 'none';
+  document.getElementById('rejectReasonWrap').style.display = 'none';
+  document.getElementById('reviewAppContent').innerHTML = '<div style="text-align:center;padding:20px;color:#849495">Loading…</div>';
+  document.getElementById('reviewAppModal').classList.add('show');
+
+  let d;
+  try {
+    d = await DC_DATA.getRentalApplicationDetail(id);
+  } catch {
+    document.getElementById('reviewAppContent').innerHTML = '<div style="color:#ff6b6b">Could not load application details.</div>';
+    return;
+  }
+  if (!d) { document.getElementById('reviewAppContent').innerHTML = '<div style="color:#ff6b6b">Application not found.</div>'; return; }
+
+  document.getElementById('reviewAppSub').textContent = `${d.firstName} ${d.lastName} — ${d.equipmentName}`;
+  const rows = [
+    ['Email', d.email], ['Phone', d.phone], ['ID Number', d.idNumber],
+    ['Address', [d.address, d.city, d.postalCode].filter(Boolean).join(', ')],
+    ['Employment', (d.employmentStatus || '').replace(/_/g, ' ')], ['Employer', d.employerName],
+    ['Monthly Income', d.monthlyIncome != null ? 'R ' + Math.round(d.monthlyIncome).toLocaleString() : '—'],
+    ['Bank', d.bank], ['Equipment', d.equipmentName],
+    ['Period', `${fmtDate(d.startDate)} – ${fmtDate(d.endDate)}`],
+    ['Delivery Address', d.deliveryAddress],
+  ];
+  document.getElementById('reviewAppContent').innerHTML = rows.map(([k, v]) =>
+    `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+      <span style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;flex-shrink:0">${esc(k)}</span>
+      <span style="text-align:right">${esc(v || '—')}</span>
+    </div>`).join('');
+
+  const actionsWrap = document.getElementById('reviewAppActions');
+  actionsWrap.style.display = d.status === 'PENDING' ? 'flex' : 'none';
+}
+
+function beginReject() {
+  document.getElementById('rejectReasonWrap').style.display = 'block';
+  document.getElementById('reviewAppActions').innerHTML = `
+    <button class="btnr" style="flex:1;justify-content:center;padding:11px" onclick="submitReview('REJECTED')">Confirm Decline</button>
+    <button class="btng" style="flex:1;justify-content:center;padding:11px" onclick="closeReviewApp()">Cancel</button>`;
+}
+
+async function submitReview(status) {
+  const errBox = document.getElementById('reviewAppErr');
+  errBox.style.display = 'none';
+  const reason = status === 'REJECTED' ? document.getElementById('rejectReasonInput').value.trim() : null;
+  try {
+    await DC_DATA.reviewRentalApplication(_reviewingAppId, status, reason);
+    closeReviewApp();
+    renderApplications();
+    window.showToast?.('success', status === 'APPROVED' ? 'Application approved.' : 'Application declined.');
+  } catch (err) {
+    errBox.textContent = EC_SECURITY.safeErrMsg(err, 'Could not update this application. Please try again.');
+    errBox.style.display = 'block';
+  }
+}
+
+function closeReviewApp() {
+  document.getElementById('reviewAppModal').classList.remove('show');
+  _reviewingAppId = null;
+}
 DC_DATA.init().then(renderAll).catch(err => {
   document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${EC_SECURITY.sanitizeHtml(err.message)}</div>`);
 });

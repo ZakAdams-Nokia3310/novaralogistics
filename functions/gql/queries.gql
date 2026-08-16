@@ -113,6 +113,7 @@ query ListAllMaintenanceQueries {
     priority
     status
     resolvedAt
+    createdAt
     updatedAt
   }
 }
@@ -212,6 +213,52 @@ query ListAllRentalApplications {
     startDate
     endDate
     status
+    submittedAt
+    updatedAt
+  }
+}
+
+query GetRentalApplicationById($id: UUID!) {
+  rentalApplication(id: $id) {
+    id
+    applicantUser {
+      id
+      name
+      email
+    }
+    firstName
+    lastName
+    idNumber
+    dateOfBirth
+    email
+    phone
+    address
+    city
+    province
+    postalCode
+    employmentStatus
+    employerName
+    monthlyIncome
+    yearsEmployed
+    bank
+    accountType
+    outstandingCredit
+    vehicle {
+      id
+      make
+      model
+      regPlate
+    }
+    equipmentName
+    dailyRate
+    startDate
+    endDate
+    estimatedCost
+    deliveryAddress
+    purpose
+    rentalNotes
+    status
+    rejectionReason
     submittedAt
     updatedAt
   }

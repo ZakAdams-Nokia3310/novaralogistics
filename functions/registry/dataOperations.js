@@ -22,6 +22,11 @@
 //              client sent, so this can't be used to read another org's
 //              data no matter what a caller supplies.
 //   orgField — the variable name orgRoles scoping applies to.
+//   injectOwnIdAs — optional. Overrides variables[injectOwnIdAs] with the
+//              caller's own resolved database user id server-side, ignoring
+//              whatever the client sent — for mutations that record *who*
+//              performed the action (e.g. reviewedById), so it can't be
+//              spoofed as a different admin.
 
 const ADMIN = ['admin'];
 
@@ -34,6 +39,8 @@ module.exports = {
   ListAllMaintenanceQueries: { kind: 'query', roles: ADMIN },
   ListAllRentals:              { kind: 'query', roles: ADMIN },
   ListAllRentalApplications: { kind: 'query', roles: ADMIN },
+  GetRentalApplicationById:  { kind: 'query', roles: ADMIN },
+  ReviewRentalApplication:   { kind: 'mutation', roles: ADMIN, injectOwnIdAs: 'reviewedById' },
 
   // ── Org-scoped reads (the "user" dashboard) — any signed-in role, but
   //    always forced to the caller's OWN org, never the client's request ──

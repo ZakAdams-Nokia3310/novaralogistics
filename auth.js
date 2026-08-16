@@ -111,6 +111,12 @@ const EC_AUTH = (() => {
 
     return {
       id    : fbUser.uid,
+      // The Data Connect User row's own id — a different id space from
+      // Firebase's `id` above. Needed anywhere a real database UUID
+      // reference is submitted (e.g. CreateRentalApplication's
+      // applicantUserId) — sending the Firebase uid there fails uuid
+      // validation server-side.
+      dbId  : dbUser.id,
       name  : dbUser.name || fbUser.displayName || (fbUser.email || '').split('@')[0],
       email : fbUser.email,
       role  : (dbUser.role || 'USER').toLowerCase(),

@@ -60,6 +60,19 @@ exports.execute = async (req, res) => {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
+  // Same principle as orgField above: some mutations record *who acted*
+  // (e.g. ReviewRentalApplication's reviewedById) — that must be the
+  // caller's own resolved row id, never a client-supplied uid, or any
+  // admin could attribute an action to a different admin.
+  if (op.injectOwnIdAs) {
+    const ownId = await resolveOwnUserId(req.user.email);
+    if (!ownId) {
+      await logEvent(req, 'DATA_ACCESS_DENIED', { operationName, reason: 'no-own-user-row' });
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    effectiveVariables[op.injectOwnIdAs] = ownId;
+  }
+
   try {
     const data = op.kind === 'query'
       ? await runQuery(operationName, effectiveVariables)

@@ -110,21 +110,7 @@
             </div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr)" id="eGrid">
-            <a href="apply-rental" style="text-decoration:none;color:inherit;padding:13px;border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;display:block" onmouseover="this.style.background='rgba(0,240,255,.025)'" onmouseout="this.style.background=''">
-              <div style="height:72px;border-radius:8px;overflow:hidden;margin-bottom:9px"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuAv8e87iP2w_pHeQcW7esQSy6rjuuzXoliWo98ZkWquL6R0NH4Wt64g10-CEaMYh-ErLyiif_9SWsCi-be1XiCdLZkyB-gRd18LqFi005Twx_ZVbvSAesU6ZrpShpx61tTo3W1U8cBqCEYYtI3bSFTzgMM5gH2tB3QpkUFAaz3wImYaRMJlburfRXIHZYDZoVoXZviouUPktBzQx2UklNr9bjAoR2u_3hI7-Ba06LkWZBdJ3Vz1YJkfe80rjiD3De49_iR9BGneReY" style="width:100%;height:100%;object-fit:cover"/></div>
-              <div style="font-size:13px;font-weight:600;margin-bottom:2px">Volvo FH16</div>
-              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00dbe9">R4,200/day</div>
-            </a>
-            <a href="apply-rental" style="text-decoration:none;color:inherit;padding:13px;border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;display:block" onmouseover="this.style.background='rgba(0,240,255,.025)'" onmouseout="this.style.background=''">
-              <div style="height:72px;border-radius:8px;overflow:hidden;margin-bottom:9px"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvjBh4G6uFhvFE7zGhLGVK_LfyO1n_pJWncpqsRMSKAU_7NZLlqLR6zwSRawgQ6QMNb21cdXuxXF-7laAXMHx4efih_N9wXGraW9q_I0AkUr_B-EJvaYRIWUwS0TDgpL5qYluKnb3Isqkkiiyw3PMQywZIHRIF1bmUHqSXA5Vg0Uk0biPqwV2yLb7xPD8v5t4ByxG9fI3_L0N9YUeP8LgseDLL0MIRtCDA78mrOrjsAarzBLHZNXtkgAS__EyBAVC9DqZ2OIKpwRE" style="width:100%;height:100%;object-fit:cover"/></div>
-              <div style="font-size:13px;font-weight:600;margin-bottom:2px">EX-350 Crawler</div>
-              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00dbe9">R5,800/day</div>
-            </a>
-            <a href="apply-rental" style="text-decoration:none;color:inherit;padding:13px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;display:block" onmouseover="this.style.background='rgba(0,240,255,.025)'" onmouseout="this.style.background=''">
-              <div style="height:72px;border-radius:8px;overflow:hidden;margin-bottom:9px"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdE2hCW5w2ij9u0n1ow2t5elpRp1Mbj3wDGIvJDwLfM0OVkDC7dwpdHhpZD0nZ70no8JAVxJ6HZs84JXziytiGiBWNmLFx3Qc-cWt6qAnt7FNNujYtVfB1hdxk3dXLJMlSHjAkY-XkCUnBXWuv-JdxrX3FdKCoWnG1HKStyXtBvm8HsO1wgNo6nBhN5GN9pSraR9Y2oUFbBhaeZI7sT1dMs1buHld872mq5n6ezGvPzlsGvQ9ArczrClq2unSaMPmSIubvGK3mhjQ" style="width:100%;height:100%;object-fit:cover"/></div>
-              <div style="font-size:13px;font-weight:600;margin-bottom:2px">HC-900 Lifter</div>
-              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00dbe9">R18,500/day</div>
-            </a>
+            <div style="grid-column:1/-1;padding:20px;text-align:center;color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px">Loading fleet…</div>
           </div>
         </div>
       </div>
@@ -194,19 +180,57 @@ if (user) {
     {href:'calculator',     icon:'calculate',   label:'Calculator'},
   ]);
 
+  function vStatusBadge(s) {
+    if (s === 'available')   return `<span class="b ba">Available</span>`;
+    if (s === 'on_rent')     return `<span class="b bblue">On Rent</span>`;
+    if (s === 'maintenance') return `<span class="b bp">Maintenance</span>`;
+    if (s === 'retired')     return `<span class="b bo">Retired</span>`;
+    return `<span class="b">${esc(s)}</span>`;
+  }
+
+  function renderEquipmentGrid() {
+    const vehicles = DC_DATA.getVehicles().slice().sort((a, b) => {
+      if (a.status === 'available' && b.status !== 'available') return -1;
+      if (b.status === 'available' && a.status !== 'available') return 1;
+      return 0;
+    });
+    const grid = document.getElementById('eGrid');
+    if (!vehicles.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;color:#849495;font-family:\'JetBrains Mono\',monospace;font-size:11px">No fleet equipment yet.</div>';
+      return;
+    }
+    grid.innerHTML = vehicles.map(v => {
+      const img = v.imageUrl
+        ? `<img src="${esc(v.imageUrl)}" style="width:100%;height:100%;object-fit:cover"/>`
+        : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04)"><span class="material-symbols-outlined ms" style="font-size:26px;color:#849495">local_shipping</span></div>`;
+      const available = v.status === 'available';
+      const inner = `
+        <div style="height:72px;border-radius:8px;overflow:hidden;margin-bottom:9px">${img}</div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:2px">${esc(v.make)} ${esc(v.model)}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-bottom:6px">${esc(v.regPlate)} · ${esc(v.orgName || '')}</div>
+        ${vStatusBadge(v.status)}`;
+      const cellStyle = 'padding:13px;border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);transition:background .2s;display:block';
+      return available
+        ? `<a href="apply-rental?vehicleId=${encodeURIComponent(v.id)}" class="eq-cell" style="text-decoration:none;color:inherit;${cellStyle}" onmouseover="this.style.background='rgba(0,240,255,.025)'" onmouseout="this.style.background=''">${inner}</a>`
+        : `<div class="eq-cell" style="${cellStyle};opacity:.55">${inner}</div>`;
+    }).join('');
+  }
+
   DC_DATA.initForOrg(user.orgId).then(() => {
     const rentals = DC_DATA.getRentals();
     document.getElementById('stActive').textContent = rentals.filter(r => r.status === 'active').length;
     document.getElementById('stSpent').textContent  = 'R' + Math.round(rentals.reduce((s, r) => s + (r.value || 0), 0) / 1000) + 'k';
     document.getElementById('stAvail').textContent  = DC_DATA.getVehicles().filter(v => v.status === 'available').length;
     document.getElementById('stTotal').textContent  = rentals.length;
+    renderEquipmentGrid();
   }).catch(() => {
     ['stActive', 'stSpent', 'stAvail', 'stTotal'].forEach(id => document.getElementById(id).textContent = '—');
+    document.getElementById('eGrid').innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;color:#ff6b6b;font-family:\'JetBrains Mono\',monospace;font-size:11px">Unable to load fleet equipment.</div>';
   });
 }
 document.getElementById('eSearch').addEventListener('input',function(){
   const q=this.value.toLowerCase();
-  document.querySelectorAll('#eGrid a').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(q)?'':'none';});
+  document.querySelectorAll('#eGrid .eq-cell').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(q)?'':'none';});
 });
 
 // Rental value chart — mirrors the Current Rentals list above

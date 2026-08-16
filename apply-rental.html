@@ -143,15 +143,7 @@
         <div class="field">
           <label>Equipment *</label>
           <select id="f_equip" required>
-            <option value="">Select equipment…</option>
-            <option value="volvo_fh16">Volvo FH16 Globetrotter — R4,200/day</option>
-            <option value="ex350">EX-350 Crawler Excavator — R5,800/day</option>
-            <option value="hc900">HC-900 Heavy Lifter — R18,500/day</option>
-            <option value="fl55">FL-55 Electric Lift — R2,400/day</option>
-            <option value="scania500">Scania R 500 V8 — R3,950/day</option>
-            <option value="cat5t">Cat 5t Diesel Forklift — R1,250/day</option>
-            <option value="gen500">Aggreko 500kVA Generator — R4,800/day</option>
-            <option value="mercedes519">Mercedes Sprinter 519 — R1,100/day</option>
+            <option value="">Loading equipment…</option>
           </select>
         </div>
         <div class="grid-2">
@@ -243,6 +235,7 @@
 <script src="security.js"></script>
 <script src="auth.js"></script>
 <script src="frontend/token-client.js"></script>
+<script src="dc.js?v=2"></script>
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
@@ -292,25 +285,75 @@ function goPage(n){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// Price estimator
-const RATES={volvo_fh16:4200,ex350:5800,hc900:18500,fl55:2400,scania500:3950,cat5t:1250,gen500:4800,mercedes519:1100};
+// Equipment picker + price estimator.
+//
+// Signed-in users (with an org) pick from their org's real Vehicle fleet —
+// live status included, so a vehicle currently On Rent/Maintenance shows up
+// but can't be selected. Guests (and signed-in users with no org) fall back
+// to the public CatalogItem marketing list, as before. RATES keyed by the
+// selected option's id — only CatalogItem entries carry a rate; real
+// Vehicle rows don't, so the estimate is omitted for those instead of
+// fabricating a number.
+let RATES = {};
+const _preselectVehicleId = new URLSearchParams(location.search).get('vehicleId');
+const _currentUser = (typeof EC_AUTH !== 'undefined') ? EC_AUTH.current() : null;
+
+async function loadEquipmentOptions(){
+  const sel = document.getElementById('f_equip');
+  if (_currentUser && _currentUser.orgId) {
+    try {
+      DC_DATA.setOrgScope(_currentUser.orgId);
+      await DC_DATA.initForOrg(_currentUser.orgId);
+    } catch {
+      sel.innerHTML = '<option value="">Unable to load your fleet — please refresh</option>';
+      return;
+    }
+    const vehicles = DC_DATA.getVehicles();
+    const label = { on_rent: 'On Rent', maintenance: 'Maintenance', retired: 'Retired' };
+    sel.innerHTML = '<option value="">Select equipment…</option>' +
+      vehicles.map(v => {
+        const name = `${v.make} ${v.model}`;
+        const disabled = v.status !== 'available' ? ' disabled' : '';
+        const suffix = v.status !== 'available' ? ` — ${label[v.status] || v.status}` : '';
+        return `<option value="${EC_SECURITY.sanitizeHtml(v.id)}" data-name="${EC_SECURITY.sanitizeHtml(name)}" data-vehicle="1"${disabled}>${EC_SECURITY.sanitizeHtml(name)}${suffix}</option>`;
+      }).join('');
+    RATES = {};
+    if (_preselectVehicleId && vehicles.some(v => v.id === _preselectVehicleId && v.status === 'available')) {
+      sel.value = _preselectVehicleId;
+    }
+    updateEstimate();
+    return;
+  }
+
+  try {
+    await DC_DATA.initPublicCatalog();
+  } catch {
+    sel.innerHTML = '<option value="">Unable to load equipment — please refresh</option>';
+    return;
+  }
+  const items = DC_DATA.getCatalogItems().filter(c => c.status === 'available');
+  sel.innerHTML = '<option value="">Select equipment…</option>' +
+    items.map(c => `<option value="${EC_SECURITY.sanitizeHtml(c.id)}" data-rate="${c.dailyRate}" data-name="${EC_SECURITY.sanitizeHtml(c.name)}">${EC_SECURITY.sanitizeHtml(c.name)} — R${Math.round(c.dailyRate).toLocaleString()}/day</option>`).join('');
+  RATES = Object.fromEntries(items.map(c => [c.id, c.dailyRate]));
+  updateEstimate();
+}
+loadEquipmentOptions();
+
 function updateEstimate(){
   const eq=document.getElementById('f_equip').value;
   const s=document.getElementById('f_start').value;
   const e=document.getElementById('f_end').value;
   if(!eq||!s||!e) return;
   const days=Math.max(1,Math.round((new Date(e)-new Date(s))/(86400000)));
-  const rate=RATES[eq]||0;
-  const total=rate*days;
-  document.getElementById('est-equip').textContent=document.getElementById('f_equip').selectedOptions[0]?.text.split('—')[0].trim()||'';
+  document.getElementById('est-equip').textContent=document.getElementById('f_equip').selectedOptions[0]?.dataset.name||'';
   document.getElementById('est-days').textContent=days+' day'+(days!==1?'s':'');
-  document.getElementById('est-total').textContent='R '+total.toLocaleString();
+  const rate=RATES[eq];
+  document.getElementById('est-total').textContent = rate != null ? 'R '+(rate*days).toLocaleString() : 'Confirmed by admin';
   document.getElementById('priceEstimate').style.display='block';
 }
 document.getElementById('f_equip').addEventListener('change',updateEstimate);
 document.getElementById('f_start').addEventListener('change',updateEstimate);
 document.getElementById('f_end').addEventListener('change',updateEstimate);
-updateEstimate();
 
 // Build review
 function buildReview(){
@@ -330,8 +373,23 @@ function buildReview(){
   document.getElementById('reviewContent').innerHTML=Object.entries(vals).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em">${EC_SECURITY.sanitizeHtml(k)}</span><span style="font-size:13px;color:#e2e2e8;font-weight:500;max-width:60%;text-align:right">${EC_SECURITY.sanitizeHtml(v)}</span></div>`).join('');
 }
 
+// Server enums are UPPER_SNAKE_CASE; the selects show human-friendly text.
+const PROVINCE_MAP = {
+  'Gauteng':'GAUTENG', 'Western Cape':'WESTERN_CAPE', 'KwaZulu-Natal':'KWAZULU_NATAL',
+  'Eastern Cape':'EASTERN_CAPE', 'Mpumalanga':'MPUMALANGA', 'Limpopo':'LIMPOPO',
+  'North West':'NORTH_WEST', 'Northern Cape':'NORTHERN_CAPE', 'Free State':'FREE_STATE',
+};
+const EMPLOYMENT_MAP = {
+  'Full-time Employed':'FULL_TIME_EMPLOYED', 'Self-employed':'SELF_EMPLOYED',
+  'Business Owner':'BUSINESS_OWNER', 'Contractor':'CONTRACTOR',
+};
+const BANK_MAP = {
+  'ABSA':'ABSA', 'FNB':'FNB', 'Standard Bank':'STANDARD_BANK', 'Nedbank':'NEDBANK',
+  'Capitec':'CAPITEC', 'Investec':'INVESTEC', 'African Bank':'AFRICAN_BANK', 'Other':'OTHER',
+};
+
 // Submit
-document.getElementById('rentalForm').addEventListener('submit',e=>{
+document.getElementById('rentalForm').addEventListener('submit', async e => {
   e.preventDefault();
   const form = e.target;
 
@@ -348,13 +406,67 @@ document.getElementById('rentalForm').addEventListener('submit',e=>{
   }
   const btn=document.getElementById('submitBtn');
   btn.textContent='Submitting…';btn.disabled=true;
-  if (typeof EC_SECURITY !== 'undefined') {
-    EC_SECURITY.audit('RENTAL_APPLICATION_SUBMITTED', { ref: appRef });
-  }
-  setTimeout(()=>{
+
+  const equipOpt = document.getElementById('f_equip').selectedOptions[0];
+  const start = document.getElementById('f_start').value;
+  const end = document.getElementById('f_end').value;
+  const days = Math.max(1, Math.round((new Date(end) - new Date(start)) / 86400000));
+  const dailyRate = equipOpt && equipOpt.dataset.rate != null ? Number(equipOpt.dataset.rate) : null;
+  const isRealVehicle = !!(equipOpt && equipOpt.dataset.vehicle === '1');
+
+  const payload = {
+    ref: appRef,
+    applicantUserId: (typeof EC_AUTH !== 'undefined' && EC_AUTH.current()) ? EC_AUTH.current().dbId : null,
+    organisationId: (typeof EC_AUTH !== 'undefined' && EC_AUTH.current()) ? EC_AUTH.current().orgId : null,
+    firstName: document.getElementById('f_firstname').value.trim(),
+    lastName: document.getElementById('f_lastname').value.trim(),
+    idNumber: document.getElementById('f_id').value.trim(),
+    dateOfBirth: document.getElementById('f_dob').value,
+    email: document.getElementById('f_email').value.trim().toLowerCase(),
+    phone: document.getElementById('f_phone').value.trim(),
+    address: document.getElementById('f_address').value.trim(),
+    city: document.getElementById('f_city').value.trim() || null,
+    province: PROVINCE_MAP[document.getElementById('f_province').value] || null,
+    postalCode: document.getElementById('f_postal').value.trim() || null,
+    employmentStatus: EMPLOYMENT_MAP[document.getElementById('f_employment').value],
+    employerName: document.getElementById('f_employer').value.trim(),
+    monthlyIncome: Number(document.getElementById('f_income').value),
+    yearsEmployed: document.getElementById('f_years').value ? Number(document.getElementById('f_years').value) : null,
+    bank: BANK_MAP[document.getElementById('f_bank').value],
+    // Both NOT NULL in the DB with a default (CHEQUE / 0) — a schema
+    // default only applies when a column is *omitted* from the insert, not
+    // when explicitly set to null, so null here would violate the NOT NULL
+    // constraint. No UI field for account type, so use the same default.
+    accountType: 'CHEQUE',
+    outstandingCredit: document.getElementById('f_credit').value ? Number(document.getElementById('f_credit').value) : 0,
+    creditCheckConsent: document.getElementById('consent1').checked,
+    // vehicleId only set when the picker drew from the signed-in user's own
+    // org fleet (isRealVehicle) — those option values are real Vehicle ids.
+    // Guest/CatalogItem picks have no matching Vehicle row, so stays null;
+    // an admin matches those to a real Vehicle when approving.
+    vehicleId: isRealVehicle ? equipOpt.value : null,
+    equipmentName: equipOpt ? (equipOpt.dataset.name || equipOpt.text) : '',
+    dailyRate,
+    startDate: start,
+    endDate: end,
+    estimatedCost: dailyRate != null ? dailyRate * days : null,
+    deliveryAddress: document.getElementById('f_site').value.trim(),
+    purpose: null,
+    rentalNotes: null,
+    consentCreditCheck: document.getElementById('consent1').checked,
+    consentTerms: document.getElementById('consent2').checked,
+    consentUnderstanding: document.getElementById('consent3').checked,
+  };
+
+  try {
+    await DC_DATA.submitRentalApplication(payload);
+    if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('RENTAL_APPLICATION_SUBMITTED', { ref: appRef });
     document.getElementById('successRef').textContent='Reference: '+appRef;
     document.getElementById('successOverlay').style.display='flex';
-  },1500);
+  } catch (err) {
+    alert(EC_SECURITY.safeErrMsg(err, 'Could not submit your application. Please try again.'));
+    btn.textContent='Submit Application';btn.disabled=false;
+  }
 });
 </script>
 </body></html>

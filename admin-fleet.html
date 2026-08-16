@@ -104,81 +104,29 @@
         <option value="all">All Types</option>
         <optgroup label="Earth Moving">
           <option value="EXCAVATOR">Excavator</option>
-          <option value="MINI_EXCAVATOR">Mini Excavator</option>
           <option value="BACKHOE_LOADER">Backhoe Loader</option>
           <option value="WHEEL_LOADER">Wheel Loader</option>
-          <option value="COMPACT_TRACK_LOADER">Compact Track Loader</option>
-          <option value="SKID_STEER_LOADER">Skid Steer Loader</option>
-          <option value="BULLDOZER">Bulldozer</option>
-          <option value="MOTOR_GRADER">Motor Grader</option>
-          <option value="COMPACTOR">Compactor</option>
         </optgroup>
-        <optgroup label="Trucks">
+        <optgroup label="Trucks &amp; Haulage">
           <option value="HEAVY_TRUCK">Heavy Truck</option>
-          <option value="RIGID_TRUCK">Rigid Truck</option>
-          <option value="TIPPER_TRUCK">Tipper Truck</option>
-          <option value="FLATBED_TRUCK">Flatbed Truck</option>
-          <option value="CURTAINSIDER_TRUCK">Curtainsider Truck</option>
-          <option value="REFRIGERATED_TRUCK">Refrigerated Truck</option>
-          <option value="TANKER_TRUCK">Tanker Truck</option>
-          <option value="CONCRETE_MIXER">Concrete Mixer</option>
-          <option value="CAR_TRANSPORTER">Car Transporter</option>
-          <option value="CRANE_TRUCK">Crane Truck</option>
-        </optgroup>
-        <optgroup label="Trailers">
-          <option value="FLATBED_TRAILER">Flatbed Trailer</option>
-          <option value="CURTAINSIDER_TRAILER">Curtainsider Trailer</option>
-          <option value="REFRIGERATED_TRAILER">Refrigerated Trailer</option>
-          <option value="TANKER_TRAILER">Tanker Trailer</option>
-          <option value="TIPPER_TRAILER">Tipper Trailer</option>
-          <option value="LOWBOY_TRAILER">Lowboy Trailer</option>
-          <option value="SKELETAL_TRAILER">Skeletal Trailer</option>
-          <option value="CAR_TRANSPORTER_TRAILER">Car Transporter Trailer</option>
-        </optgroup>
-        <optgroup label="Mining &amp; Heavy Haul">
-          <option value="DRILL_RIG">Drill Rig</option>
-          <option value="RIGID_DUMP_TRUCK">Rigid Dump Truck</option>
           <option value="ARTICULATED_HAULER">Articulated Hauler</option>
+        </optgroup>
+        <optgroup label="Mining">
+          <option value="DRILL_RIG">Drill Rig</option>
         </optgroup>
         <optgroup label="Cranes &amp; Lifting">
           <option value="CRANE">Crane</option>
-          <option value="MOBILE_CRANE">Mobile Crane</option>
-          <option value="TOWER_CRANE">Tower Crane</option>
-          <option value="CRAWLER_CRANE">Crawler Crane</option>
-          <option value="OVERHEAD_CRANE">Overhead Crane</option>
-          <option value="BOOM_TRUCK">Boom Truck</option>
           <option value="CONTAINER_REACHSTACKER">Container Reachstacker</option>
-          <option value="STRADDLE_CARRIER">Straddle Carrier</option>
+          <option value="HIGH_REACH_TRUCK">High Reach Truck</option>
         </optgroup>
         <optgroup label="Forklifts &amp; Warehouse">
           <option value="FORKLIFT">Forklift</option>
-          <option value="HIGH_REACH_TRUCK">High Reach Truck</option>
-          <option value="ROUGH_TERRAIN_FORKLIFT">Rough Terrain Forklift</option>
-          <option value="ORDER_PICKER">Order Picker</option>
-          <option value="PALLET_JACK">Pallet Jack</option>
-          <option value="TELEHANDLER">Telehandler</option>
-        </optgroup>
-        <optgroup label="Aerial Work Platforms">
-          <option value="SCISSOR_LIFT">Scissor Lift</option>
-          <option value="BOOM_LIFT">Boom Lift</option>
         </optgroup>
         <optgroup label="Power &amp; Utilities">
           <option value="GENERATOR">Generator</option>
-          <option value="COMPRESSOR">Compressor</option>
-          <option value="LIGHT_TOWER">Light Tower</option>
-          <option value="WATER_PUMP">Water Pump</option>
-        </optgroup>
-        <optgroup label="Specialty &amp; Road">
-          <option value="ROAD_SWEEPER">Road Sweeper</option>
-          <option value="WATER_BOWSER">Water Bowser</option>
-          <option value="CONCRETE_PUMP">Concrete Pump</option>
-          <option value="ASPHALT_PAVER">Asphalt Paver</option>
-          <option value="COLD_PLANER">Cold Planer</option>
         </optgroup>
         <optgroup label="Light Vehicles">
           <option value="VAN">Van</option>
-          <option value="PICKUP_TRUCK">Pickup Truck</option>
-          <option value="MINIBUS">Minibus</option>
         </optgroup>
         <option value="OTHER">Other</option>
       </select>
@@ -330,17 +278,17 @@ function typeLabel(t) {
 }
 
 // ─── Searchable type dropdown ─────────────────────────────────────────────────
+// Must match dataconnect/schema/schema.gql's VehicleType enum exactly —
+// any value not listed there makes CreateVehicle/UpdateVehicleDetails fail
+// server-side with a 500.
 const VEH_TYPE_GROUPS = [
-  { g: 'Earth Moving',         t: ['Excavator','Mini Excavator','Backhoe Loader','Wheel Loader','Compact Track Loader','Skid Steer Loader','Bulldozer','Motor Grader','Compactor'] },
-  { g: 'Trucks',               t: ['Heavy Truck','Rigid Truck','Tipper Truck','Flatbed Truck','Curtainsider Truck','Refrigerated Truck','Tanker Truck','Concrete Mixer','Car Transporter','Crane Truck'] },
-  { g: 'Trailers',             t: ['Flatbed Trailer','Curtainsider Trailer','Refrigerated Trailer','Tanker Trailer','Tipper Trailer','Lowboy Trailer','Skeletal Trailer','Car Transporter Trailer'] },
-  { g: 'Mining & Heavy Haul',  t: ['Drill Rig','Rigid Dump Truck','Articulated Hauler'] },
-  { g: 'Cranes & Lifting',     t: ['Crane','Mobile Crane','Tower Crane','Crawler Crane','Overhead Crane','Boom Truck','Container Reachstacker','Straddle Carrier'] },
-  { g: 'Forklifts & Warehouse',t: ['Forklift','High Reach Truck','Rough Terrain Forklift','Order Picker','Pallet Jack','Telehandler'] },
-  { g: 'Aerial Work Platforms',t: ['Scissor Lift','Boom Lift'] },
-  { g: 'Power & Utilities',    t: ['Generator','Compressor','Light Tower','Water Pump'] },
-  { g: 'Specialty & Road',     t: ['Road Sweeper','Water Bowser','Concrete Pump','Asphalt Paver','Cold Planer'] },
-  { g: 'Light Vehicles',       t: ['Van','Pickup Truck','Minibus'] },
+  { g: 'Earth Moving',         t: ['Excavator','Backhoe Loader','Wheel Loader'] },
+  { g: 'Trucks & Haulage',     t: ['Heavy Truck','Articulated Hauler'] },
+  { g: 'Mining',                t: ['Drill Rig'] },
+  { g: 'Cranes & Lifting',     t: ['Crane','Container Reachstacker','High Reach Truck'] },
+  { g: 'Forklifts & Warehouse',t: ['Forklift'] },
+  { g: 'Power & Utilities',    t: ['Generator'] },
+  { g: 'Light Vehicles',       t: ['Van'] },
   { g: 'Other',                t: ['Other'] },
 ];
 
