@@ -928,6 +928,76 @@ exports.createAuditLog = function createAuditLog(dcOrVars, vars) {
 }
 ;
 
+const setUserTotpPendingRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'SetUserTotpPending', inputVars);
+}
+setUserTotpPendingRef.operationName = 'SetUserTotpPending';
+exports.setUserTotpPendingRef = setUserTotpPendingRef;
+
+exports.setUserTotpPending = function setUserTotpPending(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(setUserTotpPendingRef(dcInstance, inputVars));
+}
+;
+
+const confirmUserTotpEnrollmentRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'ConfirmUserTotpEnrollment', inputVars);
+}
+confirmUserTotpEnrollmentRef.operationName = 'ConfirmUserTotpEnrollment';
+exports.confirmUserTotpEnrollmentRef = confirmUserTotpEnrollmentRef;
+
+exports.confirmUserTotpEnrollment = function confirmUserTotpEnrollment(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(confirmUserTotpEnrollmentRef(dcInstance, inputVars));
+}
+;
+
+const recordTotpVerificationRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'RecordTotpVerification', inputVars);
+}
+recordTotpVerificationRef.operationName = 'RecordTotpVerification';
+exports.recordTotpVerificationRef = recordTotpVerificationRef;
+
+exports.recordTotpVerification = function recordTotpVerification(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(recordTotpVerificationRef(dcInstance, inputVars));
+}
+;
+
+const updateUserTotpBackupCodesRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateUserTotpBackupCodes', inputVars);
+}
+updateUserTotpBackupCodesRef.operationName = 'UpdateUserTotpBackupCodes';
+exports.updateUserTotpBackupCodesRef = updateUserTotpBackupCodesRef;
+
+exports.updateUserTotpBackupCodes = function updateUserTotpBackupCodes(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updateUserTotpBackupCodesRef(dcInstance, inputVars));
+}
+;
+
+const disableUserTotpRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DisableUserTotp', inputVars);
+}
+disableUserTotpRef.operationName = 'DisableUserTotp';
+exports.disableUserTotpRef = disableUserTotpRef;
+
+exports.disableUserTotp = function disableUserTotp(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(disableUserTotpRef(dcInstance, inputVars));
+}
+;
+
 const listAllVehiclesRef = (dc) => {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
   dcInstance._useGeneratedSdk();
@@ -1210,6 +1280,21 @@ exports.getUserByEmail = function getUserByEmail(dcOrVars, varsOrOptions, option
   
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
   return executeQuery(getUserByEmailRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+;
+
+const getUserTotpByEmailRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetUserTotpByEmail', inputVars);
+}
+getUserTotpByEmailRef.operationName = 'GetUserTotpByEmail';
+exports.getUserTotpByEmailRef = getUserTotpByEmailRef;
+
+exports.getUserTotpByEmail = function getUserTotpByEmail(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(getUserTotpByEmailRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 ;
 

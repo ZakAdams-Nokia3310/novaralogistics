@@ -167,6 +167,7 @@
 <script>
 buildSidebar('admin-fleet');
 const user = EC_AUTH.require(['admin']);
+const esc = EC_SECURITY.sanitizeHtml;
 DC_DATA.setOrgScope(user.orgId);
 
 const vehicleId = new URLSearchParams(location.search).get('id');
@@ -231,11 +232,11 @@ function render(v) {
   const leftColor = left <= 0 ? '#ff6b6b' : left <= 2000 ? '#ffd93d' : '#849495';
   document.getElementById('glanceRow').innerHTML = [
     { k: 'Mileage', v: `${v.km.toLocaleString()} km` },
-    { k: 'VIN', v: v.vin || '—' },
-    { k: 'Tracking Co.', v: v.trackingCompany || '—' },
+    { k: 'VIN', v: esc(v.vin) || '—' },
+    { k: 'Tracking Co.', v: esc(v.trackingCompany) || '—' },
     { k: 'Last Serviced', v: fmtDate(v.lastServiceDate) },
     { k: 'Next Service', v: `${v.nextServiceKm.toLocaleString()} km`, color: leftColor },
-    { k: 'Organisation', v: v.orgName || 'Unassigned' },
+    { k: 'Organisation', v: esc(v.orgName) || 'Unassigned' },
   ].map(s => `<div class="stat-mini"><div class="k">${s.k}</div><div class="v" style="${s.color?`color:${s.color}`:''}">${s.v}</div></div>`).join('');
 
   const rentals = DC_DATA.getRentalsForVehicle(v.id);
@@ -247,10 +248,10 @@ function render(v) {
     banner.style.display = 'block';
     banner.innerHTML = `<div class="glass-lo" style="border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
       <div>
-        <div style="font-weight:700;font-size:13.5px;margin-bottom:2px">${active ? 'Currently on rent' : 'Booked'} — ${r.client}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${r.orgName || ''} · ${fmtDate(r.startDate)} → ${fmtDate(r.returnDate)}</div>
+        <div style="font-weight:700;font-size:13.5px;margin-bottom:2px">${active ? 'Currently on rent' : 'Booked'} — ${esc(r.client)}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${esc(r.orgName) || ''} · ${fmtDate(r.startDate)} → ${fmtDate(r.returnDate)}</div>
       </div>
-      <a href="rental-detail?id=${r.id}" class="btng" style="font-size:12px;padding:8px 14px">View Rental</a>
+      <a href="rental-detail?id=${encodeURIComponent(r.id)}" class="btng" style="font-size:12px;padding:8px 14px">View Rental</a>
     </div>`;
   } else {
     banner.style.display = 'none';
@@ -273,12 +274,12 @@ function render(v) {
     histBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px">No rental history for this vehicle yet</td></tr>`;
   } else {
     histBody.innerHTML = rentals.slice().sort((a, b) => new Date(b.startDate) - new Date(a.startDate)).map(r => `
-      <tr onclick="location.href='rental-detail?id=${r.id}'">
-        <td>${r.client}</td>
-        <td style="color:#849495">${r.orgName || '—'}</td>
-        <td style="font-family:'JetBrains Mono',monospace">${fmtDate(r.startDate)} – ${fmtDate(r.returnDate)}</td>
-        <td style="font-family:'JetBrains Mono',monospace;color:#00f0ff">R${(r.value || 0).toLocaleString()}</td>
-        <td>${rentalBadge(r.status)}</td>
+      <tr onclick="location.href='rental-detail?id=${encodeURIComponent(r.id)}'">
+        <td data-label="Client">${esc(r.client)}</td>
+        <td data-label="Organisation" style="color:#849495">${esc(r.orgName) || '—'}</td>
+        <td data-label="Period" style="font-family:'JetBrains Mono',monospace">${fmtDate(r.startDate)} – ${fmtDate(r.returnDate)}</td>
+        <td data-label="Value" style="font-family:'JetBrains Mono',monospace;color:#00f0ff">R${(r.value || 0).toLocaleString()}</td>
+        <td data-label="Status">${rentalBadge(r.status)}</td>
       </tr>`).join('');
   }
 }

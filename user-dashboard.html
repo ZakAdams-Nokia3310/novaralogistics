@@ -42,7 +42,7 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","ba
     <a href="login" class="text-on-surface-variant hover:text-on-surface hover:bg-white/5 rounded-lg flex items-center gap-3 px-4 py-3 transition-all"><span class="material-symbols-outlined">logout</span><span class="font-label-sm text-label-sm">Sign Out</span></a>
   </div>
 </nav>
-<header class="sticky top-0 z-50 flex justify-between items-center w-full px-margin-desktop h-16 bg-surface-container/30 backdrop-blur-lg border-b border-white/10 md:pl-72">
+<header class="sticky top-0 z-50 flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop h-16 bg-surface-container/30 backdrop-blur-lg border-b border-white/10 md:pl-72">
   <div class="flex items-center gap-4">
     <span class="font-display-lg text-[24px] font-bold text-primary">EquipCore</span>
     <div class="h-6 w-[1px] bg-white/10 mx-2"></div>
@@ -53,7 +53,7 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","ba
     </div>
   </div>
   <div class="flex items-center gap-4">
-    <div class="bg-surface-variant/20 rounded-full px-4 py-1.5 flex items-center gap-2 border border-white/5">
+    <div class="hidden lg:flex bg-surface-variant/20 rounded-full px-4 py-1.5 items-center gap-2 border border-white/5">
       <span class="material-symbols-outlined text-primary text-[18px]">search</span>
       <input id="dashSearch" class="bg-transparent border-none focus:ring-0 text-body-md text-on-surface placeholder:text-on-surface-variant/50 w-48 font-body-md" placeholder="Search fleet..." type="text"/>
     </div>

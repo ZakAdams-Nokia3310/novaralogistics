@@ -6,11 +6,17 @@
 
 const { logEvent } = require('../services/auditLog');
 
-function makeLimiter({ windowMs, max }) {
+// Default key is per-IP. Pass keyFn to key per-authenticated-user instead
+// (only meaningful for limiters mounted AFTER authenticateToken, so
+// req.user is already populated) — a malicious signed-in user rotating IPs
+// shouldn't be able to reset their own quota, and legitimate users behind a
+// shared/corporate IP shouldn't share one.
+function makeLimiter({ windowMs, max, keyFn }) {
   const ipCalls = new Map();
+  const getKey = keyFn || ((req) => req.ip);
 
   function limiter(req, res, next) {
-    const ip = req.ip;
+    const ip = getKey(req);
     const now = Date.now();
     const calls = (ipCalls.get(ip) || []).filter(t => now - t < windowMs);
     calls.push(now);
@@ -35,12 +41,27 @@ function makeLimiter({ windowMs, max }) {
   return limiter;
 }
 
-// General-purpose limiter, applied to every request.
+const userOrIpKey = (req) => (req.user && req.user.id) ? `u:${req.user.id}` : `ip:${req.ip}`;
+
+// General-purpose limiter, applied to every request before routing —
+// req.user isn't populated yet at this point, so this is necessarily
+// IP-keyed. It's the outer defensive layer against unauthenticated flooding;
+// per-user limits kick in on top of it once a route has authenticated.
 const rateLimiter = makeLimiter({ windowMs: 60 * 1000, max: 60 });
 
-// Stricter limiter for privileged, abuse-prone routes (role/password
+// Stricter limiter for privileged, abuse-prone routes (role/password/TOTP
 // changes) — applied on top of the general limiter, not instead of it.
-const strictRateLimiter = makeLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
+// Mounted AFTER authenticateToken at the route level (see authRoutes.js /
+// totpRoutes.js) specifically so req.user is available here and this keys
+// per-account rather than per-IP — otherwise a malicious signed-in user
+// could reset their own quota just by rotating IPs.
+const strictRateLimiter = makeLimiter({ windowMs: 15 * 60 * 1000, max: 10, keyFn: userOrIpKey });
+
+// Per-user limit on the general authenticated data-access endpoint
+// (/api/data/execute) — every dashboard read/write funnels through this one
+// route, so it's the highest-value target for a compromised or malicious
+// account to hammer. Also mounted after authenticateToken.
+const dataExecuteRateLimiter = makeLimiter({ windowMs: 60 * 1000, max: 120, keyFn: userOrIpKey });
 
 // Anonymous-submission forms (no auth, no per-user identity to key off of)
 // — bounded harder than a signed-in user's general traffic to blunt
@@ -48,4 +69,4 @@ const strictRateLimiter = makeLimiter({ windowMs: 15 * 60 * 1000, max: 10 });
 // forms, still generous enough for a real applicant retrying a typo.
 const publicSubmitRateLimiter = makeLimiter({ windowMs: 15 * 60 * 1000, max: 8 });
 
-module.exports = { rateLimiter, strictRateLimiter, publicSubmitRateLimiter };
+module.exports = { rateLimiter, strictRateLimiter, dataExecuteRateLimiter, publicSubmitRateLimiter };

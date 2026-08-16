@@ -26,6 +26,14 @@ const css = `
     position:fixed; inset:0; z-index:99999;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:#060810; overflow:hidden;
+    /* Purely decorative — no interactive elements of its own. Without
+       this, it silently blocks every click on the real page underneath
+       for its ~2.9s lifetime (worse: at equal z-index, whichever of this
+       or the cookie-consent banner got appended to the DOM later wins the
+       hit-test, so which one was actually swallowing a given click was
+       timing-dependent). Letting clicks pass through removes that whole
+       class of "nothing happens" bug regardless of timing. */
+    pointer-events:none;
   }
   #ec-splash-bg {
     position:absolute; inset:0;

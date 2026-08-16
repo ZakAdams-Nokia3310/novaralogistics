@@ -218,15 +218,15 @@ function renderPage() {
   empty.style.display = 'none';
   tbody.innerHTML = slice.map(e => `
     <tr>
-      <td class="mono" style="font-size:11px;white-space:nowrap;color:#849495">${fmtTs(e.ts)}</td>
-      <td>
+      <td data-label="Timestamp" class="mono" style="font-size:11px;white-space:nowrap;color:#849495">${fmtTs(e.ts)}</td>
+      <td data-label="User">
         <div style="font-size:12px;font-weight:600">${EC_SECURITY.sanitizeHtml(e.userName || '—')}</div>
         ${e.userId ? `<div class="mono" style="font-size:10px;color:#849495">id:${EC_SECURITY.sanitizeHtml(String(e.userId))}</div>` : ''}
       </td>
-      <td><span class="mono" style="font-size:10px;color:#849495">${EC_SECURITY.sanitizeHtml(e.userRole || '—')}</span></td>
-      <td><span class="badge ${badgeClass(e.action)}">${EC_SECURITY.sanitizeHtml(e.action || '—')}</span></td>
-      <td class="mono" style="font-size:10px;color:#849495">${EC_SECURITY.sanitizeHtml(e.page || '—')}</td>
-      <td style="font-size:11px;max-width:320px;white-space:normal">${fmtDetails(e.details)}</td>
+      <td data-label="Role"><span class="mono" style="font-size:10px;color:#849495">${EC_SECURITY.sanitizeHtml(e.userRole || '—')}</span></td>
+      <td data-label="Action"><span class="badge ${badgeClass(e.action)}">${EC_SECURITY.sanitizeHtml(e.action || '—')}</span></td>
+      <td data-label="Page" class="mono" style="font-size:10px;color:#849495">${EC_SECURITY.sanitizeHtml(e.page || '—')}</td>
+      <td data-label="Details" style="font-size:11px;max-width:320px;white-space:normal">${fmtDetails(e.details)}</td>
     </tr>
   `).join('');
 

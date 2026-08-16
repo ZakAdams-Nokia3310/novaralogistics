@@ -200,6 +200,10 @@ mutation UpdateUserRole($id: UUID!, $role: UserRole!) {
   user_update(id: $id, data: { role: $role, updatedAt_expr: "request.time" })
 }
 
+mutation UpdateUserEmail($id: UUID!, $email: String!) {
+  user_update(id: $id, data: { email: $email, emailVerified: true, updatedAt_expr: "request.time" })
+}
+
 mutation UpdateUserProfile(
   $id: UUID!
   $name: String
@@ -383,6 +387,47 @@ mutation UpdateRental(
 
 mutation DeleteRental($id: UUID!) {
   rental_delete(id: $id)
+}
+
+mutation SetUserTotpPending($id: UUID!, $totpSecretEnc: String!) {
+  user_update(id: $id, data: {
+    totpSecretEnc: $totpSecretEnc
+    totpEnabled: false
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation ConfirmUserTotpEnrollment($id: UUID!, $totpBackupCodesEnc: String!) {
+  user_update(id: $id, data: {
+    totpEnabled: true
+    totpBackupCodesEnc: $totpBackupCodesEnc
+    totpVerifiedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation RecordTotpVerification($id: UUID!) {
+  user_update(id: $id, data: {
+    totpVerifiedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateUserTotpBackupCodes($id: UUID!, $totpBackupCodesEnc: String!) {
+  user_update(id: $id, data: {
+    totpBackupCodesEnc: $totpBackupCodesEnc
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DisableUserTotp($id: UUID!) {
+  user_update(id: $id, data: {
+    totpEnabled: false
+    totpSecretEnc: null
+    totpBackupCodesEnc: null
+    totpVerifiedAt: null
+    updatedAt_expr: "request.time"
+  })
 }
 
 mutation CreateAuditLog(

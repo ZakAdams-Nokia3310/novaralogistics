@@ -800,6 +800,66 @@ export function createAuditLog(dcOrVars, vars) {
   return executeMutation(createAuditLogRef(dcInstance, inputVars));
 }
 
+export const setUserTotpPendingRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'SetUserTotpPending', inputVars);
+}
+setUserTotpPendingRef.operationName = 'SetUserTotpPending';
+
+export function setUserTotpPending(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(setUserTotpPendingRef(dcInstance, inputVars));
+}
+
+export const confirmUserTotpEnrollmentRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'ConfirmUserTotpEnrollment', inputVars);
+}
+confirmUserTotpEnrollmentRef.operationName = 'ConfirmUserTotpEnrollment';
+
+export function confirmUserTotpEnrollment(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(confirmUserTotpEnrollmentRef(dcInstance, inputVars));
+}
+
+export const recordTotpVerificationRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'RecordTotpVerification', inputVars);
+}
+recordTotpVerificationRef.operationName = 'RecordTotpVerification';
+
+export function recordTotpVerification(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(recordTotpVerificationRef(dcInstance, inputVars));
+}
+
+export const updateUserTotpBackupCodesRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'UpdateUserTotpBackupCodes', inputVars);
+}
+updateUserTotpBackupCodesRef.operationName = 'UpdateUserTotpBackupCodes';
+
+export function updateUserTotpBackupCodes(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(updateUserTotpBackupCodesRef(dcInstance, inputVars));
+}
+
+export const disableUserTotpRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'DisableUserTotp', inputVars);
+}
+disableUserTotpRef.operationName = 'DisableUserTotp';
+
+export function disableUserTotp(dcOrVars, vars) {
+  const { dc: dcInstance, vars: inputVars } = validateArgs(connectorConfig, dcOrVars, vars, true);
+  return executeMutation(disableUserTotpRef(dcInstance, inputVars));
+}
+
 export const listAllVehiclesRef = (dc) => {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
   dcInstance._useGeneratedSdk();
@@ -1045,6 +1105,19 @@ export function getUserByEmail(dcOrVars, varsOrOptions, options) {
   
   const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
   return executeQuery(getUserByEmailRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
+}
+
+export const getUserTotpByEmailRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetUserTotpByEmail', inputVars);
+}
+getUserTotpByEmailRef.operationName = 'GetUserTotpByEmail';
+
+export function getUserTotpByEmail(dcOrVars, varsOrOptions, options) {
+  
+  const { dc: dcInstance, vars: inputVars, options: inputOpts } = validateArgsWithOptions(connectorConfig, dcOrVars, varsOrOptions, options, true, true);
+  return executeQuery(getUserTotpByEmailRef(dcInstance, inputVars), inputOpts && { fetchPolicy: inputOpts.fetchPolicy });
 }
 
 export const listUsersByRoleRef = (dcOrVars, vars) => {

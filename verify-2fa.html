@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>Verify — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);}
+  input{width:100%;padding:13px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;color:#e2e2e8;font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:.3em;text-align:center;outline:none;transition:border-color .2s,box-shadow .2s;}
+  input:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,0.3);}
+  input::placeholder{color:rgba(255,255,255,0.22);letter-spacing:.3em;}
+  .btn-main{width:100%;padding:14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 0 30px rgba(0,240,255,0.18);}
+  .btn-main:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 36px rgba(0,240,255,0.28);}
+  .btn-main:disabled{opacity:.6;cursor:default;transform:none;}
+  .btn-ghost{width:100%;padding:12px;background:transparent;color:#849495;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;cursor:pointer;transition:all .2s;}
+  .btn-ghost:hover{color:#e2e2e8;border-color:rgba(255,255,255,0.2);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  @keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  .anim{animation:up .5s cubic-bezier(0.4,0,0.2,1) both;}
+  .spin{animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .backup-code{font-family:'JetBrains Mono',monospace;font-size:14px;padding:8px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;text-align:center;letter-spacing:.05em;}
+</style>
+</head>
+<body>
+
+<div style="position:relative;z-index:2;width:100%;max-width:420px;padding:24px">
+
+  <div class="anim" style="text-align:center;margin-bottom:36px">
+    <a href="/" style="text-decoration:none;display:inline-flex;align-items:center;gap:10px">
+      <span style="font-size:26px">⚡</span>
+      <span class="grad" style="font-family:'Hanken Grotesk',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.03em">EquipCore</span>
+    </a>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(0,240,255,0.5);letter-spacing:.22em;text-transform:uppercase;margin-top:6px">Two-Factor Verification</p>
+  </div>
+
+  <div id="loadingCard" class="glass anim" style="border-radius:20px;padding:48px 32px;text-align:center">
+    <span class="material-symbols-outlined spin" style="font-size:28px;color:#00f0ff">progress_activity</span>
+  </div>
+
+  <!-- Reauthentication card — required before enrollment can start -->
+  <div id="reauthCard" class="glass anim" style="display:none;border-radius:20px;padding:32px">
+    <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">Confirm it's you</h2>
+    <p style="color:#b9cacb;font-size:13px;margin-bottom:20px;line-height:1.5">This account doesn't have two-factor auth set up yet. Re-enter your password to start enrollment — this stops anyone reusing a signed-in session from silently enrolling their own device.</p>
+    <input id="reauthPwdInput" type="password" placeholder="Password" style="margin-bottom:14px;font-size:15px;letter-spacing:normal;text-align:left"/>
+    <div id="reauthErrBox" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+    <button class="btn-main" id="reauthPwdBtn" type="button" style="margin-bottom:10px">Confirm &amp; Continue</button>
+    <button class="btn-ghost" id="reauthGoogleBtn" type="button" style="display:none;margin-bottom:10px">Confirm with Google</button>
+    <button class="btn-ghost" id="reauthCancelBtn" type="button">Sign out and cancel</button>
+  </div>
+
+  <!-- Enrollment card -->
+  <div id="enrollCard" class="glass anim" style="display:none;border-radius:20px;padding:32px">
+    <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">Set up two-factor auth</h2>
+    <p style="color:#b9cacb;font-size:13px;margin-bottom:20px;line-height:1.5">Admin accounts require an authenticator app (Google Authenticator, Authy, 1Password, etc). Scan this QR code, then enter the 6-digit code it shows.</p>
+    <div style="display:flex;justify-content:center;margin-bottom:16px">
+      <img id="qrImg" alt="QR code" style="width:180px;height:180px;border-radius:12px;background:#fff;padding:8px"/>
+    </div>
+    <p style="font-size:11px;color:#849495;text-align:center;margin-bottom:4px">Can't scan? Enter this key manually:</p>
+    <p id="secretText" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#00f0ff;text-align:center;word-break:break-all;margin-bottom:20px"></p>
+    <input id="enrollCodeInput" inputmode="numeric" maxlength="6" placeholder="000000" style="margin-bottom:14px"/>
+    <div id="enrollErrBox" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+    <button class="btn-main" id="enrollConfirmBtn" type="button">Confirm &amp; Enable</button>
+  </div>
+
+  <!-- Backup codes card -->
+  <div id="backupCard" class="glass anim" style="display:none;border-radius:20px;padding:32px">
+    <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">Save your backup codes</h2>
+    <p style="color:#b9cacb;font-size:13px;margin-bottom:20px;line-height:1.5">Each code works once, if you lose access to your authenticator app. Store them somewhere safe — they won't be shown again.</p>
+    <div id="backupCodesGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px"></div>
+    <button class="btn-main" id="backupContinueBtn" type="button">I've saved these — continue</button>
+  </div>
+
+  <!-- Challenge card -->
+  <div id="challengeCard" class="glass anim" style="display:none;border-radius:20px;padding:32px">
+    <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">Enter your code</h2>
+    <p style="color:#b9cacb;font-size:13px;margin-bottom:20px">Open your authenticator app and enter the current 6-digit code, or use a backup code.</p>
+    <input id="challengeCodeInput" inputmode="text" maxlength="11" placeholder="000000" style="margin-bottom:14px"/>
+    <div id="challengeErrBox" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+    <button class="btn-main" id="challengeVerifyBtn" type="button" style="margin-bottom:10px">Verify</button>
+    <button class="btn-ghost" id="lostDeviceBtn" type="button" style="margin-bottom:10px">Lost your device?</button>
+    <button class="btn-ghost" id="cancelBtn" type="button">Sign out and cancel</button>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="dc.js?v=2"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script>
+const loadingCard   = document.getElementById('loadingCard');
+const reauthCard    = document.getElementById('reauthCard');
+const enrollCard    = document.getElementById('enrollCard');
+const backupCard    = document.getElementById('backupCard');
+const challengeCard = document.getElementById('challengeCard');
+
+function showCard(card) {
+  [loadingCard, reauthCard, enrollCard, backupCard, challengeCard].forEach(c => c.style.display = 'none');
+  card.style.display = 'block';
+}
+
+function showErr(boxEl, msg) {
+  boxEl.textContent = msg;
+  boxEl.style.display = 'block';
+}
+
+async function goToDashboard() {
+  const session = EC_AUTH.finalizePendingSession();
+  if (!session) { location.href = 'login'; return; }
+  location.href = EC_AUTH.dashFor(session.role) + '?intro=1';
+}
+
+async function init() {
+  // Nothing to verify — either already fully signed in, or landed here
+  // directly with no pending login. Either way this page has no job to do.
+  if (!sessionStorage.getItem('ec_session_pending')) {
+    location.href = EC_AUTH.current() ? (EC_AUTH.dashFor(EC_AUTH.current().role)) : 'login';
+    return;
+  }
+
+  let status;
+  try {
+    const res = await EC_API.authFetch('/auth/totp/status');
+    status = await res.json();
+  } catch {
+    showCard(challengeCard);
+    showErr(document.getElementById('challengeErrBox'), 'Could not reach the server. Please try again.');
+    return;
+  }
+
+  if (status.needsEnrollment) {
+    showReauth();
+  } else if (status.needsChallenge) {
+    showCard(challengeCard);
+    document.getElementById('challengeCodeInput').focus();
+  } else {
+    // Nothing actually required (e.g. re-loaded this page after already
+    // passing) — just finish.
+    goToDashboard();
+  }
+}
+
+function showReauth() {
+  const fbUser = firebase.auth().currentUser;
+  const isPasswordAccount = !!(fbUser && (fbUser.providerData || []).some(p => p.providerId === 'password'));
+  document.getElementById('reauthPwdInput').style.display = isPasswordAccount ? 'block' : 'none';
+  document.getElementById('reauthPwdBtn').style.display = isPasswordAccount ? 'block' : 'none';
+  document.getElementById('reauthGoogleBtn').style.display = isPasswordAccount ? 'none' : 'block';
+  showCard(reauthCard);
+  if (isPasswordAccount) document.getElementById('reauthPwdInput').focus();
+}
+
+document.getElementById('reauthPwdBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('reauthPwdBtn');
+  const errBox = document.getElementById('reauthErrBox');
+  const pwd = document.getElementById('reauthPwdInput').value;
+  errBox.style.display = 'none';
+  if (!pwd) { showErr(errBox, 'Enter your password.'); return; }
+
+  btn.disabled = true; btn.textContent = 'Confirming…';
+  try {
+    const fbUser = firebase.auth().currentUser;
+    const cred = firebase.auth.EmailAuthProvider.credential(fbUser.email, pwd);
+    await fbUser.reauthenticateWithCredential(cred);
+    startEnrollment();
+  } catch {
+    showErr(errBox, 'Incorrect password.');
+    btn.disabled = false; btn.textContent = 'Confirm & Continue';
+  }
+});
+
+document.getElementById('reauthGoogleBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('reauthGoogleBtn');
+  const errBox = document.getElementById('reauthErrBox');
+  errBox.style.display = 'none';
+  btn.disabled = true;
+  try {
+    const fbUser = firebase.auth().currentUser;
+    await fbUser.reauthenticateWithPopup(new firebase.auth.GoogleAuthProvider());
+    startEnrollment();
+  } catch {
+    showErr(errBox, 'Could not confirm with Google. Please try again.');
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('reauthCancelBtn').addEventListener('click', async () => {
+  sessionStorage.removeItem('ec_session_pending');
+  try { await firebase.auth().signOut(); } catch { /* already signed out */ }
+  location.href = 'login';
+});
+
+async function startEnrollment() {
+  showCard(loadingCard);
+  try {
+    const res = await EC_API.authFetch('/auth/totp/enroll/start', { method: 'POST' });
+    if (!res.ok) throw new Error('Could not start enrollment.');
+    const body = await res.json();
+    document.getElementById('qrImg').src = body.qrCodeDataUrl;
+    document.getElementById('secretText').textContent = body.secret;
+    showCard(enrollCard);
+    document.getElementById('enrollCodeInput').focus();
+  } catch (err) {
+    showCard(challengeCard);
+    showErr(document.getElementById('challengeErrBox'), EC_SECURITY.safeErrMsg(err, 'Something went wrong.'));
+  }
+}
+
+document.getElementById('enrollConfirmBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('enrollConfirmBtn');
+  const errBox = document.getElementById('enrollErrBox');
+  const code = document.getElementById('enrollCodeInput').value.trim();
+  errBox.style.display = 'none';
+  if (!/^\d{6}$/.test(code)) { showErr(errBox, 'Enter the 6-digit code from your app.'); return; }
+
+  btn.disabled = true; btn.textContent = 'Verifying…';
+  try {
+    const res = await EC_API.authFetch('/auth/totp/enroll/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'Invalid code.');
+
+    const grid = document.getElementById('backupCodesGrid');
+    grid.innerHTML = '';
+    body.backupCodes.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'backup-code';
+      div.textContent = c;
+      grid.appendChild(div);
+    });
+    showCard(backupCard);
+  } catch (err) {
+    showErr(errBox, EC_SECURITY.safeErrMsg(err, 'Invalid code. Please try again.'));
+    btn.disabled = false; btn.textContent = 'Confirm & Enable';
+  }
+});
+
+document.getElementById('backupContinueBtn').addEventListener('click', goToDashboard);
+
+document.getElementById('challengeVerifyBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('challengeVerifyBtn');
+  const errBox = document.getElementById('challengeErrBox');
+  const code = document.getElementById('challengeCodeInput').value.trim();
+  errBox.style.display = 'none';
+  if (!code) { showErr(errBox, 'Enter your code.'); return; }
+
+  btn.disabled = true; btn.textContent = 'Verifying…';
+  try {
+    const res = await EC_API.authFetch('/auth/totp/challenge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error || 'Invalid code.');
+    goToDashboard();
+  } catch (err) {
+    showErr(errBox, EC_SECURITY.safeErrMsg(err, 'Invalid code. Please try again.'));
+    btn.disabled = false; btn.textContent = 'Verify';
+    document.getElementById('challengeCodeInput').value = '';
+    document.getElementById('challengeCodeInput').focus();
+  }
+});
+
+document.getElementById('lostDeviceBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('lostDeviceBtn');
+  const errBox = document.getElementById('challengeErrBox');
+  errBox.style.display = 'none';
+  const fbUser = firebase.auth().currentUser;
+  if (!fbUser || !fbUser.email) return;
+
+  btn.disabled = true;
+  try {
+    // handleCodeInApp routes the emailed link straight to
+    // totp-recovery.html with ?mode=resetPassword&oobCode=... instead of
+    // Firebase's own hosted reset page — that page is what actually
+    // verifies the code and, on success, clears this account's TOTP.
+    await firebase.auth().sendPasswordResetEmail(fbUser.email, {
+      url: location.origin + '/totp-recovery',
+      handleCodeInApp: true,
+    });
+    showErr(errBox, `We sent a recovery link to ${fbUser.email}. Open it on this or any device to reset your password and clear two-factor auth.`);
+    errBox.style.color = '#00d4aa';
+  } catch {
+    showErr(errBox, 'Could not send a recovery email. Please try again shortly.');
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+document.getElementById('cancelBtn').addEventListener('click', async () => {
+  sessionStorage.removeItem('ec_session_pending');
+  try { await firebase.auth().signOut(); } catch { /* already signed out */ }
+  location.href = 'login';
+});
+
+init();
+</script>
+</body></html>

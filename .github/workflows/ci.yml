@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: Frontend — install, lint, build-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # No bundler/build step in this project (static HTML + vanilla JS,
+      # deployed as-is via Firebase Hosting) — the closest real equivalent
+      # to "does this build" is: every JS file parses, every inline
+      # <script> in every page parses, and firebase.json itself is valid.
+      - name: Lint
+        run: npm run lint
+
+      - name: Syntax-check all root-level JS files
+        run: |
+          find . -maxdepth 2 -name "*.js" \
+            -not -path "./node_modules/*" \
+            -not -path "./functions/*" \
+            -not -path "./src/*" \
+            -print0 | xargs -0 -n1 node --check
+
+      - name: Syntax-check inline <script> blocks in every HTML page
+        run: |
+          node -e "
+            const fs = require('fs');
+            const files = fs.readdirSync('.').filter(f => f.endsWith('.html'));
+            let failed = false;
+            for (const f of files) {
+              const html = fs.readFileSync(f, 'utf8');
+              const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)]
+                .map(m => m[1]).filter(s => s.trim() && !s.includes('src='));
+              try { new Function(scripts.join('\n;\n')); }
+              catch (e) { console.error('FAIL:', f, '-', e.message); failed = true; }
+            }
+            if (failed) process.exit(1);
+            console.log('All ' + files.length + ' HTML pages: inline scripts OK');
+          "
+
+      - name: Validate firebase.json
+        run: node -e "JSON.parse(require('fs').readFileSync('firebase.json','utf8')); console.log('firebase.json is valid JSON')"
+
+      # Report-only: several moderate-severity findings are transitive,
+      # nested inside firebase-admin's own dependency tree, and only
+      # resolvable via a firebase-admin major-version bump (a deliberate,
+      # separately-scheduled change, not something a routine PR should be
+      # blocked on). High/critical direct findings still show up here for
+      # a human to see on every run.
+      - name: npm audit (report only)
+        run: npm audit --audit-level=high || true
+
+  functions:
+    name: Cloud Functions — install, build-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Syntax-check all function files
+        working-directory: functions
+        run: find . -name "*.js" -not -path "./node_modules/*" -print0 | xargs -0 -n1 node --check
+
+      - name: npm audit (report only — see note in frontend job)
+        working-directory: functions
+        run: npm audit --audit-level=high || true
+
+  test:
+    name: Firestore security-rules tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # The rules test suite runs against the local Firestore emulator
+      # (firebase-tools), which needs a JVM — not assumed to be
+      # preinstalled on the runner, set up explicitly instead.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test

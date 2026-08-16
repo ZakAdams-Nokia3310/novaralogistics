@@ -126,6 +126,7 @@
 buildSidebar('messages');
 
 const user = EC_AUTH.require(['admin', 'user', 'driver']);
+const esc = EC_SECURITY.sanitizeHtml;
 
 const msgLayout      = document.getElementById('msgLayout');
 const convoListEl    = document.getElementById('convoList');
@@ -172,14 +173,14 @@ function renderConvoList() {
     const el = document.createElement('div');
     el.className = 'convo-item' + (convo.id === activeConvoId ? ' active' : '');
     el.innerHTML = `
-      <div class="convo-avatar">${initials(other.name)}</div>
+      <div class="convo-avatar">${esc(initials(other.name))}</div>
       <div class="convo-meta">
         <div style="display:flex;justify-content:space-between;gap:8px">
-          <div class="convo-name">${other.name}</div>
+          <div class="convo-name">${esc(other.name)}</div>
           <div class="convo-time">${EC_CHAT.relativeTime(convo.lastMessageAt)}</div>
         </div>
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
-          <div class="convo-preview">${convo.lastMessagePreview || ''}</div>
+          <div class="convo-preview">${esc(convo.lastMessagePreview) || ''}</div>
           ${unread ? '<div class="unread-dot"></div>' : ''}
         </div>
       </div>`;

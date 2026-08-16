@@ -227,6 +227,12 @@
 <script>
 buildSidebar('admin-orgs');
 const _ecUser = EC_AUTH.require(['admin']);
+// DB-sourced strings (org/user names, emails, notes) can originate from
+// unauthenticated public forms (org-request, signup) — must be escaped
+// before going into innerHTML so a hostile submission can't run script in
+// this admin's session when reviewed here. esc() for text content, escA()
+// for values embedded inside onclick="fn('...')" JS-string arguments.
+const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
 DC_DATA.setOrgScope(_ecUser.orgId);
 
 let expandedOrgId = null;
@@ -245,7 +251,7 @@ function switchTab(tab) {
 function sectorTag(sector) {
   const colors = {'Construction':'#00f0ff','Maritime Logistics':'#ffb4a2','Energy & Utilities':'#d1bcff','Agricultural':'#00d4aa','Mining & Extraction':'#ffd93d','Logistics':'#ffb4a2'};
   const c = colors[sector] || '#849495';
-  return `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${c}18;color:${c};padding:3px 8px;border-radius:999px;border:1px solid ${c}28">${sector}</span>`;
+  return `<span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${c}18;color:${c};padding:3px 8px;border-radius:999px;border:1px solid ${c}28">${esc(sector)}</span>`;
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
@@ -297,11 +303,11 @@ function renderRequests() {
             <span class="material-symbols-outlined ms" style="font-size:13px">close</span>Decline
           </button>
          </div>`
-      : `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${r.notes ? r.notes.slice(0,40) : '—'}</span>`;
+      : `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${r.notes ? esc(r.notes.slice(0,40)) : '—'}</span>`;
     return `<tr>
-      <td data-label="Organisation"><div style="font-weight:600">${r.orgName}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${r.regId}</div></td>
+      <td data-label="Organisation"><div style="font-weight:600">${esc(r.orgName)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(r.regId)}</div></td>
       <td data-label="Sector">${sectorTag(r.sector)}</td>
-      <td data-label="Contact"><div style="font-size:13px">${r.contactName}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${r.contactEmail}</div></td>
+      <td data-label="Contact"><div style="font-size:13px">${esc(r.contactName)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(r.contactEmail)}</div></td>
       <td data-label="Submitted" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${r.submittedAt}</td>
       <td data-label="Status">${statusMap[r.status] || ''}</td>
       <td>${actions}</td>
@@ -327,16 +333,16 @@ function renderOrgs() {
     return `<tr>
       <td data-label="Organisation">
         <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,240,255,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#00f0ff;flex-shrink:0">${init}</div>
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(0,240,255,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#00f0ff;flex-shrink:0">${esc(init)}</div>
           <div>
-            <div style="font-weight:600;font-size:13px">${o.name}</div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${o.id}</div>
+            <div style="font-weight:600;font-size:13px">${esc(o.name)}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(o.id)}</div>
           </div>
         </div>
       </td>
       <td data-label="Sector">${sectorTag(o.sector)}</td>
-      <td data-label="Reg ID" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${o.regId}</td>
-      <td data-label="Contact" style="font-size:12px;color:#849495">${o.contactEmail}</td>
+      <td data-label="Reg ID" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${esc(o.regId)}</td>
+      <td data-label="Contact" style="font-size:12px;color:#849495">${esc(o.contactEmail)}</td>
       <td data-label="Users">
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#00f0ff;font-weight:600">${userCount}</span>
         <span style="font-size:11px;color:#849495"> users</span>
@@ -371,22 +377,22 @@ function buildUsersPanel(org, users) {
         return `<tr style="border-bottom:1px solid rgba(255,255,255,.03)">
           <td style="padding:10px 16px;font-size:13px">
             <div style="display:flex;align-items:center;gap:9px">
-              <div style="width:28px;height:28px;border-radius:7px;background:${rc}18;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${rc}">${init}</div>
+              <div style="width:28px;height:28px;border-radius:7px;background:${rc}18;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:${rc}">${esc(init)}</div>
               <div>
-                <div style="font-weight:600">${u.name}</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.email}</div>
+                <div style="font-weight:600">${esc(u.name)}</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(u.email)}</div>
               </div>
             </div>
           </td>
-          <td style="padding:10px 16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${rc}18;color:${rc};padding:3px 8px;border-radius:999px;border:1px solid ${rc}28">${u.role.toUpperCase()}</span></td>
+          <td style="padding:10px 16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${rc}18;color:${rc};padding:3px 8px;border-radius:999px;border:1px solid ${rc}28">${esc(u.role.toUpperCase())}</span></td>
           <td style="padding:10px 16px"><span class="b ${u.status === 'active' ? 'ba' : 'bo'}">${u.status === 'active' ? 'Active' : 'Inactive'}</span></td>
-          <td style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.id}</td>
+          <td style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(u.id)}</td>
           <td style="padding:10px 16px">
             <div style="display:flex;gap:5px;flex-wrap:wrap">
-              <button class="btng" style="font-size:11px;padding:4px 9px" onclick="DC_DATA.toggleUserStatus('${u.id}').then(renderAll)">
+              <button class="btng" style="font-size:11px;padding:4px 9px" onclick="DC_DATA.toggleUserStatus('${escA(u.id)}').then(renderAll)">
                 ${u.status === 'active' ? 'Deactivate' : 'Reactivate'}
               </button>
-              <button class="btng" style="font-size:11px;padding:4px 9px" onclick="sendPasswordReset('${u.email}','${u.name.replace(/'/g,"\\'")}')">
+              <button class="btng" style="font-size:11px;padding:4px 9px" onclick="sendPasswordReset('${escA(u.email)}','${escA(u.name)}')">
                 <span class="material-symbols-outlined ms" style="font-size:12px">lock_reset</span>Reset Password
               </button>
             </div>
@@ -398,9 +404,9 @@ function buildUsersPanel(org, users) {
   return `<div style="padding:14px 16px 16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#849495">
-        Users in ${org.name}
+        Users in ${esc(org.name)}
       </div>
-      <button class="btnp" style="font-size:11px;padding:6px 12px" onclick="openAddUser('${org.id}','${org.name.replace(/'/g,"\\'")}')">
+      <button class="btnp" style="font-size:11px;padding:6px 12px" onclick="openAddUser('${escA(org.id)}','${escA(org.name)}')">
         <span class="material-symbols-outlined ms" style="font-size:13px">person_add</span>Add User
       </button>
     </div>
@@ -434,23 +440,23 @@ function renderUsers() {
   tbody.innerHTML = users.map(u => {
     const roleColors = { admin: '#00f0ff', user: '#00dbe9', driver: '#ffb4a2' };
     const rc = roleColors[u.role] || '#849495';
-    return `<tr onclick="location.href='profile?id=${u.id}'" style="cursor:pointer" title="View profile">
+    return `<tr onclick="location.href='profile?id=${escA(u.id)}'" style="cursor:pointer" title="View profile">
       <td data-label="Name">
-        <div style="font-weight:600">${u.name}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.email}</div>
+        <div style="font-weight:600">${esc(u.name)}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(u.email)}</div>
       </td>
       <td data-label="Role">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${rc}18;color:${rc};padding:3px 8px;border-radius:999px;border:1px solid ${rc}28">${u.role.toUpperCase()}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:${rc}18;color:${rc};padding:3px 8px;border-radius:999px;border:1px solid ${rc}28">${esc(u.role.toUpperCase())}</span>
       </td>
-      <td data-label="Organisation" style="font-size:12px;color:#849495">${u.orgName || '—'}</td>
+      <td data-label="Organisation" style="font-size:12px;color:#849495">${esc(u.orgName) || '—'}</td>
       <td data-label="Status"><span class="b ${u.status === 'active' ? 'ba' : 'bo'}">${u.status === 'active' ? 'Active' : 'Inactive'}</span></td>
       <td data-label="Added" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${u.createdAt || '—'}</td>
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap" onclick="event.stopPropagation()">
-          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="location.href='profile?id=${u.id}'">
+          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="location.href='profile?id=${escA(u.id)}'">
             <span class="material-symbols-outlined ms" style="font-size:13px">edit</span>Edit
           </button>
-          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="DC_DATA.toggleUserStatus('${u.id}').then(renderAll)">
+          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="DC_DATA.toggleUserStatus('${escA(u.id)}').then(renderAll)">
             ${u.status === 'active' ? 'Deactivate' : 'Reactivate'}
           </button>
         </div>
@@ -486,7 +492,7 @@ function populateOrgSelect() {
   const sel = document.getElementById('addUserOrgId');
   const orgs = DC_DATA.getOrgs();
   sel.innerHTML = '<option value="">No Organisation</option>' +
-    orgs.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+    orgs.map(o => `<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('');
 }
 
 function openAddUser(orgId, orgName) {
@@ -586,8 +592,7 @@ DC_DATA.init().then(() => {
   renderAll();
   if (location.hash === '#users') switchTab('users');
 }).catch(err => {
-  console.error('[DC_DATA]', err);
-  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${err.message}</div>`);
+  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${EC_SECURITY.sanitizeHtml(err.message)}</div>`);
 });
 </script>
 </body></html>

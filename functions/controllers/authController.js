@@ -2,7 +2,7 @@
 
 const admin = require('firebase-admin');
 const { logEvent } = require('../services/auditLog');
-const { runQuery } = require('../services/dataConnect');
+const { runQuery, runMutation } = require('../services/dataConnect');
 
 // RegEx whitelist for the fields accepted here — same defence-in-depth
 // style used elsewhere in this project (see security.js's isValid* functions).
@@ -40,6 +40,19 @@ exports.logSessionEvent = async (req, res) => {
   const event = (req.body && req.body.event) || '';
   if (!SESSION_EVENTS.has(event)) {
     return res.status(400).json({ error: 'Invalid event' });
+  }
+  // On logout, revoke the account's refresh tokens server-side — the
+  // client already discards its copy (auth.js's logout()), but without
+  // this the still-live ID token (up to ~1hr left on it) and any other
+  // signed-in session for this account would otherwise keep working until
+  // natural expiry. verifyIdToken elsewhere only rejects revoked tokens
+  // when checkRevoked is requested, which authenticateToken doesn't do on
+  // every request (that per-request Auth lookup isn't worth the latency
+  // for a check that's only ever meaningful right after a revocation) —
+  // the practical effect of this call is capping exposure to the token's
+  // remaining natural lifetime instead of leaving it silently valid.
+  if (event === 'LOGOUT') {
+    try { await admin.auth().revokeRefreshTokens(req.user.id); } catch { /* best effort */ }
   }
   await logEvent(req, event, {});
   res.status(200).json({ success: true });
@@ -127,6 +140,40 @@ exports.setRole = async (req, res) => {
   }
 };
 
+// Admin-only: corrects another user's email address (Firebase Auth is the
+// source of truth for sign-in identity; the Postgres User row is a mirror
+// keyed on the same address — see auth.js's sessionFromFirebaseUser — so
+// both must be updated together or a login would stop resolving to a row).
+// Marks the new address pre-verified: an admin making this change is
+// vouching for it directly, same trust level as admin-set-password below.
+exports.setEmail = async (req, res) => {
+  try {
+    const uid = await resolveTargetUid(req.body || {});
+    const { newEmail } = req.body || {};
+
+    if (!EMAIL_RE.test(String(newEmail || ''))) {
+      return res.status(400).json({ error: 'Invalid email' });
+    }
+
+    const oldFbUser = await admin.auth().getUser(uid);
+    const data = await runQuery('GetUserByEmail', { email: oldFbUser.email });
+    const dbUser = data.users && data.users[0];
+
+    await admin.auth().updateUser(uid, { email: newEmail, emailVerified: true });
+    if (dbUser) {
+      await runMutation('UpdateUserEmail', { id: dbUser.id, email: newEmail });
+    }
+
+    await logEvent(req, 'EMAIL_CHANGED', { targetUid: uid, from: oldFbUser.email, to: newEmail });
+    res.status(200).json({ success: true, message: 'Email updated', dbRowUpdated: !!dbUser });
+  } catch (err) {
+    console.error('setEmail:', err.message);
+    await logEvent(req, 'EMAIL_CHANGE_FAILED', { reason: err.message });
+    const status = err.status || 500;
+    res.status(status).json({ error: status < 500 ? err.message : 'Failed to update email' });
+  }
+};
+
 // Admin-only: resets another user's password. A client-side Firebase SDK
 // can only ever change the CURRENTLY signed-in user's own password
 // (updatePassword) — changing someone else's requires the Admin SDK, which
@@ -137,8 +184,8 @@ exports.setPassword = async (req, res) => {
     const uid = await resolveTargetUid(req.body || {});
     const { newPassword } = req.body || {};
 
-    if (typeof newPassword !== 'string' || newPassword.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (typeof newPassword !== 'string' || newPassword.length < 8 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters and include a letter and a number' });
     }
 
     await admin.auth().updateUser(uid, { password: newPassword });

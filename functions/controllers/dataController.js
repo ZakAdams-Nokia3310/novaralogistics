@@ -4,6 +4,7 @@ const REGISTRY = require('../registry/dataOperations');
 const { runQuery, runMutation } = require('../services/dataConnect');
 const { logEvent } = require('../services/auditLog');
 const { SCHEMAS, PUBLIC_SCHEMAS } = require('../validation/dataSchemas');
+const { verifyTurnstile } = require('../services/turnstile');
 
 async function resolveOwnUserId(email) {
   const data = await runQuery('GetUserByEmail', { email });
@@ -108,10 +109,18 @@ exports.registerSelf = async (req, res) => {
 // hostile input and the database for these; rate limiting is applied at
 // the route level (see routes/dataRoutes.js).
 exports.submitPublic = async (req, res) => {
-  const { operationName, variables } = req.body || {};
+  const { operationName, variables, turnstileToken } = req.body || {};
   const schema = typeof operationName === 'string' ? PUBLIC_SCHEMAS[operationName] : null;
   if (!schema) {
     return res.status(404).json({ error: 'Unknown operation' });
+  }
+
+  // No-op until TURNSTILE_SECRET_KEY is configured (see services/turnstile.js)
+  // — kept outside the zod schema since turnstileToken isn't a data field.
+  const humanVerified = await verifyTurnstile(turnstileToken, req.ip);
+  if (!humanVerified) {
+    await logEvent(req, 'BOT_CHECK_FAILED', { operationName });
+    return res.status(400).json({ error: 'Verification failed. Please try again.' });
   }
 
   const parsed = schema.safeParse(variables || {});

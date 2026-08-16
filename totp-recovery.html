@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>Recover Access — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);}
+  input{width:100%;padding:13px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;}
+  input:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,0.3);}
+  input::placeholder{color:rgba(255,255,255,0.22);}
+  .btn-main{width:100%;padding:14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 0 30px rgba(0,240,255,0.18);}
+  .btn-main:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 36px rgba(0,240,255,0.28);}
+  .btn-main:disabled{opacity:.6;cursor:default;transform:none;}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  @keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .anim{animation:up .5s cubic-bezier(0.4,0,0.2,1) both;}
+  .spin{animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div style="position:relative;z-index:2;width:100%;max-width:420px;padding:24px">
+
+  <div class="anim" style="text-align:center;margin-bottom:36px">
+    <a href="/" style="text-decoration:none;display:inline-flex;align-items:center;gap:10px">
+      <span style="font-size:26px">⚡</span>
+      <span class="grad" style="font-family:'Hanken Grotesk',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.03em">EquipCore</span>
+    </a>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(0,240,255,0.5);letter-spacing:.22em;text-transform:uppercase;margin-top:6px">Account Recovery</p>
+  </div>
+
+  <div id="loadingCard" class="glass anim" style="border-radius:20px;padding:48px 32px;text-align:center">
+    <span class="material-symbols-outlined spin" style="font-size:28px;color:#00f0ff">progress_activity</span>
+  </div>
+
+  <div id="invalidCard" class="glass anim" style="display:none;border-radius:20px;padding:32px;text-align:center">
+    <span class="material-symbols-outlined" style="font-size:32px;color:#ff6b6b;margin-bottom:10px;display:inline-block">error</span>
+    <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;margin-bottom:8px">Link expired or invalid</h2>
+    <p style="color:#b9cacb;font-size:13px;margin-bottom:20px;line-height:1.5">Recovery links are single-use and expire quickly. Go back to sign-in and try "Lost your device?" again to request a new one.</p>
+    <a href="login" class="btn-main" style="display:block;text-decoration:none;box-sizing:border-box">Back to Sign In</a>
+  </div>
+
+  <div id="resetCard" class="glass anim" style="display:none;border-radius:20px;padding:32px">
+    <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:6px">Reset access for <span id="resetEmail" style="color:#00f0ff"></span></h2>
+    <p style="color:#b9cacb;font-size:13px;margin-bottom:20px;line-height:1.5">Clicking this link (sent to your own inbox) proves the account is yours. Set a new password to continue — this will also clear your current two-factor setup so you can enroll a new device on next sign-in.</p>
+    <input id="pwd1Input" type="password" placeholder="New password" autocomplete="new-password" minlength="8" style="margin-bottom:12px"/>
+    <input id="pwd2Input" type="password" placeholder="Repeat new password" autocomplete="new-password" style="margin-bottom:14px"/>
+    <div id="resetErrBox" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+    <button class="btn-main" id="resetBtn" type="button">Reset Password &amp; Clear 2FA</button>
+  </div>
+
+  <div id="doneCard" class="glass anim" style="display:none;border-radius:20px;padding:32px;text-align:center">
+    <span class="material-symbols-outlined" style="font-size:32px;color:#00d4aa;margin-bottom:10px;display:inline-block">check_circle</span>
+    <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:18px;font-weight:800;margin-bottom:8px">Access recovered</h2>
+    <p style="color:#b9cacb;font-size:13px;margin-bottom:20px;line-height:1.5">Your password was reset and two-factor auth was cleared. Sign in with your new password — you'll be asked to set up a new authenticator device.</p>
+    <a href="login" class="btn-main" style="display:block;text-decoration:none;box-sizing:border-box">Go to Sign In</a>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script>
+const loadingCard = document.getElementById('loadingCard');
+const invalidCard = document.getElementById('invalidCard');
+const resetCard   = document.getElementById('resetCard');
+const doneCard    = document.getElementById('doneCard');
+
+function showCard(card) {
+  [loadingCard, invalidCard, resetCard, doneCard].forEach(c => c.style.display = 'none');
+  card.style.display = 'block';
+}
+function showErr(msg) {
+  const box = document.getElementById('resetErrBox');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+
+const params = new URLSearchParams(location.search);
+const mode = params.get('mode');
+const oobCode = params.get('oobCode');
+let recoveryEmail = null;
+
+async function init() {
+  if (mode !== 'resetPassword' || !oobCode) { showCard(invalidCard); return; }
+  try {
+    recoveryEmail = await firebase.auth().verifyPasswordResetCode(oobCode);
+  } catch {
+    showCard(invalidCard);
+    return;
+  }
+  document.getElementById('resetEmail').textContent = recoveryEmail;
+  showCard(resetCard);
+}
+
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('resetBtn');
+  document.getElementById('resetErrBox').style.display = 'none';
+  const pwd1 = document.getElementById('pwd1Input').value;
+  const pwd2 = document.getElementById('pwd2Input').value;
+
+  if (pwd1 !== pwd2) { showErr('Passwords do not match.'); return; }
+  if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.isStrongPassword(pwd1)) {
+    showErr('Password must be at least 8 characters and include a letter and a number.');
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = 'Resetting…';
+  try {
+    await firebase.auth().confirmPasswordReset(oobCode, pwd1);
+    // Fresh sign-in — self-recovery-disable requires a just-issued token
+    // (see totpController.js's selfRecoveryDisable) so a stale/stolen
+    // token can't be used for this on its own.
+    await firebase.auth().signInWithEmailAndPassword(recoveryEmail, pwd1);
+    const res = await EC_API.authFetch('/auth/totp/self-recovery-disable', { method: 'POST' });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error || 'Could not clear two-factor auth. Contact another admin.');
+    }
+    try { await firebase.auth().signOut(); } catch { /* already signed out */ }
+    sessionStorage.removeItem('ec_session');
+    sessionStorage.removeItem('ec_session_pending');
+    showCard(doneCard);
+  } catch (err) {
+    showErr(EC_SECURITY.safeErrMsg(err, 'Something went wrong. The link may have expired.'));
+    btn.disabled = false; btn.textContent = 'Reset Password & Clear 2FA';
+  }
+});
+
+init();
+</script>
+</body></html>

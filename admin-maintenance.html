@@ -241,6 +241,7 @@
 <script>
 buildSidebar('admin-maintenance');
 const admin = EC_AUTH.require(['admin']);
+const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
 DC_DATA.setOrgScope(admin.orgId);
 
 let activeType = 'all';
@@ -351,21 +352,21 @@ function renderTable() {
     const rowBg = item.priority === 'critical' ? 'background:rgba(255,107,107,.025)' : '';
     return `<tr style="${rowBg}">
       <td data-label="Vehicle">
-        <div style="font-weight:600;font-size:12px">${item.vehicleLabel.split('·')[0].trim()}</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${item.vehicleLabel.split('·')[1]?.trim() || ''}</div>
+        <div style="font-weight:600;font-size:12px">${esc(item.vehicleLabel.split('·')[0].trim())}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(item.vehicleLabel.split('·')[1]?.trim() || '')}</div>
       </td>
       <td data-label="Type">${typeBadge(item.type)}</td>
-      <td data-label="Priority"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${pCfg.color};font-weight:600;text-transform:uppercase">${item.priority}</span></td>
-      <td data-label="Description" style="color:#b9cacb;font-size:12px">${shortDesc}</td>
-      <td data-label="Logged By" style="font-size:12px;color:#849495">${item.loggedBy}</td>
+      <td data-label="Priority"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${pCfg.color};font-weight:600;text-transform:uppercase">${esc(item.priority)}</span></td>
+      <td data-label="Description" style="color:#b9cacb;font-size:12px">${esc(shortDesc)}</td>
+      <td data-label="Logged By" style="font-size:12px;color:#849495">${esc(item.loggedBy)}</td>
       <td data-label="Date" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${dateLabel}</td>
       <td data-label="Status">${statusBadge(item.status)}</td>
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btng" style="font-size:12px;padding:8px 12px" onclick="openDetail('${item.id}')">Details</button>
+          <button class="btng" style="font-size:12px;padding:8px 12px" onclick="openDetail('${escA(item.id)}')">Details</button>
           ${item.status !== 'resolved' ? `
-            ${item.status === 'open' ? `<button class="btng" style="font-size:12px;padding:8px 12px;color:#ffd93d;border-color:rgba(255,217,61,.2)" onclick="updateStatus('${item.id}','in_progress')">In Progress</button>` : ''}
-            <button class="btng" style="font-size:12px;padding:8px 12px;color:#00d4aa;border-color:rgba(0,212,170,.2)" onclick="updateStatus('${item.id}','resolved')">Resolve</button>
+            ${item.status === 'open' ? `<button class="btng" style="font-size:12px;padding:8px 12px;color:#ffd93d;border-color:rgba(255,217,61,.2)" onclick="updateStatus('${escA(item.id)}','in_progress')">In Progress</button>` : ''}
+            <button class="btng" style="font-size:12px;padding:8px 12px;color:#00d4aa;border-color:rgba(0,212,170,.2)" onclick="updateStatus('${escA(item.id)}','resolved')">Resolve</button>
           ` : ''}
         </div>
       </td>
@@ -383,7 +384,7 @@ function populateVehicleSelect() {
   const sel = document.getElementById('mqVehicle');
   sel.innerHTML = '<option value="">Select vehicle…</option>';
   DC_DATA.getVehicles().forEach(v => {
-    sel.innerHTML += `<option value="${v.id}" data-label="${v.make} ${v.model} · ${v.regPlate}">${v.make} ${v.model} (${v.regPlate})</option>`;
+    sel.innerHTML += `<option value="${esc(v.id)}" data-label="${esc(v.make)} ${esc(v.model)} · ${esc(v.regPlate)}">${esc(v.make)} ${esc(v.model)} (${esc(v.regPlate)})</option>`;
   });
 }
 
@@ -495,8 +496,8 @@ function openDetail(id) {
 
 function extraRow(label, val) {
   return `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)">
-    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">${label}</span>
-    <span style="font-size:12px;font-weight:600">${val}</span>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">${esc(label)}</span>
+    <span style="font-size:12px;font-weight:600">${esc(val)}</span>
   </div>`;
 }
 
@@ -504,8 +505,7 @@ function closeDetail() { document.getElementById('detailModal').classList.remove
 
 function renderAll() { renderStats(); renderTabs(); renderTable(); }
 DC_DATA.init().then(renderAll).catch(err => {
-  console.error('[DC_DATA]', err);
-  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${err.message}</div>`);
+  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${EC_SECURITY.sanitizeHtml(err.message)}</div>`);
 });
 </script>
 </body></html>

@@ -29,8 +29,7 @@ const EC_CHAT = (() => {
     return db().collection('conversations')
       .where('participantUids', 'array-contains', uid)
       .orderBy('lastMessageAt', 'desc')
-      .onSnapshot(snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => {
-        console.error('conversations listener error', err);
+      .onSnapshot(snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => {
         cb([]);
       });
   }
@@ -38,8 +37,7 @@ const EC_CHAT = (() => {
   function listenToMessages(conversationId, cb) {
     return db().collection('conversations').doc(conversationId).collection('messages')
       .orderBy('sentAt', 'asc')
-      .onSnapshot(snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), err => {
-        console.error('messages listener error', err);
+      .onSnapshot(snap => cb(snap.docs.map(d => ({ id: d.id, ...d.data() }))), () => {
         cb([]);
       });
   }

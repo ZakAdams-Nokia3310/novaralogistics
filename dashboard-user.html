@@ -19,6 +19,9 @@
   .eq-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:13px;overflow:hidden;transition:transform .28s ease,border-color .28s ease;}
   .eq-card:hover{transform:translateY(-4px);border-color:rgba(0,240,255,.2);}
   @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:900px){#dashSplit{grid-template-columns:1fr!important}}
+  @media(max-width:640px){#eGrid{grid-template-columns:repeat(2,1fr)!important}}
+  @media(max-width:400px){#eGrid{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -61,7 +64,7 @@
       <div class="sc"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:24px;font-weight:800;margin-bottom:2px" id="stTotal">—</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Total Rentals</div></div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 270px;gap:14px;align-items:start">
+    <div id="dashSplit" style="display:grid;grid-template-columns:1fr 270px;gap:14px;align-items:start">
       <div style="display:flex;flex-direction:column;gap:14px">
 
         <!-- Current rentals -->
@@ -175,12 +178,13 @@
 <script src="transitions.js"></script>
 <script>
 const user = EC_AUTH.require(['user','admin']);
+const esc = EC_SECURITY.sanitizeHtml;
 if (user) {
   document.getElementById('sh-name').textContent  = user.name;
   document.getElementById('sh-id').textContent    = user.id;
   document.getElementById('sh-avatar').textContent= user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('orgLabel').textContent  = user.org || 'Client Account';
-  document.getElementById('acctCard').innerHTML   = `<b>${user.name}</b><br><span style="color:#849495">${user.email}</span><br><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff">${user.id}</span><br>${user.org||'Independent'}`;
+  document.getElementById('acctCard').innerHTML   = `<b>${esc(user.name)}</b><br><span style="color:#849495">${esc(user.email)}</span><br><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff">${esc(user.id)}</span><br>${esc(user.org)||'Independent'}`;
   EC_SHELL.init([
     {href:'dashboard-user', icon:'dashboard',   label:'Overview',  active:()=>true},
     {href:'my-rentals',     icon:'receipt_long',label:'My Rentals'},

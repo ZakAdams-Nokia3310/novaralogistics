@@ -8,20 +8,6 @@ const EC_AUTH = (() => {
     firebase.initializeApp(FIREBASE_CONFIG);
   }
 
-  // Client-side hint only, used to preview which org an email domain
-  // belongs to before sign-in even completes. Real role/org assignment
-  // happens server-side via custom claims (see
-  // functions/controllers/authController.js's setRole) — this map cannot
-  // grant access to anything by itself, it only colors a UI pill.
-  const ORG_DOMAINS = {
-    'vanguard.io'    : 'Vanguard Heavies Ltd.',
-    'oceanic.com'    : 'Oceanic Rigging Corp',
-    'aether.org'     : 'Aether Power Grid',
-    'terraform.co'   : 'TerraForming Inc',
-    'ironclad.co.za' : 'Ironclad Logistics',
-    'equipcore.com'  : 'EquipCore HQ',
-  };
-
   // Extensionless — matches the clean URLs served by firebase.json's
   // "cleanUrls" setting (and server.js's local-dev equivalent).
   const DASH = {
@@ -32,6 +18,12 @@ const EC_AUTH = (() => {
   };
 
   const KEY = 'ec_session';
+  // Holds a computed-but-not-yet-active session while an admin account
+  // completes the TOTP gate (see checkTotpRequired below) — deliberately a
+  // different key from KEY, so EC_AUTH.current() keeps returning null
+  // (i.e. "not logged in") until 2FA actually passes, not just until
+  // Firebase Auth itself succeeds.
+  const PENDING_KEY = 'ec_session_pending';
 
   function save(user) {
     sessionStorage.setItem(KEY, JSON.stringify(user));
@@ -41,6 +33,24 @@ const EC_AUTH = (() => {
   function clear() {
     sessionStorage.removeItem(KEY);
     sessionStorage.removeItem('ec_session_ts');
+  }
+
+  // Two-factor auth is required for admin accounts (occasional beyond
+  // initial enrollment — see functions/controllers/totpController.js's
+  // REVERIFY_WINDOW_MS). Checked server-side, never assumed client-side:
+  // this only decides whether to route through verify-2fa.html before the
+  // session becomes active, the actual enrollment/challenge verification
+  // happens entirely on the server.
+  async function checkTotpRequired(session) {
+    if (session.role !== 'admin' || typeof EC_API === 'undefined') return false;
+    try {
+      const res = await EC_API.authFetch('/auth/totp/status');
+      if (!res.ok) return false;
+      const body = await res.json();
+      return !!(body.needsEnrollment || body.needsChallenge);
+    } catch {
+      return false;
+    }
   }
 
   // Builds the session object the rest of this app already expects
@@ -148,7 +158,7 @@ const EC_AUTH = (() => {
 
       if (!cleanName || !cleanEmail || !cleanPwd) throw new Error('All fields are required.');
       if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.isValidEmail(cleanEmail)) throw new Error('Please enter a valid email address.');
-      if (cleanPwd.length < 6) throw new Error('Password must be at least 6 characters.');
+      if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.isStrongPassword(cleanPwd)) throw new Error('Password must be at least 8 characters and include a letter and a number.');
 
       let cred;
       _signupInProgress = true;
@@ -157,11 +167,12 @@ const EC_AUTH = (() => {
           cred = await firebase.auth().createUserWithEmailAndPassword(cleanEmail, cleanPwd);
         } catch (err) {
           if (err.code === 'auth/email-already-in-use') throw new Error('An account with this email already exists.');
-          if (err.code === 'auth/weak-password') throw new Error('Password must be at least 6 characters.');
+          if (err.code === 'auth/weak-password') throw new Error('Password must be at least 8 characters and include a letter and a number.');
           throw new Error('Could not create account. Please try again.');
         }
 
         await cred.user.updateProfile({ displayName: cleanName });
+        try { await cred.user.sendEmailVerification(); } catch { /* best effort — login() re-sends on the gated attempt */ }
 
         // Firebase Auth account creation alone never touches the database —
         // create the corresponding Postgres User row now (role USER, no org;
@@ -179,16 +190,22 @@ const EC_AUTH = (() => {
           try { await cred.user.delete(); } catch { /* best effort */ }
           throw new Error('Could not finish creating your account. Please try again.');
         }
+
+        if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('SIGNUP_SUCCESS', { userId: cred.user.uid, email: cleanEmail });
+        if (typeof EC_API !== 'undefined') EC_API.authFetch('/auth/log-session-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'SIGNUP_SUCCESS' }) }).catch(() => {});
+
+        // Don't hand back an active session yet — login() enforces the same
+        // verified-email gate, so signing in here would just get bounced
+        // right back out. Sign out (still inside the _signupInProgress
+        // guard, so onIdTokenChanged doesn't race a session into
+        // sessionStorage in the gap) and tell the caller to show a
+        // check-your-email step instead of redirecting to the dashboard.
+        try { await firebase.auth().signOut(); } catch { /* already signed out */ }
       } finally {
         _signupInProgress = false;
       }
 
-      if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('SIGNUP_SUCCESS', { userId: cred.user.uid, email: cleanEmail });
-      if (typeof EC_API !== 'undefined') EC_API.authFetch('/auth/log-session-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'SIGNUP_SUCCESS' }) }).catch(() => {});
-
-      const session = await sessionFromFirebaseUser(cred.user);
-      save(session);
-      return session;
+      return { _verificationPending: true, email: cleanEmail };
     },
 
     async login(email, password) {
@@ -237,19 +254,140 @@ const EC_AUTH = (() => {
         throw new Error('Invalid email or password.');
       }
 
+      // Password accounts must verify their email before the session is
+      // considered usable — Google sign-in accounts skip this (Google
+      // already verified the address as part of its own OAuth flow, see
+      // checkGoogleRedirectResult below). Re-sends the link on every blocked attempt
+      // (best effort) so a user who lost the original isn't stuck.
+      const isPasswordAccount = (cred.user.providerData || []).some(p => p.providerId === 'password');
+      if (isPasswordAccount && !cred.user.emailVerified) {
+        try { await cred.user.sendEmailVerification(); } catch { /* best effort */ }
+        try { await firebase.auth().signOut(); } catch { /* already signed out */ }
+        if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('LOGIN_FAILED_UNVERIFIED_EMAIL', { email: cleanEmail });
+        throw new Error('Please verify your email before signing in. We just sent a new verification link to ' + cleanEmail + '.');
+      }
+
       let session;
       try {
         session = await sessionFromFirebaseUser(cred.user);
       } catch (err) {
         // Correct password, but no matching database record (or a
-        // deactivated one) — Firebase itself must not be left signed in to
-        // an account the app is refusing.
-        if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('LOGIN_FAILED_NO_DB_RECORD', { email: cleanEmail });
+        // deactivated one, or an org-lookup failure) — Firebase itself must
+        // not be left signed in to an account the app is refusing. The
+        // specific reason (see sessionFromFirebaseUser above) is kept out
+        // of what's shown here deliberately: surfacing "no account" vs
+        // "deactivated" vs "wrong password" as different messages would let
+        // someone who already has a valid password for an email fingerprint
+        // that account's state. One generic message regardless of cause.
+        if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('LOGIN_FAILED_NO_DB_RECORD', { email: cleanEmail, reason: err.message });
         try { await firebase.auth().signOut(); } catch { /* already signed out */ }
-        throw err;
+        throw new Error('Invalid email or password.');
       }
       if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('LOGIN_SUCCESS', { userId: session.id, role: session.role });
       if (typeof EC_API !== 'undefined') EC_API.authFetch('/auth/log-session-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: 'LOGIN_SUCCESS' }) }).catch(() => {});
+
+      if (await checkTotpRequired(session)) {
+        sessionStorage.setItem(PENDING_KEY, JSON.stringify(session));
+        return { ...session, _totpPending: true };
+      }
+      save(session);
+      return session;
+    },
+
+    // Single entry point for both "sign in" and "sign up" with Google —
+    // an existing account (matched by email, same bridge every other flow
+    // here uses) logs straight in; a first-time Google sign-in is
+    // auto-registered exactly like a self-signup (role USER, no
+    // organisation, nothing client-supplied trusted for either) since
+    // there's no separate password step to gate account creation behind.
+    // Full-page redirect, not a popup — signInWithPopup's result relies on
+    // the popup window and the opener communicating through storage on the
+    // *.firebaseapp.com auth domain, which is a different origin from this
+    // site. Browsers that partition storage by top-level site (Chrome's
+    // storage-partitioning rollout, Safari ITP, etc.) can break that
+    // handshake entirely, landing on firebaseapp.com/__/auth/handler with
+    // "The requested action is invalid" instead of ever returning a result.
+    // A redirect has no such handshake: the whole page navigates to Google
+    // and back, so the result is picked up same-origin via
+    // getRedirectResult() on the next load (see checkGoogleRedirectResult).
+    // This method itself only ever navigates away — it has no meaningful
+    // return value, since execution doesn't resume here.
+    async beginGoogleLogin() {
+      if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.checkRateLimit('login')) {
+        throw new Error('Too many requests. Please wait a moment and try again.');
+      }
+      if (typeof firebase === 'undefined' || !firebase.auth) {
+        throw new Error('Google sign-in is unavailable right now. Please try again.');
+      }
+      // Read synchronously, before Firebase even loads, by login.html/
+      // signup.html's inline head script — lets the page show a loading
+      // state immediately on the return trip instead of flashing the bare
+      // form while checkGoogleRedirectResult() is still resolving.
+      sessionStorage.setItem('ec_google_redirect_pending', '1');
+      await firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+    },
+
+    // Call once on page load (login.html / signup.html) to pick up the
+    // result of beginGoogleLogin's redirect. Resolves to null on an
+    // ordinary page load that isn't returning from Google at all.
+    async checkGoogleRedirectResult() {
+      if (typeof firebase === 'undefined' || !firebase.auth) return null;
+
+      let cred;
+      try {
+        cred = await firebase.auth().getRedirectResult();
+        if (!cred || !cred.user) return null;
+      } catch (err) {
+        if (err.code === 'auth/account-exists-with-different-credential') {
+          throw new Error('An account with this email already exists using a password. Sign in with your password instead.');
+        }
+        if (!err.code) return null; // not actually a redirect-result error — ordinary load
+        throw new Error('Google sign-in failed. Please try again.');
+      }
+
+      // Same race as email/password signup (see the guard's comment near
+      // the top of this file) — Firebase fires onIdTokenChanged before this
+      // function gets a chance to create a first-time account's database row.
+      _signupInProgress = true;
+      let isNewDbUser = false;
+      try {
+        let dbUser = await DC_DATA.getUserByEmailLive(cred.user.email);
+        if (!dbUser) {
+          if (typeof DC_DATA === 'undefined') {
+            try { await cred.user.delete(); } catch { /* best effort */ }
+            throw new Error('Could not finish creating your account. Please try again.');
+          }
+          const name = cred.user.displayName || cred.user.email.split('@')[0];
+          try {
+            await DC_DATA.createUserLive(name, cred.user.email);
+          } catch {
+            try { await cred.user.delete(); } catch { /* best effort */ }
+            throw new Error('Could not finish creating your account. Please try again.');
+          }
+          isNewDbUser = true;
+        }
+      } finally {
+        _signupInProgress = false;
+      }
+
+      let session;
+      try {
+        session = await sessionFromFirebaseUser(cred.user);
+      } catch (err) {
+        // Same reasoning as login()'s identical catch above — one generic
+        // message regardless of cause, and Firebase must not be left
+        // signed in to an account the app is refusing.
+        if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('LOGIN_FAILED_NO_DB_RECORD', { email: cred.user.email, provider: 'google', reason: err.message });
+        try { await firebase.auth().signOut(); } catch { /* already signed out */ }
+        throw new Error('Google sign-in failed. Please try again.');
+      }
+      if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit(isNewDbUser ? 'SIGNUP_SUCCESS' : 'LOGIN_SUCCESS', { userId: session.id, role: session.role, provider: 'google' });
+      if (typeof EC_API !== 'undefined') EC_API.authFetch('/auth/log-session-event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: isNewDbUser ? 'SIGNUP_SUCCESS' : 'LOGIN_SUCCESS' }) }).catch(() => {});
+
+      if (await checkTotpRequired(session)) {
+        sessionStorage.setItem(PENDING_KEY, JSON.stringify(session));
+        return { ...session, _totpPending: true };
+      }
       save(session);
       return session;
     },
@@ -270,6 +408,24 @@ const EC_AUTH = (() => {
         try { await firebase.auth().signOut(); } catch { /* already signed out */ }
       }
       location.href = 'login';
+    },
+
+    // Called by verify-2fa.html once the TOTP challenge/enrollment has
+    // actually succeeded (verified server-side) — promotes the session
+    // computed at login time from "pending" to active. Returns null if
+    // there's no pending session (e.g. the page was reached directly
+    // without going through login/checkGoogleRedirectResult first).
+    finalizePendingSession() {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      sessionStorage.removeItem(PENDING_KEY);
+      if (!raw) return null;
+      try {
+        const session = JSON.parse(raw);
+        save(session);
+        return session;
+      } catch {
+        return null;
+      }
     },
 
     current() {
@@ -306,13 +462,6 @@ const EC_AUTH = (() => {
 
     dashFor(role) {
       return DASH[role] || 'dashboard-guest';
-    },
-
-    // Client-side hint only — see ORG_DOMAINS above.
-    detectOrg(email) {
-      const domain = (email || '').split('@')[1]?.toLowerCase() || '';
-      const org = ORG_DOMAINS[domain];
-      return org ? { name: org, role: 'user' } : { name: '', role: 'guest' };
     },
   };
 })();

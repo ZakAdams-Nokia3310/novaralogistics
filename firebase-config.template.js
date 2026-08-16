@@ -12,4 +12,8 @@ const FIREBASE_CONFIG = {
   appId:             'YOUR_APP_ID',
   measurementId:     'YOUR_MEASUREMENT_ID',
   mapboxToken:       'YOUR_MAPBOX_TOKEN',
+  // Cloudflare Turnstile site key (free) — get one at
+  // dash.cloudflare.com/turnstile. Leave blank to leave the public forms'
+  // bot-check widget disabled (they still work, just without it).
+  turnstileSiteKey:  '',
 };

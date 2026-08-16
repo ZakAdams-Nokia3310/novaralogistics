@@ -210,6 +210,7 @@
             <input type="checkbox" id="consent3" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;border:none;background:none;"/> I understand that approval is subject to credit assessment and equipment availability.
           </label>
         </div>
+        <div id="turnstileWidget" style="margin-bottom:4px"></div>
       </div>
       <div style="display:flex;gap:12px">
         <button type="button" class="btn-g" onclick="goPage(3)"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Back</button>
@@ -245,6 +246,23 @@
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
+// Cloudflare Turnstile bot check — only loads/renders once a site key is
+// configured in firebase-config.js (see functions/services/turnstile.js
+// for the matching server-side no-op-until-configured behaviour).
+if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.turnstileSiteKey) {
+  const _tsScript = document.createElement('script');
+  _tsScript.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+  _tsScript.async = true; _tsScript.defer = true;
+  _tsScript.onload = () => {
+    window.turnstile?.render('#turnstileWidget', {
+      sitekey: FIREBASE_CONFIG.turnstileSiteKey,
+      callback: (token) => { window.__ecTurnstileToken = token; },
+      'expired-callback': () => { window.__ecTurnstileToken = null; },
+    });
+  };
+  document.head.appendChild(_tsScript);
+}
+
 // Generate app ref
 const appRef='APP-'+Math.floor(10000+Math.random()*90000);
 document.getElementById('appRef').textContent=appRef;
@@ -309,7 +327,7 @@ function buildReview(){
     'End Date': document.getElementById('f_end').value||'—',
     'Delivery Site': document.getElementById('f_site').value||'—',
   };
-  document.getElementById('reviewContent').innerHTML=Object.entries(vals).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em">${k}</span><span style="font-size:13px;color:#e2e2e8;font-weight:500;max-width:60%;text-align:right">${v}</span></div>`).join('');
+  document.getElementById('reviewContent').innerHTML=Object.entries(vals).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em">${EC_SECURITY.sanitizeHtml(k)}</span><span style="font-size:13px;color:#e2e2e8;font-weight:500;max-width:60%;text-align:right">${EC_SECURITY.sanitizeHtml(v)}</span></div>`).join('');
 }
 
 // Submit

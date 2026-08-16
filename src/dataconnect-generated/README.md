@@ -27,6 +27,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*GetUserById*](#getuserbyid)
   - [*ListUsersByOrg*](#listusersbyorg)
   - [*GetUserByEmail*](#getuserbyemail)
+  - [*GetUserTotpByEmail*](#getusertotpbyemail)
   - [*ListUsersByRole*](#listusersbyrole)
   - [*ListAllMaintenanceQueries*](#listallmaintenancequeries)
   - [*GetMaintenanceById*](#getmaintenancebyid)
@@ -105,6 +106,11 @@ This README will guide you through the process of using the generated JavaScript
   - [*UpdateInquiryStatus*](#updateinquirystatus)
   - [*DeleteContactInquiry*](#deletecontactinquiry)
   - [*CreateAuditLog*](#createauditlog)
+  - [*SetUserTotpPending*](#setusertotppending)
+  - [*ConfirmUserTotpEnrollment*](#confirmusertotpenrollment)
+  - [*RecordTotpVerification*](#recordtotpverification)
+  - [*UpdateUserTotpBackupCodes*](#updateusertotpbackupcodes)
+  - [*DisableUserTotp*](#disableusertotp)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `equipcore`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -2398,6 +2404,122 @@ const ref = getUserByEmailRef({ email: ..., });
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
 const ref = getUserByEmailRef(dataConnect, getUserByEmailVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.users);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.users);
+});
+```
+
+## GetUserTotpByEmail
+You can execute the `GetUserTotpByEmail` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+getUserTotpByEmail(vars: GetUserTotpByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserTotpByEmailData, GetUserTotpByEmailVariables>;
+
+interface GetUserTotpByEmailRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserTotpByEmailVariables): QueryRef<GetUserTotpByEmailData, GetUserTotpByEmailVariables>;
+}
+export const getUserTotpByEmailRef: GetUserTotpByEmailRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getUserTotpByEmail(dc: DataConnect, vars: GetUserTotpByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserTotpByEmailData, GetUserTotpByEmailVariables>;
+
+interface GetUserTotpByEmailRef {
+  ...
+  (dc: DataConnect, vars: GetUserTotpByEmailVariables): QueryRef<GetUserTotpByEmailData, GetUserTotpByEmailVariables>;
+}
+export const getUserTotpByEmailRef: GetUserTotpByEmailRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getUserTotpByEmailRef:
+```typescript
+const name = getUserTotpByEmailRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetUserTotpByEmail` query requires an argument of type `GetUserTotpByEmailVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetUserTotpByEmailVariables {
+  email: string;
+}
+```
+### Return Type
+Recall that executing the `GetUserTotpByEmail` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetUserTotpByEmailData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetUserTotpByEmailData {
+  users: ({
+    id: UUIDString;
+    role: UserRole;
+    totpEnabled: boolean;
+    totpSecretEnc?: string | null;
+    totpBackupCodesEnc?: string | null;
+    totpVerifiedAt?: TimestampString | null;
+  } & User_Key)[];
+}
+```
+### Using `GetUserTotpByEmail`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getUserTotpByEmail, GetUserTotpByEmailVariables } from '@dataconnect/generated';
+
+// The `GetUserTotpByEmail` query requires an argument of type `GetUserTotpByEmailVariables`:
+const getUserTotpByEmailVars: GetUserTotpByEmailVariables = {
+  email: ..., 
+};
+
+// Call the `getUserTotpByEmail()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getUserTotpByEmail(getUserTotpByEmailVars);
+// Variables can be defined inline as well.
+const { data } = await getUserTotpByEmail({ email: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getUserTotpByEmail(dataConnect, getUserTotpByEmailVars);
+
+console.log(data.users);
+
+// Or, you can use the `Promise` API.
+getUserTotpByEmail(getUserTotpByEmailVars).then((response) => {
+  const data = response.data;
+  console.log(data.users);
+});
+```
+
+### Using `GetUserTotpByEmail`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getUserTotpByEmailRef, GetUserTotpByEmailVariables } from '@dataconnect/generated';
+
+// The `GetUserTotpByEmail` query requires an argument of type `GetUserTotpByEmailVariables`:
+const getUserTotpByEmailVars: GetUserTotpByEmailVariables = {
+  email: ..., 
+};
+
+// Call the `getUserTotpByEmailRef()` function to get a reference to the query.
+const ref = getUserTotpByEmailRef(getUserTotpByEmailVars);
+// Variables can be defined inline as well.
+const ref = getUserTotpByEmailRef({ email: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getUserTotpByEmailRef(dataConnect, getUserTotpByEmailVars);
 
 // Call `executeQuery()` on the reference to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
@@ -11509,6 +11631,560 @@ console.log(data.auditLog_insert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.auditLog_insert);
+});
+```
+
+## SetUserTotpPending
+You can execute the `SetUserTotpPending` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+setUserTotpPending(vars: SetUserTotpPendingVariables): MutationPromise<SetUserTotpPendingData, SetUserTotpPendingVariables>;
+
+interface SetUserTotpPendingRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SetUserTotpPendingVariables): MutationRef<SetUserTotpPendingData, SetUserTotpPendingVariables>;
+}
+export const setUserTotpPendingRef: SetUserTotpPendingRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+setUserTotpPending(dc: DataConnect, vars: SetUserTotpPendingVariables): MutationPromise<SetUserTotpPendingData, SetUserTotpPendingVariables>;
+
+interface SetUserTotpPendingRef {
+  ...
+  (dc: DataConnect, vars: SetUserTotpPendingVariables): MutationRef<SetUserTotpPendingData, SetUserTotpPendingVariables>;
+}
+export const setUserTotpPendingRef: SetUserTotpPendingRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the setUserTotpPendingRef:
+```typescript
+const name = setUserTotpPendingRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `SetUserTotpPending` mutation requires an argument of type `SetUserTotpPendingVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface SetUserTotpPendingVariables {
+  id: UUIDString;
+  totpSecretEnc: string;
+}
+```
+### Return Type
+Recall that executing the `SetUserTotpPending` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `SetUserTotpPendingData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface SetUserTotpPendingData {
+  user_update?: User_Key | null;
+}
+```
+### Using `SetUserTotpPending`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, setUserTotpPending, SetUserTotpPendingVariables } from '@dataconnect/generated';
+
+// The `SetUserTotpPending` mutation requires an argument of type `SetUserTotpPendingVariables`:
+const setUserTotpPendingVars: SetUserTotpPendingVariables = {
+  id: ..., 
+  totpSecretEnc: ..., 
+};
+
+// Call the `setUserTotpPending()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await setUserTotpPending(setUserTotpPendingVars);
+// Variables can be defined inline as well.
+const { data } = await setUserTotpPending({ id: ..., totpSecretEnc: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await setUserTotpPending(dataConnect, setUserTotpPendingVars);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+setUserTotpPending(setUserTotpPendingVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+### Using `SetUserTotpPending`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, setUserTotpPendingRef, SetUserTotpPendingVariables } from '@dataconnect/generated';
+
+// The `SetUserTotpPending` mutation requires an argument of type `SetUserTotpPendingVariables`:
+const setUserTotpPendingVars: SetUserTotpPendingVariables = {
+  id: ..., 
+  totpSecretEnc: ..., 
+};
+
+// Call the `setUserTotpPendingRef()` function to get a reference to the mutation.
+const ref = setUserTotpPendingRef(setUserTotpPendingVars);
+// Variables can be defined inline as well.
+const ref = setUserTotpPendingRef({ id: ..., totpSecretEnc: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = setUserTotpPendingRef(dataConnect, setUserTotpPendingVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+## ConfirmUserTotpEnrollment
+You can execute the `ConfirmUserTotpEnrollment` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+confirmUserTotpEnrollment(vars: ConfirmUserTotpEnrollmentVariables): MutationPromise<ConfirmUserTotpEnrollmentData, ConfirmUserTotpEnrollmentVariables>;
+
+interface ConfirmUserTotpEnrollmentRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ConfirmUserTotpEnrollmentVariables): MutationRef<ConfirmUserTotpEnrollmentData, ConfirmUserTotpEnrollmentVariables>;
+}
+export const confirmUserTotpEnrollmentRef: ConfirmUserTotpEnrollmentRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+confirmUserTotpEnrollment(dc: DataConnect, vars: ConfirmUserTotpEnrollmentVariables): MutationPromise<ConfirmUserTotpEnrollmentData, ConfirmUserTotpEnrollmentVariables>;
+
+interface ConfirmUserTotpEnrollmentRef {
+  ...
+  (dc: DataConnect, vars: ConfirmUserTotpEnrollmentVariables): MutationRef<ConfirmUserTotpEnrollmentData, ConfirmUserTotpEnrollmentVariables>;
+}
+export const confirmUserTotpEnrollmentRef: ConfirmUserTotpEnrollmentRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the confirmUserTotpEnrollmentRef:
+```typescript
+const name = confirmUserTotpEnrollmentRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ConfirmUserTotpEnrollment` mutation requires an argument of type `ConfirmUserTotpEnrollmentVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ConfirmUserTotpEnrollmentVariables {
+  id: UUIDString;
+  totpBackupCodesEnc: string;
+}
+```
+### Return Type
+Recall that executing the `ConfirmUserTotpEnrollment` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ConfirmUserTotpEnrollmentData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ConfirmUserTotpEnrollmentData {
+  user_update?: User_Key | null;
+}
+```
+### Using `ConfirmUserTotpEnrollment`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, confirmUserTotpEnrollment, ConfirmUserTotpEnrollmentVariables } from '@dataconnect/generated';
+
+// The `ConfirmUserTotpEnrollment` mutation requires an argument of type `ConfirmUserTotpEnrollmentVariables`:
+const confirmUserTotpEnrollmentVars: ConfirmUserTotpEnrollmentVariables = {
+  id: ..., 
+  totpBackupCodesEnc: ..., 
+};
+
+// Call the `confirmUserTotpEnrollment()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await confirmUserTotpEnrollment(confirmUserTotpEnrollmentVars);
+// Variables can be defined inline as well.
+const { data } = await confirmUserTotpEnrollment({ id: ..., totpBackupCodesEnc: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await confirmUserTotpEnrollment(dataConnect, confirmUserTotpEnrollmentVars);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+confirmUserTotpEnrollment(confirmUserTotpEnrollmentVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+### Using `ConfirmUserTotpEnrollment`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, confirmUserTotpEnrollmentRef, ConfirmUserTotpEnrollmentVariables } from '@dataconnect/generated';
+
+// The `ConfirmUserTotpEnrollment` mutation requires an argument of type `ConfirmUserTotpEnrollmentVariables`:
+const confirmUserTotpEnrollmentVars: ConfirmUserTotpEnrollmentVariables = {
+  id: ..., 
+  totpBackupCodesEnc: ..., 
+};
+
+// Call the `confirmUserTotpEnrollmentRef()` function to get a reference to the mutation.
+const ref = confirmUserTotpEnrollmentRef(confirmUserTotpEnrollmentVars);
+// Variables can be defined inline as well.
+const ref = confirmUserTotpEnrollmentRef({ id: ..., totpBackupCodesEnc: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = confirmUserTotpEnrollmentRef(dataConnect, confirmUserTotpEnrollmentVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+## RecordTotpVerification
+You can execute the `RecordTotpVerification` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+recordTotpVerification(vars: RecordTotpVerificationVariables): MutationPromise<RecordTotpVerificationData, RecordTotpVerificationVariables>;
+
+interface RecordTotpVerificationRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RecordTotpVerificationVariables): MutationRef<RecordTotpVerificationData, RecordTotpVerificationVariables>;
+}
+export const recordTotpVerificationRef: RecordTotpVerificationRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+recordTotpVerification(dc: DataConnect, vars: RecordTotpVerificationVariables): MutationPromise<RecordTotpVerificationData, RecordTotpVerificationVariables>;
+
+interface RecordTotpVerificationRef {
+  ...
+  (dc: DataConnect, vars: RecordTotpVerificationVariables): MutationRef<RecordTotpVerificationData, RecordTotpVerificationVariables>;
+}
+export const recordTotpVerificationRef: RecordTotpVerificationRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the recordTotpVerificationRef:
+```typescript
+const name = recordTotpVerificationRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `RecordTotpVerification` mutation requires an argument of type `RecordTotpVerificationVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface RecordTotpVerificationVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `RecordTotpVerification` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `RecordTotpVerificationData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface RecordTotpVerificationData {
+  user_update?: User_Key | null;
+}
+```
+### Using `RecordTotpVerification`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, recordTotpVerification, RecordTotpVerificationVariables } from '@dataconnect/generated';
+
+// The `RecordTotpVerification` mutation requires an argument of type `RecordTotpVerificationVariables`:
+const recordTotpVerificationVars: RecordTotpVerificationVariables = {
+  id: ..., 
+};
+
+// Call the `recordTotpVerification()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await recordTotpVerification(recordTotpVerificationVars);
+// Variables can be defined inline as well.
+const { data } = await recordTotpVerification({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await recordTotpVerification(dataConnect, recordTotpVerificationVars);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+recordTotpVerification(recordTotpVerificationVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+### Using `RecordTotpVerification`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, recordTotpVerificationRef, RecordTotpVerificationVariables } from '@dataconnect/generated';
+
+// The `RecordTotpVerification` mutation requires an argument of type `RecordTotpVerificationVariables`:
+const recordTotpVerificationVars: RecordTotpVerificationVariables = {
+  id: ..., 
+};
+
+// Call the `recordTotpVerificationRef()` function to get a reference to the mutation.
+const ref = recordTotpVerificationRef(recordTotpVerificationVars);
+// Variables can be defined inline as well.
+const ref = recordTotpVerificationRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = recordTotpVerificationRef(dataConnect, recordTotpVerificationVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+## UpdateUserTotpBackupCodes
+You can execute the `UpdateUserTotpBackupCodes` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+updateUserTotpBackupCodes(vars: UpdateUserTotpBackupCodesVariables): MutationPromise<UpdateUserTotpBackupCodesData, UpdateUserTotpBackupCodesVariables>;
+
+interface UpdateUserTotpBackupCodesRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateUserTotpBackupCodesVariables): MutationRef<UpdateUserTotpBackupCodesData, UpdateUserTotpBackupCodesVariables>;
+}
+export const updateUserTotpBackupCodesRef: UpdateUserTotpBackupCodesRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+updateUserTotpBackupCodes(dc: DataConnect, vars: UpdateUserTotpBackupCodesVariables): MutationPromise<UpdateUserTotpBackupCodesData, UpdateUserTotpBackupCodesVariables>;
+
+interface UpdateUserTotpBackupCodesRef {
+  ...
+  (dc: DataConnect, vars: UpdateUserTotpBackupCodesVariables): MutationRef<UpdateUserTotpBackupCodesData, UpdateUserTotpBackupCodesVariables>;
+}
+export const updateUserTotpBackupCodesRef: UpdateUserTotpBackupCodesRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the updateUserTotpBackupCodesRef:
+```typescript
+const name = updateUserTotpBackupCodesRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `UpdateUserTotpBackupCodes` mutation requires an argument of type `UpdateUserTotpBackupCodesVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface UpdateUserTotpBackupCodesVariables {
+  id: UUIDString;
+  totpBackupCodesEnc: string;
+}
+```
+### Return Type
+Recall that executing the `UpdateUserTotpBackupCodes` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `UpdateUserTotpBackupCodesData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface UpdateUserTotpBackupCodesData {
+  user_update?: User_Key | null;
+}
+```
+### Using `UpdateUserTotpBackupCodes`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, updateUserTotpBackupCodes, UpdateUserTotpBackupCodesVariables } from '@dataconnect/generated';
+
+// The `UpdateUserTotpBackupCodes` mutation requires an argument of type `UpdateUserTotpBackupCodesVariables`:
+const updateUserTotpBackupCodesVars: UpdateUserTotpBackupCodesVariables = {
+  id: ..., 
+  totpBackupCodesEnc: ..., 
+};
+
+// Call the `updateUserTotpBackupCodes()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await updateUserTotpBackupCodes(updateUserTotpBackupCodesVars);
+// Variables can be defined inline as well.
+const { data } = await updateUserTotpBackupCodes({ id: ..., totpBackupCodesEnc: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await updateUserTotpBackupCodes(dataConnect, updateUserTotpBackupCodesVars);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+updateUserTotpBackupCodes(updateUserTotpBackupCodesVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+### Using `UpdateUserTotpBackupCodes`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, updateUserTotpBackupCodesRef, UpdateUserTotpBackupCodesVariables } from '@dataconnect/generated';
+
+// The `UpdateUserTotpBackupCodes` mutation requires an argument of type `UpdateUserTotpBackupCodesVariables`:
+const updateUserTotpBackupCodesVars: UpdateUserTotpBackupCodesVariables = {
+  id: ..., 
+  totpBackupCodesEnc: ..., 
+};
+
+// Call the `updateUserTotpBackupCodesRef()` function to get a reference to the mutation.
+const ref = updateUserTotpBackupCodesRef(updateUserTotpBackupCodesVars);
+// Variables can be defined inline as well.
+const ref = updateUserTotpBackupCodesRef({ id: ..., totpBackupCodesEnc: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = updateUserTotpBackupCodesRef(dataConnect, updateUserTotpBackupCodesVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+## DisableUserTotp
+You can execute the `DisableUserTotp` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+disableUserTotp(vars: DisableUserTotpVariables): MutationPromise<DisableUserTotpData, DisableUserTotpVariables>;
+
+interface DisableUserTotpRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DisableUserTotpVariables): MutationRef<DisableUserTotpData, DisableUserTotpVariables>;
+}
+export const disableUserTotpRef: DisableUserTotpRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+disableUserTotp(dc: DataConnect, vars: DisableUserTotpVariables): MutationPromise<DisableUserTotpData, DisableUserTotpVariables>;
+
+interface DisableUserTotpRef {
+  ...
+  (dc: DataConnect, vars: DisableUserTotpVariables): MutationRef<DisableUserTotpData, DisableUserTotpVariables>;
+}
+export const disableUserTotpRef: DisableUserTotpRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the disableUserTotpRef:
+```typescript
+const name = disableUserTotpRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `DisableUserTotp` mutation requires an argument of type `DisableUserTotpVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface DisableUserTotpVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `DisableUserTotp` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `DisableUserTotpData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface DisableUserTotpData {
+  user_update?: User_Key | null;
+}
+```
+### Using `DisableUserTotp`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, disableUserTotp, DisableUserTotpVariables } from '@dataconnect/generated';
+
+// The `DisableUserTotp` mutation requires an argument of type `DisableUserTotpVariables`:
+const disableUserTotpVars: DisableUserTotpVariables = {
+  id: ..., 
+};
+
+// Call the `disableUserTotp()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await disableUserTotp(disableUserTotpVars);
+// Variables can be defined inline as well.
+const { data } = await disableUserTotp({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await disableUserTotp(dataConnect, disableUserTotpVars);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+disableUserTotp(disableUserTotpVars).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
+});
+```
+
+### Using `DisableUserTotp`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, disableUserTotpRef, DisableUserTotpVariables } from '@dataconnect/generated';
+
+// The `DisableUserTotp` mutation requires an argument of type `DisableUserTotpVariables`:
+const disableUserTotpVars: DisableUserTotpVariables = {
+  id: ..., 
+};
+
+// Call the `disableUserTotpRef()` function to get a reference to the mutation.
+const ref = disableUserTotpRef(disableUserTotpVars);
+// Variables can be defined inline as well.
+const ref = disableUserTotpRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = disableUserTotpRef(dataConnect, disableUserTotpVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.user_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.user_update);
 });
 ```
 

@@ -217,6 +217,17 @@ query ListAllRentalApplications {
   }
 }
 
+query GetUserTotpByEmail($email: String!) {
+  users(where: { email: { eq: $email } }, limit: 1) {
+    id
+    role
+    totpEnabled
+    totpSecretEnc
+    totpBackupCodesEnc
+    totpVerifiedAt
+  }
+}
+
 query GetUserByEmail($email: String!) {
   users(where: { email: { eq: $email } }, limit: 1) {
     id

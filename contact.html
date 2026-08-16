@@ -69,6 +69,7 @@
               </select>
             </div>
             <div style="margin-bottom:20px"><label>Message</label><textarea id="cMessage" rows="5" placeholder="Tell us how we can help…" required></textarea></div>
+            <div id="turnstileWidget" style="margin-bottom:16px"></div>
             <button class="btnp" type="submit" id="submitBtn"><span class="material-symbols-outlined ms" style="font-size:18px">send</span>Send Message</button>
           </form>
         </div>
@@ -120,6 +121,23 @@
 <script src="transitions.js"></script>
 <script>
 buildSidebar('contact');
+
+// Cloudflare Turnstile bot check — only loads/renders once a site key is
+// configured in firebase-config.js (see functions/services/turnstile.js
+// for the matching server-side no-op-until-configured behaviour).
+if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.turnstileSiteKey) {
+  const s = document.createElement('script');
+  s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+  s.async = true; s.defer = true;
+  s.onload = () => {
+    window.turnstile?.render('#turnstileWidget', {
+      sitekey: FIREBASE_CONFIG.turnstileSiteKey,
+      callback: (token) => { window.__ecTurnstileToken = token; },
+      'expired-callback': () => { window.__ecTurnstileToken = null; },
+    });
+  };
+  document.head.appendChild(s);
+}
 
 document.getElementById('contactForm').addEventListener('submit', e => {
   e.preventDefault();

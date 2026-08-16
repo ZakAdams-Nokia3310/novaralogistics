@@ -223,6 +223,15 @@ export interface CatalogItem_Key {
   __typename?: 'CatalogItem_Key';
 }
 
+export interface ConfirmUserTotpEnrollmentData {
+  user_update?: User_Key | null;
+}
+
+export interface ConfirmUserTotpEnrollmentVariables {
+  id: UUIDString;
+  totpBackupCodesEnc: string;
+}
+
 export interface ContactInquiry_Key {
   id: UUIDString;
   __typename?: 'ContactInquiry_Key';
@@ -494,6 +503,14 @@ export interface DeleteWaitlistEntryVariables {
   id: UUIDString;
 }
 
+export interface DisableUserTotpData {
+  user_update?: User_Key | null;
+}
+
+export interface DisableUserTotpVariables {
+  id: UUIDString;
+}
+
 export interface ExpireWaitlistEntryData {
   waitlistEntry_update?: WaitlistEntry_Key | null;
 }
@@ -741,6 +758,21 @@ export interface GetUserByIdData {
 
 export interface GetUserByIdVariables {
   id: UUIDString;
+}
+
+export interface GetUserTotpByEmailData {
+  users: ({
+    id: UUIDString;
+    role: UserRole;
+    totpEnabled: boolean;
+    totpSecretEnc?: string | null;
+    totpBackupCodesEnc?: string | null;
+    totpVerifiedAt?: TimestampString | null;
+  } & User_Key)[];
+}
+
+export interface GetUserTotpByEmailVariables {
+  email: string;
 }
 
 export interface GetVehicleByIdData {
@@ -1431,6 +1463,14 @@ export interface RecordFailedLoginVariables {
   lockedUntil?: TimestampString | null;
 }
 
+export interface RecordTotpVerificationData {
+  user_update?: User_Key | null;
+}
+
+export interface RecordTotpVerificationVariables {
+  id: UUIDString;
+}
+
 export interface RecordUserLoginData {
   user_update?: User_Key | null;
 }
@@ -1477,6 +1517,15 @@ export interface ReviewRentalApplicationVariables {
   status: ApplicationStatus;
   reviewedById: UUIDString;
   rejectionReason?: string | null;
+}
+
+export interface SetUserTotpPendingData {
+  user_update?: User_Key | null;
+}
+
+export interface SetUserTotpPendingVariables {
+  id: UUIDString;
+  totpSecretEnc: string;
 }
 
 export interface UpdateCatalogItemData {
@@ -1614,6 +1663,15 @@ export interface UpdateUserStatusData {
 export interface UpdateUserStatusVariables {
   id: UUIDString;
   status: UserStatus;
+}
+
+export interface UpdateUserTotpBackupCodesData {
+  user_update?: User_Key | null;
+}
+
+export interface UpdateUserTotpBackupCodesVariables {
+  id: UUIDString;
+  totpBackupCodesEnc: string;
 }
 
 export interface UpdateVehicleDetailsData {
@@ -2338,6 +2396,66 @@ export const createAuditLogRef: CreateAuditLogRef;
 export function createAuditLog(vars: CreateAuditLogVariables): MutationPromise<CreateAuditLogData, CreateAuditLogVariables>;
 export function createAuditLog(dc: DataConnect, vars: CreateAuditLogVariables): MutationPromise<CreateAuditLogData, CreateAuditLogVariables>;
 
+interface SetUserTotpPendingRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: SetUserTotpPendingVariables): MutationRef<SetUserTotpPendingData, SetUserTotpPendingVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: SetUserTotpPendingVariables): MutationRef<SetUserTotpPendingData, SetUserTotpPendingVariables>;
+  operationName: string;
+}
+export const setUserTotpPendingRef: SetUserTotpPendingRef;
+
+export function setUserTotpPending(vars: SetUserTotpPendingVariables): MutationPromise<SetUserTotpPendingData, SetUserTotpPendingVariables>;
+export function setUserTotpPending(dc: DataConnect, vars: SetUserTotpPendingVariables): MutationPromise<SetUserTotpPendingData, SetUserTotpPendingVariables>;
+
+interface ConfirmUserTotpEnrollmentRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ConfirmUserTotpEnrollmentVariables): MutationRef<ConfirmUserTotpEnrollmentData, ConfirmUserTotpEnrollmentVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ConfirmUserTotpEnrollmentVariables): MutationRef<ConfirmUserTotpEnrollmentData, ConfirmUserTotpEnrollmentVariables>;
+  operationName: string;
+}
+export const confirmUserTotpEnrollmentRef: ConfirmUserTotpEnrollmentRef;
+
+export function confirmUserTotpEnrollment(vars: ConfirmUserTotpEnrollmentVariables): MutationPromise<ConfirmUserTotpEnrollmentData, ConfirmUserTotpEnrollmentVariables>;
+export function confirmUserTotpEnrollment(dc: DataConnect, vars: ConfirmUserTotpEnrollmentVariables): MutationPromise<ConfirmUserTotpEnrollmentData, ConfirmUserTotpEnrollmentVariables>;
+
+interface RecordTotpVerificationRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: RecordTotpVerificationVariables): MutationRef<RecordTotpVerificationData, RecordTotpVerificationVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: RecordTotpVerificationVariables): MutationRef<RecordTotpVerificationData, RecordTotpVerificationVariables>;
+  operationName: string;
+}
+export const recordTotpVerificationRef: RecordTotpVerificationRef;
+
+export function recordTotpVerification(vars: RecordTotpVerificationVariables): MutationPromise<RecordTotpVerificationData, RecordTotpVerificationVariables>;
+export function recordTotpVerification(dc: DataConnect, vars: RecordTotpVerificationVariables): MutationPromise<RecordTotpVerificationData, RecordTotpVerificationVariables>;
+
+interface UpdateUserTotpBackupCodesRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: UpdateUserTotpBackupCodesVariables): MutationRef<UpdateUserTotpBackupCodesData, UpdateUserTotpBackupCodesVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: UpdateUserTotpBackupCodesVariables): MutationRef<UpdateUserTotpBackupCodesData, UpdateUserTotpBackupCodesVariables>;
+  operationName: string;
+}
+export const updateUserTotpBackupCodesRef: UpdateUserTotpBackupCodesRef;
+
+export function updateUserTotpBackupCodes(vars: UpdateUserTotpBackupCodesVariables): MutationPromise<UpdateUserTotpBackupCodesData, UpdateUserTotpBackupCodesVariables>;
+export function updateUserTotpBackupCodes(dc: DataConnect, vars: UpdateUserTotpBackupCodesVariables): MutationPromise<UpdateUserTotpBackupCodesData, UpdateUserTotpBackupCodesVariables>;
+
+interface DisableUserTotpRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: DisableUserTotpVariables): MutationRef<DisableUserTotpData, DisableUserTotpVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: DisableUserTotpVariables): MutationRef<DisableUserTotpData, DisableUserTotpVariables>;
+  operationName: string;
+}
+export const disableUserTotpRef: DisableUserTotpRef;
+
+export function disableUserTotp(vars: DisableUserTotpVariables): MutationPromise<DisableUserTotpData, DisableUserTotpVariables>;
+export function disableUserTotp(dc: DataConnect, vars: DisableUserTotpVariables): MutationPromise<DisableUserTotpData, DisableUserTotpVariables>;
+
 interface ListAllVehiclesRef {
   /* Allow users to create refs without passing in DataConnect */
   (): QueryRef<ListAllVehiclesData, undefined>;
@@ -2565,6 +2683,18 @@ export const getUserByEmailRef: GetUserByEmailRef;
 
 export function getUserByEmail(vars: GetUserByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserByEmailData, GetUserByEmailVariables>;
 export function getUserByEmail(dc: DataConnect, vars: GetUserByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserByEmailData, GetUserByEmailVariables>;
+
+interface GetUserTotpByEmailRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetUserTotpByEmailVariables): QueryRef<GetUserTotpByEmailData, GetUserTotpByEmailVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetUserTotpByEmailVariables): QueryRef<GetUserTotpByEmailData, GetUserTotpByEmailVariables>;
+  operationName: string;
+}
+export const getUserTotpByEmailRef: GetUserTotpByEmailRef;
+
+export function getUserTotpByEmail(vars: GetUserTotpByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserTotpByEmailData, GetUserTotpByEmailVariables>;
+export function getUserTotpByEmail(dc: DataConnect, vars: GetUserTotpByEmailVariables, options?: ExecuteQueryOptions): QueryPromise<GetUserTotpByEmailData, GetUserTotpByEmailVariables>;
 
 interface ListUsersByRoleRef {
   /* Allow users to create refs without passing in DataConnect */

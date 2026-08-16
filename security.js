@@ -134,6 +134,41 @@ const EC_SECURITY = (() => {
     return String(str == null ? '' : str).replace(/<[^>]*>/g, '').trim();
   }
 
+  // Every deliberate, human-authored error this app throws (auth.js's
+  // login/signup/2FA flows, etc.) is a plain `new Error('...')` with
+  // user-safe text and NO .code property. Anything else — a TypeError from
+  // a real bug, a stale-cache "X is not a function", or (the case that
+  // actually mattered: Firebase's own compat SDK, which builds its auth
+  // errors as plain `Error` instances too, just with a .code like
+  // "auth/unauthorized-domain" attached — so checking the constructor alone
+  // doesn't distinguish "mine" from "theirs") — is NOT meant for a user's
+  // screen. .code is the reliable signal: our own throws never set it,
+  // every SDK/library error does. Callers should use this instead of
+  // trusting err.message directly.
+  function safeErrMsg(err, fallback) {
+    if (err && !err.code && err.constructor === Error && typeof err.message === 'string' && err.message) {
+      return err.message;
+    }
+    return fallback;
+  }
+
+  // For DB-sourced values interpolated into an inline onclick="fn('${...}')"
+  // JS-string argument (not plain HTML text — sanitizeHtml alone isn't
+  // enough there): first JS-escapes so the value can't break out of the
+  // single-quoted JS string, THEN HTML-attribute-escapes the result so the
+  // browser's HTML parser can't break out of the onclick="..." attribute
+  // itself. The browser HTML-decodes the attribute before handing it to the
+  // JS parser, so this order (JS-escape, then HTML-escape) is what survives
+  // both parsing stages intact.
+  function escJsAttr(str) {
+    const jsEscaped = String(str == null ? '' : str)
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '');
+    return sanitizeHtml(jsEscaped);
+  }
+
   function sanitizeInput(value, type) {
     const v = stripTags(value);
     switch (type) {
@@ -168,6 +203,16 @@ const EC_SECURITY = (() => {
 
   function isValidEmail(v) {
     return typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) && v.length <= 200;
+  }
+
+  // 8+ chars, at least one letter and one number — deliberately not
+  // demanding symbols/mixed-case too (that tends to push users toward
+  // predictable substitutions like "Password1!" without real entropy gain);
+  // length is the strongest lever, so it's weighted at 8 instead of Firebase
+  // Auth's own bare 6-char minimum.
+  function isStrongPassword(v) {
+    const s = String(v || '');
+    return s.length >= 8 && /[A-Za-z]/.test(s) && /\d/.test(s);
   }
 
   function isValidPhone(v) {
@@ -441,6 +486,16 @@ const EC_SECURITY = (() => {
   guardPage();
   document.addEventListener('DOMContentLoaded', initInactivityWatcher);
 
+  // Back/forward-cache restore: the browser can bring back a protected
+  // page's exact frozen DOM/JS state (e.g. after logout, hitting Back)
+  // without re-running any script on the page — guardPage() above only
+  // ever ran once, at the original load. Re-running it here is what
+  // actually catches "logged out in the meantime" on a bfcache restore;
+  // without it the stale rendered page would sit on screen indefinitely.
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) guardPage();
+  });
+
   // ── Public API ─────────────────────────────────────────────────────────────
   return {
     // Crypto
@@ -458,8 +513,10 @@ const EC_SECURITY = (() => {
 
     // Sanitisation
     sanitizeHtml,
+    escJsAttr,
     stripTags,
     sanitizeInput,
+    safeErrMsg,
 
     // Masking
     maskId,
@@ -467,6 +524,7 @@ const EC_SECURITY = (() => {
 
     // Validation
     isValidEmail,
+    isStrongPassword,
     isValidPhone,
     isValidSAId,
     isValidName,

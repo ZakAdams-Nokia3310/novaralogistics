@@ -26,6 +26,11 @@ async function authenticateToken(req, res, next) {
       role  : decoded.role || 'user',
       org   : decoded.org || null,
       orgId : decoded.orgId || null,
+      // Seconds-since-epoch of the actual sign-in that produced this token
+      // (not when the token was refreshed) — lets sensitive actions (see
+      // totpController.js's selfRecoveryDisable) require a genuinely fresh
+      // login rather than trusting an hour-old still-valid token.
+      authTime: decoded.auth_time || 0,
     };
     next();
   } catch (err) {

@@ -161,6 +161,11 @@
           '#sidebar-root{display:none}' +
           '#sb-burger{display:flex!important}' +
           '#sb-close{display:flex!important}' +
+          // Desktop-only collapse-to-rail control — without this it renders
+          // in the same top-right corner as #sb-close above (X) on mobile,
+          // where the sidebar is an open/close overlay, not a collapsible
+          // rail, so both were visible at once.
+          '.sb-toggle{display:none!important}' +
           '#sidebar-root.mob{display:flex!important;z-index:51}' +
           '.main{margin-left:0!important;max-width:100vw!important;overflow-x:hidden!important}' +
           '.body{padding:14px 12px!important}' +
@@ -214,7 +219,10 @@
         const t = document.createElement('div');
         t.className = 'ec-toast ec-toast-' + (type || 'info');
         const icons = { success: 'check_circle', error: 'error', warn: 'warning', info: 'info' };
-        t.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;flex-shrink:0">' + (icons[type] || 'info') + '</span><span>' + msg + '</span>';
+        // msg often embeds DB-sourced values (emails, names) from callers
+        // across the app — escape so a hostile value can't run script here.
+        const safeMsg = (typeof EC_SECURITY !== 'undefined') ? EC_SECURITY.sanitizeHtml(msg) : msg;
+        t.innerHTML = '<span class="material-symbols-outlined" style="font-size:15px;flex-shrink:0">' + (icons[type] || 'info') + '</span><span>' + safeMsg + '</span>';
         wrap.appendChild(t);
         setTimeout(() => {
           t.style.cssText += ';opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s';

@@ -4,6 +4,17 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <title>Create Account — EquipCore</title>
+<script>
+// Runs synchronously, before the form below ever paints — if we're
+// returning from beginGoogleLogin's redirect (auth.js sets this flag right
+// before navigating to Google), show the loading state immediately instead
+// of flashing the bare form while checkGoogleRedirectResult() is still
+// resolving further down the page. One-shot: consumed right here.
+if (sessionStorage.getItem('ec_google_redirect_pending')) {
+  sessionStorage.removeItem('ec_google_redirect_pending');
+  document.documentElement.classList.add('ec-gsi-returning');
+}
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
@@ -23,9 +34,18 @@
   .anim{animation:up .5s cubic-bezier(0.4,0,0.2,1) both;}
   .d1{animation-delay:.06s}.d2{animation-delay:.14s}.d3{animation-delay:.22s}.d4{animation-delay:.3s}
   .pwd-strength{height:3px;border-radius:2px;margin-top:6px;transition:all .3s}
+  #gsiLoader{display:none;position:fixed;inset:0;z-index:100000;background:#060810;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+  #gsiLoader .spin{animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .ec-gsi-returning body > *:not(#gsiLoader){display:none!important;}
+  .ec-gsi-returning #gsiLoader{display:flex!important;}
 </style>
 </head>
 <body>
+<div id="gsiLoader">
+  <span class="material-symbols-outlined spin" style="font-size:32px;color:#00f0ff">progress_activity</span>
+  <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;letter-spacing:.1em;text-transform:uppercase">Signing you in…</span>
+</div>
 
 <div style="position:relative;z-index:2;width:100%;max-width:420px;padding:24px">
 
@@ -70,7 +90,7 @@
         <label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px">Password</label>
         <div style="position:relative">
           <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">lock</span>
-          <input id="pwdInput" type="password" placeholder="Min. 6 characters" autocomplete="new-password" style="padding-right:46px" required/>
+          <input id="pwdInput" type="password" placeholder="Min. 8 characters, 1 letter, 1 number" autocomplete="new-password" minlength="8" style="padding-right:46px" required/>
           <button type="button" id="togglePwd" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#849495;display:flex;align-items:center;padding:4px">
             <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
           </button>
@@ -92,6 +112,23 @@
 
       <button class="btn-main d3 anim" id="submitBtn" type="submit">Create Account</button>
     </form>
+
+    <div id="verifyBox" style="display:none;margin-bottom:14px;padding:16px;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.25);border-radius:10px;font-size:13.5px;color:#e2e2e8">
+      <div style="font-weight:700;margin-bottom:6px;color:#00d4aa">Check your email</div>
+      <div id="verifyMsg" style="color:#b9cacb;line-height:1.5"></div>
+      <a href="login" class="btn-main d3 anim" style="display:inline-flex;margin-top:14px">Go to Sign In</a>
+    </div>
+
+    <div class="d3 anim" style="display:flex;align-items:center;gap:12px;margin:20px 0">
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em">or</span>
+      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+    </div>
+
+    <button type="button" id="googleBtn" class="d3 anim" style="width:100%;padding:13px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#e2e2e8;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,border-color .2s">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.61z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.19l-2.92-2.26c-.81.54-1.85.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.69 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
 
     <div style="margin-top:20px;text-align:center;font-size:13px;color:#849495">
       Already have an account? <a href="login" style="color:#00dbe9;text-decoration:none">Sign in →</a>
@@ -118,6 +155,16 @@
 // Redirect if already logged in
 var _u = EC_AUTH.current();
 if (_u) location.href = EC_AUTH.dashFor(_u.role);
+
+// Landed back here after beginGoogleLogin's redirect to Google — pick up
+// the result. No-ops (resolves null) on an ordinary page load.
+EC_AUTH.checkGoogleRedirectResult().then(function (user) {
+  if (!user) { document.documentElement.classList.remove('ec-gsi-returning'); return; }
+  location.href = user._totpPending ? 'verify-2fa' : (EC_AUTH.dashFor(user.role) + '?intro=1');
+}).catch(function (err) {
+  document.documentElement.classList.remove('ec-gsi-returning');
+  showErr(EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
+});
 
 var form    = document.getElementById('signupForm');
 var btn     = document.getElementById('submitBtn');
@@ -167,9 +214,17 @@ form.addEventListener('submit', function(e){
   setTimeout(async function(){
     try {
       var user = await EC_AUTH.signup(name, email, pwd);
+      if (user && user._verificationPending) {
+        form.style.display = 'none';
+        document.getElementById('verifyMsg').textContent =
+          'We sent a verification link to ' + user.email + '. Click it, then sign in below.';
+        document.getElementById('verifyBox').style.display = 'block';
+        return;
+      }
       location.href = EC_AUTH.dashFor(user.role) + '?intro=1';
     } catch (err) {
-      showErr(err.message || 'Sign-up failed.');
+      showErr(EC_SECURITY.safeErrMsg(err, 'Sign-up failed.'));
+      btn.textContent = 'Create Account'; btn.disabled = false;
     }
   }, 500);
 });
@@ -180,6 +235,20 @@ function showErr(msg) {
   setTimeout(function(){ form.style.animation = ''; }, 400);
   btn.textContent = 'Create Account'; btn.disabled = false;
 }
+
+var googleBtn = document.getElementById('googleBtn');
+googleBtn.addEventListener('click', async function () {
+  googleBtn.disabled = true;
+  try {
+    // Navigates the whole page to Google — execution doesn't resume past
+    // this call. The result is picked up above via checkGoogleRedirectResult
+    // on the next load, once Google sends the browser back here.
+    await EC_AUTH.beginGoogleLogin();
+  } catch (err) {
+    showErr(EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
+    googleBtn.disabled = false;
+  }
+});
 </script>
 <script src="cookie-consent.js"></script>
 </body></html>

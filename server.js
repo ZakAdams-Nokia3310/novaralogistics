@@ -57,12 +57,13 @@ const SECURITY_HEADERS = {
   // onclick handlers. Refactoring to nonce-based CSP is tracked as a future task.
   'Content-Security-Policy'   : [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://api.mapbox.com https://www.gstatic.com",
+    "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://api.mapbox.com https://www.gstatic.com https://apis.google.com https://challenges.cloudflare.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://api.mapbox.com",
     "font-src 'self' https://fonts.gstatic.com https://api.mapbox.com",
     "img-src 'self' data: blob: https://lh3.googleusercontent.com https://storage.googleapis.com https://firebasestorage.googleapis.com https://unpkg.com https://*.mapbox.com https://*.basemaps.cartocdn.com",
     "media-src 'self' https://d8j0ntlcm91z4.cloudfront.net",
-    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasedataconnect.googleapis.com https://unpkg.com https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com",
+    "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebasedataconnect.googleapis.com https://apis.google.com https://unpkg.com https://api.mapbox.com https://events.mapbox.com https://*.tiles.mapbox.com https://challenges.cloudflare.com",
+    "frame-src https://logisticsandconstructionrentals.com https://accounts.google.com https://challenges.cloudflare.com",
     "worker-src blob:",
     "frame-ancestors 'self'",
     "upgrade-insecure-requests",
@@ -216,8 +217,9 @@ server.listen(PORT, () => {
 ║                                          ║
 ╚══════════════════════════════════════════╝
   `);
-  const { exec } = require('child_process');
-  exec(`open -a "Google Chrome" http://localhost:${PORT}`, err => {
-    if (err) exec(`open http://localhost:${PORT}`);
+  const { execFile } = require('child_process');
+  const url = `http://localhost:${PORT}`;
+  execFile('open', ['-a', 'Google Chrome', url], err => {
+    if (err) execFile('open', [url], () => {});
   });
 });

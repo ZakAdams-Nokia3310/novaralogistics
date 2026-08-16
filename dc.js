@@ -81,20 +81,16 @@ const DC_DATA = (() => {
       throw new Error('Network error. Check your connection and try again.');
     }
     if (!res.ok) {
-      let body = '';
-      try { body = await res.text(); } catch { /**/ }
-      console.error('[DC]', operationName, res.status, body);
       if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
-      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+      throw new Error('Unable to complete request. Please try again.');
     }
     let json;
-    try { json = await res.json(); } catch (e) {
-      throw new Error(`JSON parse error: ${e.message}`);
+    try { json = await res.json(); } catch {
+      throw new Error('Unable to complete request. Please try again.');
     }
     if (json.errors?.length) {
-      console.error('[DC] GQL errors', operationName, json.errors);
       if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
-      throw new Error(`GQL: ${json.errors.map(e => e.message).join('; ')}`);
+      throw new Error('Unable to complete request. Please try again.');
     }
     return json.data || {};
   }
@@ -116,11 +112,8 @@ const DC_DATA = (() => {
       throw new Error('Network error. Check your connection and try again.');
     }
     if (!res.ok) {
-      let body = '';
-      try { body = await res.text(); } catch { /**/ }
-      console.error('[DC]', operationName, res.status, body);
       if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
-      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+      throw new Error('Unable to complete request. Please try again.');
     }
     const json = await res.json();
     return json.data || {};
@@ -142,18 +135,20 @@ const DC_DATA = (() => {
       res = await fetch('/api/data/public-submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ operationName, variables }),
+        // window.__ecTurnstileToken is set by the page's Turnstile widget
+        // callback (see contact.html / apply-rental.html) when a site key
+        // is configured; the server only checks it once a secret key is
+        // configured too (functions/services/turnstile.js) — harmless
+        // no-op field until both sides of that are set up.
+        body: JSON.stringify({ operationName, variables, turnstileToken: window.__ecTurnstileToken || null }),
       });
     } catch {
       if (_ready) window.showToast?.('error', 'Network error. Check your connection and try again.');
       throw new Error('Network error. Check your connection and try again.');
     }
     if (!res.ok) {
-      let body = '';
-      try { body = await res.text(); } catch { /**/ }
-      console.error('[DC]', operationName, res.status, body);
       if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
-      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+      throw new Error('Unable to complete request. Please try again.');
     }
     const json = await res.json();
     return json.data || {};
@@ -604,9 +599,7 @@ const DC_DATA = (() => {
         body: JSON.stringify({ name }),
       });
       if (!res.ok) {
-        let body = '';
-        try { body = await res.text(); } catch { /**/ }
-        throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+        throw new Error('Unable to complete request. Please try again.');
       }
       const json = await res.json();
       return json.user || (await this.getUserByEmailLive(email));

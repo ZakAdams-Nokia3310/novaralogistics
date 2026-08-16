@@ -211,6 +211,14 @@ type User @table(name: "users") {
   lockedUntil: Timestamp
   createdAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
+  # TOTP two-factor auth (required for admin accounts, "occasional" beyond
+  # that — see functions/services/totp.js). Secret and backup codes are
+  # never readable by any client operation — only functions/gql/queries.gql's
+  # server-only GetUserTotpByEmail can see them, executed via the Admin SDK.
+  totpEnabled: Boolean! @default(value: false)
+  totpSecretEnc: String @col(dataType: "text")
+  totpBackupCodesEnc: String @col(dataType: "text")
+  totpVerifiedAt: Timestamp
 }
 
 # ─── Vehicle ──────────────────────────────────────────────────────────────────

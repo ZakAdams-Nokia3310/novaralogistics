@@ -43,11 +43,24 @@
 
     document.body.appendChild(banner);
 
+    // Fixed-to-bottom banner would otherwise sit directly on top of
+    // whatever's at the bottom of the page underneath it (on login.html /
+    // signup.html specifically, that's the "Continue with Google" button —
+    // its click was landing on this banner instead, since a higher
+    // z-index element always wins the hit-test regardless of visual
+    // transparency). Reserving real space for the banner's own height
+    // means nothing ever renders underneath it in the first place.
+    const _prevPaddingBottom = document.body.style.paddingBottom;
+    requestAnimationFrame(() => {
+      document.body.style.paddingBottom = banner.offsetHeight + 'px';
+    });
+
     function dismiss(accepted) {
       if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.recordConsent(accepted);
       else localStorage.setItem('ec_cookie_consent', accepted ? 'accepted' : 'declined');
       banner.style.transition = 'opacity 0.3s';
       banner.style.opacity = '0';
+      document.body.style.paddingBottom = _prevPaddingBottom;
       setTimeout(() => banner.remove(), 350);
     }
 

@@ -647,3 +647,47 @@ mutation CreateAuditLog(
     userAgent: $userAgent
   })
 }
+
+# ─── TOTP (2FA) ────────────────────────────────────────────────────────────
+
+mutation SetUserTotpPending($id: UUID!, $totpSecretEnc: String!) @auth(level: NO_ACCESS) {
+  user_update(id: $id, data: {
+    totpSecretEnc: $totpSecretEnc
+    totpEnabled: false
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation ConfirmUserTotpEnrollment($id: UUID!, $totpBackupCodesEnc: String!) @auth(level: NO_ACCESS) {
+  user_update(id: $id, data: {
+    totpEnabled: true
+    totpBackupCodesEnc: $totpBackupCodesEnc
+    totpVerifiedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation RecordTotpVerification($id: UUID!) @auth(level: NO_ACCESS) {
+  user_update(id: $id, data: {
+    totpVerifiedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation UpdateUserTotpBackupCodes($id: UUID!, $totpBackupCodesEnc: String!) @auth(level: NO_ACCESS) {
+  user_update(id: $id, data: {
+    totpBackupCodesEnc: $totpBackupCodesEnc
+    updatedAt_expr: "request.time"
+  })
+}
+
+# Admin-only recovery path for an admin locked out of their own TOTP device.
+mutation DisableUserTotp($id: UUID!) @auth(level: NO_ACCESS) {
+  user_update(id: $id, data: {
+    totpEnabled: false
+    totpSecretEnc: null
+    totpBackupCodesEnc: null
+    totpVerifiedAt: null
+    updatedAt_expr: "request.time"
+  })
+}

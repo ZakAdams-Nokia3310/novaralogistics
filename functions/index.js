@@ -23,6 +23,7 @@ admin.initializeApp();
 
 const authRoutes = require('./routes/authRoutes');
 const dataRoutes = require('./routes/dataRoutes');
+const totpRoutes = require('./routes/totpRoutes');
 const { rateLimiter } = require('./middlewares/rateLimiter');
 
 const ALLOWED_ORIGINS = new Set([
@@ -50,9 +51,10 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 app.use(rateLimiter);
 
-// Mounted at /api/auth and /api/data to match the full paths Firebase
-// Hosting forwards.
+// Mounted at /api/auth, /api/auth/totp, and /api/data to match the full
+// paths Firebase Hosting forwards.
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/totp', totpRoutes);
 app.use('/api/data', dataRoutes);
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
@@ -68,4 +70,7 @@ app.use((err, req, res, next) => {
   res.status(status).json({ error: status < 500 ? err.message : 'Server error' });
 });
 
-exports.api = functions.https.onRequest(app);
+// TOTP_ENCRYPTION_KEY is a Secret Manager secret (see services/totp.js) —
+// binding it here injects it as process.env.TOTP_ENCRYPTION_KEY at
+// runtime, never checked into source.
+exports.api = functions.https.onRequest({ secrets: ['TOTP_ENCRYPTION_KEY'] }, app);

@@ -379,6 +379,20 @@ query GetUserByEmail($email: String!) @auth(level: NO_ACCESS) {
   }
 }
 
+# Never exposed via any client-reachable operation — only used internally
+# by controllers/totpController.js. Returns the encrypted secret/backup
+# codes, so this must stay unreachable even to a signed-in client.
+query GetUserTotpByEmail($email: String!) @auth(level: NO_ACCESS) {
+  users(where: { email: { eq: $email } }, limit: 1) {
+    id
+    role
+    totpEnabled
+    totpSecretEnc
+    totpBackupCodesEnc
+    totpVerifiedAt
+  }
+}
+
 query ListUsersByRole($role: UserRole!) @auth(level: NO_ACCESS) {
   users(
     where: { role: { eq: $role } }

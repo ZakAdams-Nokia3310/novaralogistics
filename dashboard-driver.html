@@ -24,6 +24,7 @@
   .btnd{width:100%;padding:13px;background:rgba(255,107,107,.1);color:#ff6b6b;border:1px solid rgba(255,107,107,.22);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;}
   .btnd:hover{background:rgba(255,107,107,.17);}
   @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:960px){#dashSplit{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
@@ -61,7 +62,7 @@
   </div>
 
   <div class="body">
-    <div style="display:grid;grid-template-columns:1fr 330px;gap:16px;align-items:start">
+    <div id="dashSplit" style="display:grid;grid-template-columns:1fr 330px;gap:16px;align-items:start">
       <div style="display:flex;flex-direction:column;gap:14px">
 
         <!-- Vehicle hero -->
@@ -180,6 +181,7 @@
 <script src="transitions.js"></script>
 <script>
 const user = EC_AUTH.require(['driver','admin']);
+const esc = EC_SECURITY.sanitizeHtml;
 if (user) {
   document.getElementById('sh-name').textContent = user.name;
   document.getElementById('sh-id').textContent   = user.id;
@@ -216,7 +218,7 @@ function submitCallout(){
   const ref='CA-'+Math.floor(10000+Math.random()*90000),eta=Math.floor(15+Math.random()*20);
   const div=document.createElement('div');
   div.style.cssText='background:rgba(255,107,107,.07);border:1px solid rgba(255,107,107,.2);border-radius:10px;padding:11px;margin-bottom:8px;';
-  div.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ff6b6b">${ref}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,107,107,.1);color:#ff6b6b;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,107,107,.2)">DISPATCHED</span></div><div style="font-size:13px;margin-bottom:3px">${type}</div><div style="font-size:12px;color:#849495">📍 ${loc}</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00d4aa;margin-top:5px">ETA: ~${eta} minutes</div>`;
+  div.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ff6b6b">${esc(ref)}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(255,107,107,.1);color:#ff6b6b;padding:2px 7px;border-radius:999px;border:1px solid rgba(255,107,107,.2)">DISPATCHED</span></div><div style="font-size:13px;margin-bottom:3px">${esc(type)}</div><div style="font-size:12px;color:#849495">📍 ${esc(loc)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00d4aa;margin-top:5px">ETA: ~${eta} minutes</div>`;
   if(calloutEl.querySelector('[style*="No active"]'))calloutEl.innerHTML='';
   calloutEl.prepend(div);
   document.getElementById('incType').value='';document.getElementById('incLoc').value='';document.getElementById('incDesc').value='';
@@ -234,7 +236,7 @@ const trips = [
 let tripChart;
 function renderTrips(){
   document.getElementById('tripBody').innerHTML = trips.map(t =>
-    `<tr><td style="font-size:13px">${t.date}</td><td style="font-size:13px;color:#b9cacb">${t.route}</td><td style="font-size:13px">${t.dist} km</td><td style="font-size:13px">${t.fuel != null ? t.fuel + ' L' : '—'}</td></tr>`
+    `<tr><td data-label="Date" style="font-size:13px">${t.date}</td><td data-label="Route" style="font-size:13px;color:#b9cacb">${t.route}</td><td data-label="Dist" style="font-size:13px">${t.dist} km</td><td data-label="Fuel" style="font-size:13px">${t.fuel != null ? t.fuel + ' L' : '—'}</td></tr>`
   ).join('');
 
   const chronological = [...trips].reverse();
