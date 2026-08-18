@@ -23,7 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "@dataconnect/generated": "file:src/dataconnect-generated",
-    "firebase": "12.14.0"
+    "firebase": "12.17.1"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",
