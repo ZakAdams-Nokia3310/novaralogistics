@@ -125,11 +125,15 @@ jobs:
 
       # The rules test suite runs against the local Firestore emulator
       # (firebase-tools), which needs a JVM — not assumed to be
-      # preinstalled on the runner, set up explicitly instead.
+      # preinstalled on the runner, set up explicitly instead. Must be 21+:
+      # firebase-tools dropped support for older JDKs, and this job was
+      # silently failing on every run (verified failing back through the
+      # commit before this change too) on Java 17 with "firebase-tools no
+      # longer supports Java version before 21."
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
       - name: Install dependencies
         run: npm ci
