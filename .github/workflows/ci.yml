@@ -130,7 +130,7 @@ jobs:
       # silently failing on every run (verified failing back through the
       # commit before this change too) on Java 17 with "firebase-tools no
       # longer supports Java version before 21."
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
