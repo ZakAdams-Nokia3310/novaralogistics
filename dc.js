@@ -282,6 +282,8 @@ const DC_DATA = (() => {
       applicantName: [a.firstName, a.lastName].filter(Boolean).join(' '),
       email:         a.email,
       phone:         a.phone,
+      orgId:         a.organisation?.id || null,
+      orgName:       a.organisation?.name || null,
       equipment:     a.equipmentName,
       estimatedCost: a.estimatedCost ?? null,
       vehicleId:     a.vehicle?.id || null,
@@ -557,8 +559,11 @@ const DC_DATA = (() => {
       await mutate('MarkNotificationRead', { id });
     },
 
-    // Note: RentalApplication records aren't org-tagged in the schema, so this
-    // is intentionally unscoped (same precedent as getOrgRequests()).
+    // Unscoped by DC_DATA.setOrgScope (same precedent as getOrgRequests()) —
+    // admin-rentals.html's review queue needs to see every org's pending
+    // applications regardless of the admin's own org. orgId IS present on
+    // each row (see normRentalApplication) for callers that want to filter
+    // themselves, e.g. admin-reports.html's org drilldown.
     getRentalApplications() { return _rentalApplications; },
 
     // Full detail (ID number, address, employment/financial info) for the
@@ -789,6 +794,24 @@ const DC_DATA = (() => {
         details:   l.details || '',
         page:      l.page || '',
         createdAt: l.createdAt,
+      }));
+    },
+
+    // Admin-wide notification engagement view for admin-reports.html's
+    // Notifications tab — not part of init()'s Promise.all (same precedent
+    // as getAuditLogs above), fetched lazily when that tab is opened.
+    // Distinct from getNotifications(userId) above, which is self-scoped.
+    async getAllNotificationsForReports(limit = 500) {
+      const d = await query('ListAllNotifications', { limit });
+      return (d.notifications || []).map(n => ({
+        id:        n.id,
+        userId:    n.user?.id || null,
+        userName:  n.user?.name || null,
+        type:      lo(n.type),
+        title:     n.title,
+        body:      n.body,
+        read:      n.read,
+        createdAt: n.createdAt,
       }));
     },
 

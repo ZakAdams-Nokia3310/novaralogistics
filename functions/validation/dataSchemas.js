@@ -196,6 +196,7 @@ const SCHEMAS = {
   AssignUserCustomRole: z.object({ id: uuid(), customRoleId: optUuid() }).strict(),
 
   ListAuditLogs: z.object({ limit: z.number().int().min(1).max(500).nullish() }).strict(),
+  ListAllNotifications: z.object({ limit: z.number().int().min(1).max(500).nullish() }).strict(),
 };
 
 // Operations reachable WITHOUT signing in — anyone (including anonymous

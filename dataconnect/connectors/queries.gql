@@ -635,6 +635,10 @@ query ListAllRentalApplications @auth(level: NO_ACCESS) {
     lastName
     email
     phone
+    organisation {
+      id
+      name
+    }
     equipmentName
     estimatedCost
     vehicle {
@@ -723,6 +727,23 @@ query ListRentalApplicationsByStatus($status: ApplicationStatus!) @auth(level: N
     endDate
     status
     submittedAt
+  }
+}
+
+# Admin-wide notification engagement view for admin-reports.html — distinct
+# from ListNotifications above, which is self-scoped (ownField: userId, see
+# registry/dataOperations.js) and only ever returns the caller's OWN
+# notifications. Same admin-only + featureKey:'admin-reports' shape as
+# ListAuditLogs below.
+query ListAllNotifications($limit: Int) @auth(level: NO_ACCESS) {
+  notifications(orderBy: { createdAt: DESC }, limit: $limit) {
+    id
+    user { id name }
+    type
+    title
+    body
+    read
+    createdAt
   }
 }
 

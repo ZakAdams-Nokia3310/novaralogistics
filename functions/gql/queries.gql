@@ -307,6 +307,10 @@ query ListAllRentalApplications {
     lastName
     email
     phone
+    organisation {
+      id
+      name
+    }
     equipmentName
     estimatedCost
     vehicle {
@@ -447,6 +451,23 @@ query GetRoleById($id: UUID!) {
     id
     name
     permissions
+  }
+}
+
+# Admin-wide notification engagement view for admin-reports.html — distinct
+# from ListNotifications above, which is self-scoped (ownField: userId, see
+# registry/dataOperations.js) and only ever returns the caller's OWN
+# notifications. Same admin-only + featureKey:'admin-reports' shape as
+# ListAuditLogs below.
+query ListAllNotifications($limit: Int) {
+  notifications(orderBy: { createdAt: DESC }, limit: $limit) {
+    id
+    user { id name }
+    type
+    title
+    body
+    read
+    createdAt
   }
 }
 

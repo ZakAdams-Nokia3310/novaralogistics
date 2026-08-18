@@ -108,6 +108,9 @@ module.exports = {
   // ── Reporting ── delegable so a custom role can grant read-only
   // Activity-tab access to admin-reports without granting admin.
   ListAuditLogs: { kind: 'query', roles: ADMIN, featureKey: 'admin-reports' },
+  // Admin-wide notification engagement view — distinct from ListNotifications
+  // above (self-scoped via ownField), same delegable shape as ListAuditLogs.
+  ListAllNotifications: { kind: 'query', roles: ADMIN, featureKey: 'admin-reports' },
 
   // ── Vehicles (admin) ──
   CreateVehicle:         { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },

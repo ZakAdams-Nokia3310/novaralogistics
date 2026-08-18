@@ -22,7 +22,7 @@
   .statCard{border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;}
   .statVal{font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;}
   .statLabel{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em;}
-  .panelTitle{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:14px;}
+  .panelTitle{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .miniStat{border-radius:11px;padding:13px 15px;}
   .miniStat .v{font-family:'Hanken Grotesk',sans-serif;font-size:19px;font-weight:800;}
   .miniStat .l{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495;text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
@@ -34,6 +34,11 @@
   .tbl{width:100%;border-collapse:collapse;}
   .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);}
   .tbl td{padding:9px 12px;font-size:12.5px;border-bottom:1px solid rgba(255,255,255,.03);}
+  label{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495;text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:5px;}
+  select,input[type=date]{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:12.5px;padding:8px 10px;outline:none;}
+  .btnx{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;background:rgba(255,255,255,.05);color:#b9cacb;font-family:'JetBrains Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;border-radius:8px;border:1px solid rgba(255,255,255,.08);cursor:pointer;transition:background .18s;white-space:nowrap;}
+  .btnx:hover{background:rgba(255,255,255,.09);}
+  .toolbar{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;}
   @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
   @media(max-width:600px){
     .body{padding:14px 12px!important}
@@ -41,6 +46,7 @@
     #kpiRow{grid-template-columns:repeat(2,1fr)!important}
     .tab-btn{font-size:10px!important;padding:6px 10px!important;gap:5px}
     .grid2,.grid3{grid-template-columns:1fr!important}
+    .toolbar{flex-direction:column;align-items:stretch!important}
   }
 </style>
 </head>
@@ -51,11 +57,27 @@
   <div class="topbar">
     <div>
       <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Reporting</div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Metrics across every feature — view each individually below</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Metrics across every feature — filter, drill in, and build your own cut below</div>
     </div>
   </div>
 
   <div class="body">
+    <!-- Global filters — apply to every tab -->
+    <div class="glass toolbar" style="border-radius:13px;padding:14px 18px;margin-bottom:16px">
+      <div>
+        <label>Date Range</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="rangePresets"></div>
+      </div>
+      <div id="customRangeBox" style="display:none;gap:10px;align-items:flex-end">
+        <div><label>From</label><input type="date" id="rangeFrom" onchange="onCustomRangeChange()"/></div>
+        <div><label>To</label><input type="date" id="rangeTo" onchange="onCustomRangeChange()"/></div>
+      </div>
+      <div style="margin-left:auto;min-width:220px">
+        <label>Organisation</label>
+        <select id="orgFilterSel" onchange="onOrgFilterChange()" style="width:100%"></select>
+      </div>
+    </div>
+
     <div id="kpiRow" style="display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:20px"></div>
 
     <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap" id="tabBar"></div>
@@ -64,9 +86,12 @@
     <div id="panelRentals" style="display:none"></div>
     <div id="panelApplications" style="display:none"></div>
     <div id="panelMaintenance" style="display:none"></div>
+    <div id="panelDrivers" style="display:none"></div>
     <div id="panelOrgs" style="display:none"></div>
     <div id="panelUsers" style="display:none"></div>
+    <div id="panelNotifications" style="display:none"></div>
     <div id="panelActivity" style="display:none"></div>
+    <div id="panelCustom" style="display:none"></div>
   </div>
 </div>
 
@@ -91,9 +116,12 @@ const TABS = [
   { key: 'Rentals',      icon: 'receipt_long' },
   { key: 'Applications', icon: 'assignment' },
   { key: 'Maintenance',  icon: 'build' },
+  { key: 'Drivers',      icon: 'badge' },
   { key: 'Orgs',         icon: 'domain', label: 'Organisations' },
   { key: 'Users',        icon: 'group', label: 'Users & Access' },
+  { key: 'Notifications',icon: 'notifications' },
   { key: 'Activity',     icon: 'history' },
+  { key: 'Custom',       icon: 'tune', label: 'Custom Report' },
 ];
 
 document.getElementById('tabBar').innerHTML = TABS.map((t, i) =>
@@ -108,22 +136,123 @@ function switchTab(key) {
     document.getElementById('panel' + t.key).style.display = t.key === key ? '' : 'none';
     document.getElementById('tab' + t.key).className = 'tab-btn' + (t.key === key ? ' active' : '');
   });
+  if (key === 'Notifications') loadNotificationsTab();
   if (key === 'Activity') loadActivityTab();
+}
+
+// ── Global filters: date range + organisation ───────────────────────────────
+const RANGE_PRESETS = [
+  { key: '30d',  label: '30D',  days: 30 },
+  { key: '90d',  label: '90D',  days: 90 },
+  { key: '6mo',  label: '6M',   days: 182 },
+  { key: '12mo', label: '12M',  days: 365 },
+  { key: 'all',  label: 'All Time', days: null },
+  { key: 'custom', label: 'Custom', days: undefined },
+];
+let _rangeKey = '6mo';
+let _orgFilterId = '';
+
+function renderRangePresets() {
+  document.getElementById('rangePresets').innerHTML = RANGE_PRESETS.map(p =>
+    `<button class="tab-btn${_rangeKey === p.key ? ' active' : ''}" style="padding:6px 12px" onclick="selectRangePreset('${p.key}')">${p.label}</button>`).join('');
+}
+function selectRangePreset(key) {
+  _rangeKey = key;
+  document.getElementById('customRangeBox').style.display = key === 'custom' ? 'flex' : 'none';
+  renderRangePresets();
+  if (key !== 'custom') renderAll();
+}
+function onCustomRangeChange() { if (_rangeKey === 'custom') renderAll(); }
+function getRange() {
+  if (_rangeKey === 'custom') {
+    const f = document.getElementById('rangeFrom').value;
+    const t = document.getElementById('rangeTo').value;
+    return { from: f ? new Date(f + 'T00:00:00') : null, to: t ? new Date(t + 'T23:59:59') : null };
+  }
+  const preset = RANGE_PRESETS.find(p => p.key === _rangeKey);
+  if (!preset || preset.days == null) return { from: null, to: null }; // 'all'
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - preset.days);
+  return { from, to };
+}
+function inRange(dateStr) {
+  if (!dateStr) return false;
+  const { from, to } = getRange();
+  if (!from && !to) return true;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  if (from && d < from) return false;
+  if (to && d > to) return false;
+  return true;
+}
+function renderOrgFilter() {
+  const orgs = DC_DATA.getAllOrgs();
+  document.getElementById('orgFilterSel').innerHTML = '<option value="">All Organisations</option>' +
+    orgs.map(o => `<option value="${o.id}">${esc(o.name)}</option>`).join('');
+  document.getElementById('orgFilterSel').value = _orgFilterId;
+}
+function onOrgFilterChange() { _orgFilterId = document.getElementById('orgFilterSel').value; renderAll(); }
+
+// Adaptive trend-chart bucketing — daily for short windows, weekly for
+// medium, monthly for long/unbounded ("All Time" defaults to a 12-month
+// lookback so the chart stays a readable size). Every trend chart on this
+// page calls this instead of the old fixed lastNMonths(6).
+function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function bucketsForRange() {
+  let { from, to } = getRange();
+  to = to || new Date();
+  from = from || new Date(to.getFullYear(), to.getMonth() - 11, 1);
+  const days = Math.max(1, Math.round((to - from) / 86400000));
+  const buckets = [];
+  if (days <= 31) {
+    for (let d = new Date(from.getFullYear(), from.getMonth(), from.getDate()); d <= to; d.setDate(d.getDate() + 1)) {
+      const bd = new Date(d);
+      buckets.push({ label: bd.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }), matches: ds => ds && sameDay(new Date(ds), bd) });
+    }
+  } else if (days <= 180) {
+    let d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+    while (d <= to) {
+      const start = new Date(d), end = new Date(d); end.setDate(end.getDate() + 6);
+      buckets.push({ label: start.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' }), matches: ds => { if (!ds) return false; const x = new Date(ds); return x >= start && x <= end; } });
+      d.setDate(d.getDate() + 7);
+    }
+  } else {
+    let d = new Date(from.getFullYear(), from.getMonth(), 1);
+    const end = new Date(to.getFullYear(), to.getMonth(), 1);
+    while (d <= end) {
+      const y = d.getFullYear(), m = d.getMonth();
+      buckets.push({ label: d.toLocaleString('en-US', { month: 'short' }), matches: ds => inMonth(ds, y, m) });
+      d.setMonth(d.getMonth() + 1);
+    }
+  }
+  return buckets;
+}
+
+// ── CSV export ────────────────────────────────────────────────────────────
+function exportCSV(rows, headers, filename) {
+  const q = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const lines = [headers.map(h => q(h.label)).join(',')]
+    .concat(rows.map(r => headers.map(h => q(typeof h.get === 'function' ? h.get(r) : r[h.key])).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const COLORS = ['#00f0ff','#00d4aa','#ffd93d','#ff6b6b','#d1bcff','#ffb4a2','#00dbe9','#849495'];
-function lastNMonths(n) {
-  const now = new Date();
-  return Array.from({ length: n }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() - (n - 1 - i), 1);
-    return { y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleString('en-US', { month: 'short' }) };
-  });
-}
 function inMonth(dateStr, y, m) {
   if (!dateStr) return false;
   const d = new Date(dateStr);
   return d.getFullYear() === y && d.getMonth() === m;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 function titleCase(s) { return (s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
 function barList(rows, containerId) {
@@ -133,10 +262,11 @@ function barList(rows, containerId) {
       <div class="lbl">${esc(r.label)}</div>
       <div class="track"><div class="fill" style="width:${(r.n / max * 100).toFixed(0)}%;background:${COLORS[i % COLORS.length]}"></div></div>
       <div class="n">${r.n}</div>
-    </div>`).join('') || '<div style="color:#849495;font-size:12px;padding:10px 0">No data yet</div>';
+    </div>`).join('') || '<div style="color:#849495;font-size:12px;padding:10px 0">No data in this range</div>';
 }
 function donut(elId, rows, totalLabel) {
   document.getElementById(elId).innerHTML = '';
+  if (!rows.length) { document.getElementById(elId).innerHTML = '<div style="color:#849495;font-size:12px;padding:30px 0;text-align:center">No data in this range</div>'; return; }
   new ApexCharts(document.getElementById(elId), {
     chart: { type: 'donut', height: 220, fontFamily: "'Inter',sans-serif", background: 'transparent' },
     series: rows.map(r => r.n),
@@ -160,7 +290,7 @@ function trendChart(elId, categories, series) {
     markers: { size: 0, hover: { size: 4 } },
     dataLabels: { enabled: false },
     grid: { borderColor: 'rgba(255,255,255,.05)', strokeDashArray: 3, padding: { left: 4, right: 4 } },
-    xaxis: { categories, labels: { style: { colors: '#849495', fontFamily: "'JetBrains Mono',monospace", fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    xaxis: { categories, labels: { style: { colors: '#849495', fontFamily: "'JetBrains Mono',monospace", fontSize: '10px' }, rotate: categories.length > 12 ? -45 : 0 }, axisBorder: { show: false }, axisTicks: { show: false } },
     yaxis: { labels: { style: { colors: '#849495', fontSize: '10px' } } },
     legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: "'JetBrains Mono',monospace", labels: { colors: '#b9cacb' } },
     tooltip: { theme: 'dark' },
@@ -197,23 +327,24 @@ function renderKPIs() {
 
 // ── Fleet tab ──────────────────────────────────────────────────────────────
 function renderFleetTab() {
-  const vehicles = DC_DATA.getVehicles();
+  let vehicles = DC_DATA.getVehicles();
+  if (_orgFilterId) vehicles = vehicles.filter(v => v.orgId === _orgFilterId);
   const byStatus = ['available','on_rent','maintenance','retired'].map(s => ({ label: titleCase(s), n: vehicles.filter(v => v.status === s).length }));
   const typeCounts = {};
   vehicles.forEach(v => { typeCounts[v.type] = (typeCounts[v.type] || 0) + 1; });
   const byType = Object.entries(typeCounts).sort((a,b) => b[1]-a[1]).slice(0,8).map(([t,n]) => ({ label: titleCase(t), n }));
   const dueForService = vehicles.filter(v => (v.nextServiceKm - v.km) <= 2000).length;
   const avgAge = vehicles.length ? Math.round(vehicles.reduce((s,v) => s + (new Date().getFullYear() - (v.year || new Date().getFullYear())), 0) / vehicles.length) : 0;
-  const months = lastNMonths(6);
-  const added = months.map(({y,m}) => vehicles.filter(v => inMonth(v.addedAt, y, m)).length);
+  const buckets = bucketsForRange();
+  const added = buckets.map(b => vehicles.filter(v => b.matches(v.addedAt)).length);
 
   document.getElementById('panelFleet').innerHTML = `
     <div id="fleetMini"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="grid2">
       <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Status Breakdown</div><div id="fleetDonut"></div></div>
-      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Vehicle Type</div><div id="fleetTypeBars"></div></div>
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Vehicle Type<button class="btnx" onclick="exportCSV(window._fleetTypeCache||[],[{key:'label',label:'Type'},{key:'n',label:'Count'}],'fleet-by-type.csv')">Export CSV</button></div><div id="fleetTypeBars"></div></div>
     </div>
-    <div class="glass" style="border-radius:13px;padding:18px;margin-top:14px"><div class="panelTitle">Vehicles Added — Last 6 Months</div><div id="fleetTrend"></div></div>`;
+    <div class="glass" style="border-radius:13px;padding:18px;margin-top:14px"><div class="panelTitle">Vehicles Added</div><div id="fleetTrend"></div></div>`;
   miniStats([
     { v: dueForService, l: 'Due for Service', color: dueForService ? '#ffd93d' : '#00d4aa' },
     { v: avgAge + ' yrs', l: 'Average Fleet Age' },
@@ -221,78 +352,166 @@ function renderFleetTab() {
   ], 'fleetMini');
   donut('fleetDonut', byStatus.filter(r => r.n > 0), 'Total Fleet');
   barList(byType, 'fleetTypeBars');
-  trendChart('fleetTrend', months.map(m => m.label), [{ name: 'Vehicles Added', type: 'area', data: added }]);
+  trendChart('fleetTrend', buckets.map(b => b.label), [{ name: 'Vehicles Added', type: 'area', data: added }]);
+  window._fleetTypeCache = byType;
 }
 
 // ── Rentals tab ────────────────────────────────────────────────────────────
 function renderRentalsTab() {
-  const rentals = DC_DATA.getRentals();
-  const byStatus = ['pending','active','overdue','complete','cancelled'].map(s => ({ label: titleCase(s), n: rentals.filter(r => r.status === s).length }));
-  const months = lastNMonths(6);
-  const revenue = months.map(({y,m}) => rentals.filter(r => r.status !== 'cancelled' && inMonth(r.startDate,y,m)).reduce((s,r) => s + (r.value||0), 0));
-  const durations = rentals.filter(r => r.startDate && r.returnDate).map(r => (new Date(r.returnDate) - new Date(r.startDate)) / 86400000);
+  let rentals = DC_DATA.getRentals();
+  if (_orgFilterId) rentals = rentals.filter(r => r.org === _orgFilterId);
+  const inRangeRentals = rentals.filter(r => inRange(r.startDate));
+  const byStatus = ['pending','active','overdue','complete','cancelled'].map(s => ({ label: titleCase(s), n: inRangeRentals.filter(r => r.status === s).length }));
+  const buckets = bucketsForRange();
+  const revenue = buckets.map(b => inRangeRentals.filter(r => r.status !== 'cancelled' && b.matches(r.startDate)).reduce((s,r) => s + (r.value||0), 0));
+  const durations = inRangeRentals.filter(r => r.startDate && r.returnDate).map(r => (new Date(r.returnDate) - new Date(r.startDate)) / 86400000);
   const avgDuration = durations.length ? Math.round(durations.reduce((a,b)=>a+b,0)/durations.length) : 0;
-  const totalRevenue = rentals.filter(r => r.status !== 'cancelled').reduce((s,r) => s + (r.value||0), 0);
+  const totalRevenue = inRangeRentals.filter(r => r.status !== 'cancelled').reduce((s,r) => s + (r.value||0), 0);
   const equipCounts = {};
-  rentals.forEach(r => { equipCounts[r.equipment] = (equipCounts[r.equipment]||0) + 1; });
+  inRangeRentals.forEach(r => { equipCounts[r.equipment] = (equipCounts[r.equipment]||0) + 1; });
   const topEquip = Object.entries(equipCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([e,n]) => ({ label: e, n }));
+
+  // Vehicle utilization: rented-days ÷ owned-days over the selected range.
+  const { from: rFrom, to: rTo } = getRange();
+  const rangeEnd = rTo || new Date();
+  const vehicles = _orgFilterId ? DC_DATA.getVehicles().filter(v => v.orgId === _orgFilterId) : DC_DATA.getVehicles();
+  const util = vehicles.map(v => {
+    const ownedFrom = rFrom && v.addedAt && new Date(v.addedAt) > rFrom ? new Date(v.addedAt) : (rFrom || (v.addedAt ? new Date(v.addedAt) : rangeEnd));
+    const ownedDays = Math.max(1, Math.round((rangeEnd - ownedFrom) / 86400000));
+    const rentedDays = rentals.filter(r => r.vehicleId === v.id && r.status !== 'cancelled')
+      .reduce((sum, r) => {
+        const s = new Date(r.startDate), e = new Date(r.returnDate);
+        const clampedStart = s < ownedFrom ? ownedFrom : s;
+        const clampedEnd = e > rangeEnd ? rangeEnd : e;
+        return sum + Math.max(0, Math.round((clampedEnd - clampedStart) / 86400000));
+      }, 0);
+    return { label: `${v.make} ${v.model} (${v.regPlate})`, n: Math.min(100, Math.round(rentedDays / ownedDays * 100)) };
+  }).sort((a,b) => b.n - a.n);
+  const topUtil = util.slice(0, 5);
+
+  const detailRows = inRangeRentals.slice().sort((a,b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 100);
 
   document.getElementById('panelRentals').innerHTML = `
     <div id="rentalsMini"></div>
-    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Revenue — Last 6 Months</div><div id="rentalsTrend"></div></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="grid2">
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Revenue</div><div id="rentalsTrend"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px" class="grid2">
       <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Status</div><div id="rentalsDonut"></div></div>
       <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Most-Rented Equipment</div><div id="rentalsTopBars"></div></div>
+    </div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Vehicle Utilization — Top 5 (rented-days ÷ owned-days in range)</div><div id="rentalsUtilBars"></div></div>
+    <div class="glass" style="border-radius:13px;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.05)"><div class="panelTitle" style="margin:0">Rentals in Range (${detailRows.length}${inRangeRentals.length>100?' of '+inRangeRentals.length:''})<button class="btnx" onclick="exportRentalsCSV()">Export CSV</button></div></div>
+      <div style="overflow-x:auto"><table class="tbl" style="min-width:640px">
+        <thead><tr><th>Client</th><th>Org</th><th>Vehicle/Equip.</th><th>Period</th><th>Value</th><th>Status</th></tr></thead>
+        <tbody>${detailRows.map(r => `<tr>
+          <td>${esc(r.client)}</td><td style="color:#849495">${esc(r.orgName)||'—'}</td><td>${esc(r.equipment)}</td>
+          <td style="font-family:'JetBrains Mono',monospace">${fmtDate(r.startDate)} – ${fmtDate(r.returnDate)}</td>
+          <td style="font-family:'JetBrains Mono',monospace;color:#00f0ff">R${(r.value||0).toLocaleString()}</td>
+          <td>${titleCase(r.status)}</td>
+        </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;padding:24px;color:#849495">No rentals in this range</td></tr>`}</tbody>
+      </table></div>
     </div>`;
   miniStats([
     { v: 'R' + totalRevenue.toLocaleString('en-ZA'), l: 'Total Revenue', color: '#00f0ff' },
     { v: avgDuration + ' days', l: 'Avg. Rental Duration' },
-    { v: rentals.length, l: 'Total Rentals' },
+    { v: inRangeRentals.length, l: 'Rentals in Range' },
   ], 'rentalsMini');
-  trendChart('rentalsTrend', months.map(m => m.label), [{ name: 'Revenue (R)', type: 'area', data: revenue }]);
+  trendChart('rentalsTrend', buckets.map(b => b.label), [{ name: 'Revenue (R)', type: 'area', data: revenue }]);
   donut('rentalsDonut', byStatus.filter(r => r.n > 0), 'Total Rentals');
   barList(topEquip, 'rentalsTopBars');
+  barList(topUtil, 'rentalsUtilBars');
+  window._rentalsDetailCache = detailRows;
+}
+function exportRentalsCSV() {
+  exportCSV(window._rentalsDetailCache || [], [
+    { key: 'client', label: 'Client' }, { key: 'orgName', label: 'Organisation' }, { key: 'equipment', label: 'Equipment' },
+    { key: 'startDate', label: 'Start' }, { key: 'returnDate', label: 'Return' }, { key: 'value', label: 'Value (R)' }, { key: 'status', label: 'Status' },
+  ], 'rentals.csv');
 }
 
 // ── Applications tab ───────────────────────────────────────────────────────
 function renderApplicationsTab() {
-  const apps = DC_DATA.getRentalApplications();
-  const months = lastNMonths(6);
-  const volume = months.map(({y,m}) => apps.filter(a => inMonth(a.submittedAt,y,m)).length);
-  const approved = apps.filter(a => a.status === 'approved').length;
-  const rejected = apps.filter(a => a.status === 'rejected').length;
+  let apps = DC_DATA.getRentalApplications();
+  if (_orgFilterId) apps = apps.filter(a => a.orgId === _orgFilterId);
+  const inRangeApps = apps.filter(a => inRange(a.submittedAt));
+  const buckets = bucketsForRange();
+  const volume = buckets.map(b => inRangeApps.filter(a => b.matches(a.submittedAt)).length);
+  const approved = inRangeApps.filter(a => a.status === 'approved').length;
+  const rejected = inRangeApps.filter(a => a.status === 'rejected').length;
   const reviewed = approved + rejected;
   const approvalRate = reviewed ? Math.round(approved/reviewed*100) : 0;
-  const reviewTimes = apps.filter(a => a.status !== 'pending' && a.submittedAt && a.updatedAt).map(a => (new Date(a.updatedAt) - new Date(a.submittedAt)) / 86400000);
+  const reviewTimes = inRangeApps.filter(a => a.status !== 'pending' && a.submittedAt && a.updatedAt).map(a => (new Date(a.updatedAt) - new Date(a.submittedAt)) / 86400000);
   const avgReviewDays = reviewTimes.length ? (reviewTimes.reduce((a,b)=>a+b,0)/reviewTimes.length).toFixed(1) : '—';
-  const byStatus = ['pending','approved','rejected','cancelled'].map(s => ({ label: titleCase(s), n: apps.filter(a => a.status === s).length }));
+  const byStatus = ['pending','approved','rejected','cancelled'].map(s => ({ label: titleCase(s), n: inRangeApps.filter(a => a.status === s).length }));
+
+  // Credit-check economics — fields already selected server-side, pure aggregation.
+  const ccByStatus = ['not_requested','requested','completed','declined'].map(s => ({ label: titleCase(s), n: inRangeApps.filter(a => a.creditCheckStatus === s).length }));
+  const scored = inRangeApps.filter(a => a.creditCheckStatus === 'completed' && a.creditCheckScore != null);
+  const avgScore = scored.length ? Math.round(scored.reduce((s,a) => s + a.creditCheckScore, 0) / scored.length) : '—';
+  const feeOwed = inRangeApps.filter(a => a.creditCheckStatus === 'requested' || a.creditCheckStatus === 'completed').reduce((s,a) => s + (a.creditCheckFeeZar || 0), 0);
+
+  const detailRows = inRangeApps.slice().sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt)).slice(0, 100);
 
   document.getElementById('panelApplications').innerHTML = `
     <div id="appsMini"></div>
-    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Applications Submitted — Last 6 Months</div><div id="appsTrend"></div></div>
-    <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Status</div><div id="appsDonut"></div></div>`;
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Applications Submitted</div><div id="appsTrend"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px" class="grid2">
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Status</div><div id="appsDonut"></div></div>
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Credit Check Outcomes</div><div id="ccDonut"></div></div>
+    </div>
+    <div id="ccMini"></div>
+    <div class="glass" style="border-radius:13px;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.05)"><div class="panelTitle" style="margin:0">Applications in Range (${detailRows.length}${inRangeApps.length>100?' of '+inRangeApps.length:''})<button class="btnx" onclick="exportApplicationsCSV()">Export CSV</button></div></div>
+      <div style="overflow-x:auto"><table class="tbl" style="min-width:640px">
+        <thead><tr><th>Applicant</th><th>Org</th><th>Equipment</th><th>Submitted</th><th>Status</th><th>Credit Check</th></tr></thead>
+        <tbody>${detailRows.map(a => `<tr>
+          <td>${esc(a.applicantName)}<div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495">${esc(a.ref)}</div></td>
+          <td style="color:#849495">${esc(a.orgName)||'—'}</td><td>${esc(a.equipment)}</td>
+          <td style="font-family:'JetBrains Mono',monospace">${fmtDate(a.submittedAt)}</td>
+          <td>${titleCase(a.status)}</td><td>${titleCase(a.creditCheckStatus)}</td>
+        </tr>`).join('') || `<tr><td colspan="6" style="text-align:center;padding:24px;color:#849495">No applications in this range</td></tr>`}</tbody>
+      </table></div>
+    </div>`;
   miniStats([
     { v: approvalRate + '%', l: 'Approval Rate', color: '#00d4aa' },
     { v: avgReviewDays === '—' ? '—' : avgReviewDays + ' days', l: 'Avg. Time to Review' },
-    { v: apps.length, l: 'Total Applications' },
+    { v: inRangeApps.length, l: 'Applications in Range' },
   ], 'appsMini');
-  trendChart('appsTrend', months.map(m => m.label), [{ name: 'Applications', type: 'bar', data: volume }]);
+  miniStats([
+    { v: avgScore === '—' ? '—' : avgScore, l: 'Avg. Credit Score' },
+    { v: 'R' + feeOwed.toLocaleString('en-ZA'), l: 'Credit-Check Fees Owed', color: '#ffd93d' },
+    { v: scored.length, l: 'Checks Completed' },
+  ], 'ccMini');
+  trendChart('appsTrend', buckets.map(b => b.label), [{ name: 'Applications', type: 'bar', data: volume }]);
   donut('appsDonut', byStatus.filter(r => r.n > 0), 'Total Applications');
+  donut('ccDonut', ccByStatus.filter(r => r.n > 0), 'Total Applications');
+  window._appsDetailCache = detailRows;
+}
+function exportApplicationsCSV() {
+  exportCSV(window._appsDetailCache || [], [
+    { key: 'applicantName', label: 'Applicant' }, { key: 'ref', label: 'Ref' }, { key: 'orgName', label: 'Organisation' },
+    { key: 'equipment', label: 'Equipment' }, { key: 'submittedAt', label: 'Submitted' }, { key: 'status', label: 'Status' },
+    { key: 'creditCheckStatus', label: 'Credit Check' }, { key: 'creditCheckScore', label: 'Score' },
+  ], 'applications.csv');
 }
 
 // ── Maintenance tab ────────────────────────────────────────────────────────
 function renderMaintenanceTab() {
-  const maint = DC_DATA.getMaintenanceQueries();
-  const byStatus = ['open','in_progress','resolved'].map(s => ({ label: titleCase(s), n: maint.filter(m => m.status === s).length }));
+  const vehicles = DC_DATA.getVehicles();
+  const vehOrg = {}; vehicles.forEach(v => { vehOrg[v.id] = v.orgId; });
+  let maint = DC_DATA.getMaintenanceQueries();
+  if (_orgFilterId) maint = maint.filter(m => vehOrg[m.vehicleId] === _orgFilterId);
+  const inRangeMaint = maint.filter(m => inRange(m.createdAt));
+  const byStatus = ['open','in_progress','resolved'].map(s => ({ label: titleCase(s), n: inRangeMaint.filter(m => m.status === s).length }));
   const typeCounts = {}, prioCounts = {};
-  maint.forEach(m => { typeCounts[m.type] = (typeCounts[m.type]||0)+1; prioCounts[m.priority] = (prioCounts[m.priority]||0)+1; });
+  inRangeMaint.forEach(m => { typeCounts[m.type] = (typeCounts[m.type]||0)+1; prioCounts[m.priority] = (prioCounts[m.priority]||0)+1; });
   const byType = Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([t,n]) => ({ label: titleCase(t), n }));
   const byPrio = ['critical','high','medium','low'].map(p => ({ label: titleCase(p), n: prioCounts[p] || 0 }));
-  const resolved = maint.filter(m => m.status === 'resolved' && m.resolvedAt && m.createdAt);
+  const resolved = inRangeMaint.filter(m => m.status === 'resolved' && m.resolvedAt && m.createdAt);
   const resTimes = resolved.map(m => (new Date(m.resolvedAt) - new Date(m.createdAt)) / 3600000);
   const avgResHours = resTimes.length ? Math.round(resTimes.reduce((a,b)=>a+b,0)/resTimes.length) : 0;
   const vehCounts = {};
-  maint.forEach(m => { vehCounts[m.vehicleLabel] = (vehCounts[m.vehicleLabel]||0)+1; });
+  inRangeMaint.forEach(m => { vehCounts[m.vehicleLabel] = (vehCounts[m.vehicleLabel]||0)+1; });
   const topVehicles = Object.entries(vehCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([v,n]) => ({ label: v, n }));
 
   document.getElementById('panelMaintenance').innerHTML = `
@@ -302,48 +521,99 @@ function renderMaintenanceTab() {
       <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Priority</div><div id="maintPrioBars"></div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="grid2">
-      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Type</div><div id="maintTypeBars"></div></div>
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Type<button class="btnx" onclick="exportCSV(window._maintTypeCache||[],[{key:'label',label:'Type'},{key:'n',label:'Count'}],'maintenance-by-type.csv')">Export CSV</button></div><div id="maintTypeBars"></div></div>
       <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Most-Flagged Vehicles</div><div id="maintVehBars"></div></div>
     </div>`;
   miniStats([
     { v: avgResHours ? avgResHours + 'h' : '—', l: 'Avg. Resolution Time' },
-    { v: maint.filter(m => m.status !== 'resolved').length, l: 'Currently Open', color: '#ff6b6b' },
-    { v: maint.length, l: 'Total Queries' },
+    { v: inRangeMaint.filter(m => m.status !== 'resolved').length, l: 'Currently Open', color: '#ff6b6b' },
+    { v: inRangeMaint.length, l: 'Queries in Range' },
   ], 'maintMini');
   donut('maintDonut', byStatus.filter(r => r.n > 0), 'Total Queries');
   barList(byPrio, 'maintPrioBars');
   barList(byType, 'maintTypeBars');
   barList(topVehicles, 'maintVehBars');
+  window._maintTypeCache = byType;
+}
+
+// ── Drivers tab (new — uses Vehicle.assignedDriver) ────────────────────────
+function renderDriversTab() {
+  let drivers = DC_DATA.getAllUsers().filter(u => u.role === 'driver');
+  if (_orgFilterId) drivers = drivers.filter(u => u.orgId === _orgFilterId);
+  const vehicles = DC_DATA.getVehicles();
+  const rentals = DC_DATA.getRentals();
+  const maint = DC_DATA.getMaintenanceQueries();
+  const cards = drivers.map(d => {
+    const v = vehicles.find(v => v.assignedDriverId === d.id);
+    const rental = v ? rentals.find(r => r.vehicleId === v.id && r.status === 'active') : null;
+    const openMaint = v ? maint.filter(m => m.vehicleId === v.id && m.status !== 'resolved').length : 0;
+    return { driver: d, vehicle: v, rental, openMaint };
+  });
+  const assigned = cards.filter(c => c.vehicle).length;
+
+  document.getElementById('panelDrivers').innerHTML = `
+    <div id="driversMini"></div>
+    <div class="glass" style="border-radius:13px;overflow:hidden">
+      <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.05)"><div class="panelTitle" style="margin:0">Drivers<button class="btnx" onclick="exportDriversCSV()">Export CSV</button></div></div>
+      <div style="overflow-x:auto"><table class="tbl" style="min-width:640px">
+        <thead><tr><th>Driver</th><th>Assigned Vehicle</th><th>Current Rental</th><th>Open Maintenance</th></tr></thead>
+        <tbody>${cards.map(c => `<tr>
+          <td>${esc(c.driver.name)}<div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495">${esc(c.driver.email)}</div></td>
+          <td>${c.vehicle ? esc(c.vehicle.make + ' ' + c.vehicle.model) + ' <span style="color:#849495;font-family:\'JetBrains Mono\',monospace;font-size:10.5px">(' + esc(c.vehicle.regPlate) + ')</span>' : '<span style="color:#849495">Unassigned</span>'}</td>
+          <td>${c.rental ? esc(c.rental.client) + ' — returns ' + fmtDate(c.rental.returnDate) : '<span style="color:#849495">—</span>'}</td>
+          <td>${c.openMaint ? `<span style="color:#ff6b6b">${c.openMaint}</span>` : '0'}</td>
+        </tr>`).join('') || `<tr><td colspan="4" style="text-align:center;padding:24px;color:#849495">No drivers found</td></tr>`}</tbody>
+      </table></div>
+    </div>`;
+  miniStats([
+    { v: drivers.length, l: 'Total Drivers' },
+    { v: assigned, l: 'With Assigned Vehicle', color: '#00d4aa' },
+    { v: drivers.length - assigned, l: 'Unassigned', color: (drivers.length - assigned) ? '#ffd93d' : '#00d4aa' },
+  ], 'driversMini');
+  window._driversCache = cards;
+}
+function exportDriversCSV() {
+  exportCSV((window._driversCache || []).map(c => ({
+    driver: c.driver.name, email: c.driver.email,
+    vehicle: c.vehicle ? `${c.vehicle.make} ${c.vehicle.model} (${c.vehicle.regPlate})` : 'Unassigned',
+    rental: c.rental ? c.rental.client : '', openMaint: c.openMaint,
+  })), [
+    { key: 'driver', label: 'Driver' }, { key: 'email', label: 'Email' }, { key: 'vehicle', label: 'Assigned Vehicle' },
+    { key: 'rental', label: 'Current Rental' }, { key: 'openMaint', label: 'Open Maintenance' },
+  ], 'drivers.csv');
 }
 
 // ── Organisations tab ──────────────────────────────────────────────────────
 function renderOrgsTab() {
-  const orgs = DC_DATA.getAllOrgs();
+  const orgs = _orgFilterId ? DC_DATA.getAllOrgs().filter(o => o.id === _orgFilterId) : DC_DATA.getAllOrgs();
   const byStatus = ['active','suspended'].map(s => ({ label: titleCase(s), n: orgs.filter(o => o.status === s).length }));
-  const months = lastNMonths(6);
-  let cumulative = orgs.filter(o => o.createdAt && new Date(o.createdAt) < new Date(months[0].y, months[0].m, 1)).length;
-  const growth = months.map(({y,m}) => { cumulative += orgs.filter(o => inMonth(o.createdAt,y,m)).length; return cumulative; });
+  const buckets = bucketsForRange();
+  const { from } = getRange();
+  let cumulative = from ? orgs.filter(o => o.createdAt && new Date(o.createdAt) < from).length : 0;
+  const growth = buckets.map(b => { cumulative += orgs.filter(o => b.matches(o.createdAt)).length; return cumulative; });
 
   document.getElementById('panelOrgs').innerHTML = `
     <div id="orgsMini"></div>
-    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Organisation Growth — Last 6 Months</div><div id="orgsTrend"></div></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Organisation Growth</div><div id="orgsTrend"></div></div>
     <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Active vs Suspended</div><div id="orgsDonut"></div></div>`;
   miniStats([
     { v: orgs.length, l: 'Total Organisations' },
     { v: orgs.filter(o => o.status === 'active').length, l: 'Active', color: '#00d4aa' },
     { v: orgs.filter(o => o.status === 'suspended').length, l: 'Suspended', color: '#ff6b6b' },
   ], 'orgsMini');
-  trendChart('orgsTrend', months.map(m => m.label), [{ name: 'Total Orgs', type: 'area', data: growth }]);
+  trendChart('orgsTrend', buckets.map(b => b.label), [{ name: 'Total Orgs', type: 'area', data: growth }]);
   donut('orgsDonut', byStatus.filter(r => r.n > 0), 'Total Orgs');
 }
 
 // ── Users & Access tab ─────────────────────────────────────────────────────
 function renderUsersTab() {
-  const users = DC_DATA.getAllUsers();
+  let users = DC_DATA.getAllUsers();
+  if (_orgFilterId) users = users.filter(u => u.orgId === _orgFilterId);
   const byRole = ['admin','user','driver'].map(r => ({ label: titleCase(r), n: users.filter(u => u.role === r).length }));
-  const months = lastNMonths(6);
-  let cumulative = users.filter(u => u.createdAt && new Date(u.createdAt) < new Date(months[0].y, months[0].m, 1)).length;
-  const growth = months.map(({y,m}) => { cumulative += users.filter(u => inMonth(u.createdAt,y,m)).length; return cumulative; });
+  const buckets = bucketsForRange();
+  const { from } = getRange();
+  let cumulative = from ? users.filter(u => u.createdAt && new Date(u.createdAt) < from).length : 0;
+  const growth = buckets.map(b => { cumulative += users.filter(u => b.matches(u.createdAt)).length; return cumulative; });
   const totpEligible = users.filter(u => u.role === 'admin' || u.orgId);
   const totpCompliant = totpEligible.filter(u => u.totpEnabled).length;
   const totpRate = totpEligible.length ? Math.round(totpCompliant/totpEligible.length*100) : 100;
@@ -351,56 +621,217 @@ function renderUsersTab() {
 
   document.getElementById('panelUsers').innerHTML = `
     <div id="usersMini"></div>
-    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">User Growth — Last 6 Months</div><div id="usersTrend"></div></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">User Growth</div><div id="usersTrend"></div></div>
     <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Role</div><div id="usersDonut"></div></div>`;
   miniStats([
     { v: users.length, l: 'Total Users' },
     { v: totpRate + '%', l: '2FA Compliance', color: totpRate === 100 ? '#00d4aa' : '#ffd93d' },
     { v: customRoleUsers, l: 'Custom-Role Holders', color: '#d1bcff' },
   ], 'usersMini');
-  trendChart('usersTrend', months.map(m => m.label), [{ name: 'Total Users', type: 'area', data: growth }]);
+  trendChart('usersTrend', buckets.map(b => b.label), [{ name: 'Total Users', type: 'area', data: growth }]);
   donut('usersDonut', byRole.filter(r => r.n > 0), 'Total Users');
 }
 
-// ── Activity tab (server-side audit log — lazy-loaded) ─────────────────────
-let _activityLoaded = false;
-async function loadActivityTab() {
-  if (_activityLoaded) return;
-  document.getElementById('panelActivity').innerHTML = '<div style="padding:30px;text-align:center;color:#849495">Loading activity…</div>';
-  try {
-    const logs = await DC_DATA.getAuditLogs(200);
-    _activityLoaded = true;
-    const actionCounts = {};
-    logs.forEach(l => { actionCounts[l.action] = (actionCounts[l.action]||0)+1; });
-    const topActions = Object.entries(actionCounts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([a,n]) => ({ label: titleCase(a), n }));
-    const rows = logs.slice(0, 50).map(l => `<tr>
-      <td>${esc(l.userName)}<div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495">${esc(l.userRole || '')}</div></td>
-      <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00f0ff">${esc(l.action)}</span></td>
-      <td style="color:#b9cacb">${esc(l.page || '—')}</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495">${l.createdAt ? new Date(l.createdAt).toLocaleString('en-ZA') : '—'}</td>
-    </tr>`).join('');
-    document.getElementById('panelActivity').innerHTML = `
-      <div id="activityMini"></div>
-      <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Top Actions</div><div id="activityBars"></div></div>
-      <div class="glass" style="border-radius:13px;overflow-x:auto">
-        <table class="tbl" style="min-width:520px"><thead><tr><th>User</th><th>Action</th><th>Page</th><th>When</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="4" style="text-align:center;padding:30px;color:#849495">No activity recorded yet</td></tr>'}</tbody></table>
-      </div>`;
-    miniStats([{ v: logs.length, l: 'Events (most recent ' + logs.length + ')' }], 'activityMini', 1);
-    barList(topActions, 'activityBars');
-  } catch (err) {
-    document.getElementById('panelActivity').innerHTML = `<div style="padding:30px;text-align:center;color:#ff6b6b">Unable to load activity: ${esc(err.message)}</div>`;
+// ── Notifications tab (new — admin-wide engagement view, lazy-loaded) ──────
+let _notifLoaded = false, _notifCache = [];
+async function loadNotificationsTab() {
+  if (!_notifLoaded) {
+    document.getElementById('panelNotifications').innerHTML = '<div style="padding:30px;text-align:center;color:#849495">Loading notifications…</div>';
+    try {
+      _notifCache = await DC_DATA.getAllNotificationsForReports(500);
+      _notifLoaded = true;
+    } catch (err) {
+      document.getElementById('panelNotifications').innerHTML = `<div style="padding:30px;text-align:center;color:#ff6b6b">Unable to load notifications: ${esc(err.message)}</div>`;
+      return;
+    }
   }
+  renderNotificationsTab();
+}
+function renderNotificationsTab() {
+  const userOrg = {}; DC_DATA.getAllUsers().forEach(u => { userOrg[u.id] = u.orgId; });
+  let rows = _notifCache.filter(n => inRange(n.createdAt));
+  if (_orgFilterId) rows = rows.filter(n => userOrg[n.userId] === _orgFilterId);
+  const read = rows.filter(n => n.read).length;
+  const readRate = rows.length ? Math.round(read/rows.length*100) : 0;
+  const typeCounts = {}; rows.forEach(n => { typeCounts[n.type] = (typeCounts[n.type]||0)+1; });
+  const byType = Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([t,n]) => ({ label: titleCase(t), n }));
+  const buckets = bucketsForRange();
+  const volume = buckets.map(b => rows.filter(n => b.matches(n.createdAt)).length);
+
+  document.getElementById('panelNotifications').innerHTML = `
+    <div id="notifMini"></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Volume</div><div id="notifTrend"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="grid2">
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Type</div><div id="notifTypeBars"></div></div>
+      <div class="glass" style="border-radius:13px;padding:18px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px">
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-size:34px;font-weight:800;color:${readRate>=70?'#00d4aa':readRate>=40?'#ffd93d':'#ff6b6b'}">${readRate}%</div>
+        <div class="statLabel">Read Rate</div>
+      </div>
+    </div>`;
+  miniStats([
+    { v: rows.length, l: 'Total Notifications' },
+    { v: read, l: 'Read', color: '#00d4aa' },
+    { v: rows.length - read, l: 'Unread', color: '#ffd93d' },
+  ], 'notifMini');
+  trendChart('notifTrend', buckets.map(b => b.label), [{ name: 'Notifications', type: 'bar', data: volume }]);
+  barList(byType, 'notifTypeBars');
 }
 
-DC_DATA.init().then(() => {
+// ── Activity tab (server-side audit log — lazy-loaded) ─────────────────────
+let _activityLoaded = false, _activityCache = [];
+async function loadActivityTab() {
+  if (!_activityLoaded) {
+    document.getElementById('panelActivity').innerHTML = '<div style="padding:30px;text-align:center;color:#849495">Loading activity…</div>';
+    try {
+      _activityCache = await DC_DATA.getAuditLogs(200);
+      _activityLoaded = true;
+    } catch (err) {
+      document.getElementById('panelActivity').innerHTML = `<div style="padding:30px;text-align:center;color:#ff6b6b">Unable to load activity: ${esc(err.message)}</div>`;
+      return;
+    }
+  }
+  renderActivityTab();
+}
+function renderActivityTab() {
+  const logs = _activityCache.filter(l => inRange(l.createdAt));
+  const actionCounts = {};
+  logs.forEach(l => { actionCounts[l.action] = (actionCounts[l.action]||0)+1; });
+  const topActions = Object.entries(actionCounts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([a,n]) => ({ label: titleCase(a), n }));
+  const rows = logs.slice(0, 50).map(l => `<tr>
+    <td>${esc(l.userName)}<div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495">${esc(l.userRole || '')}</div></td>
+    <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00f0ff">${esc(l.action)}</span></td>
+    <td style="color:#b9cacb">${esc(l.page || '—')}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495">${l.createdAt ? new Date(l.createdAt).toLocaleString('en-ZA') : '—'}</td>
+  </tr>`).join('');
+  document.getElementById('panelActivity').innerHTML = `
+    <div id="activityMini"></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Top Actions</div><div id="activityBars"></div></div>
+    <div class="glass" style="border-radius:13px;overflow-x:auto">
+      <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:flex-end"><button class="btnx" onclick="exportActivityCSV()">Export CSV</button></div>
+      <table class="tbl" style="min-width:520px"><thead><tr><th>User</th><th>Action</th><th>Page</th><th>When</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4" style="text-align:center;padding:30px;color:#849495">No activity in this range</td></tr>'}</tbody></table>
+    </div>`;
+  miniStats([{ v: logs.length, l: 'Events in range (most recent ' + _activityCache.length + ' loaded)' }], 'activityMini', 1);
+  barList(topActions, 'activityBars');
+  window._activityDetailCache = logs.slice(0, 50);
+}
+function exportActivityCSV() {
+  exportCSV(window._activityDetailCache || [], [
+    { key: 'userName', label: 'User' }, { key: 'userRole', label: 'Role' }, { key: 'action', label: 'Action' },
+    { key: 'page', label: 'Page' }, { key: 'createdAt', label: 'When' },
+  ], 'activity.csv');
+}
+
+// ── Custom report builder (new) ─────────────────────────────────────────────
+// Genuinely pick-your-own-cut, entirely client-side over data already in
+// DC_DATA — no persistence, no new backend. Respects the same global
+// date-range + org filters as every other tab.
+const CUSTOM_ENTITIES = {
+  Rentals: {
+    rows: () => { let r = DC_DATA.getRentals().filter(r => inRange(r.startDate)); if (_orgFilterId) r = r.filter(r => r.org === _orgFilterId); return r; },
+    dims: {
+      status: r => titleCase(r.status),
+      org: r => r.orgName || 'Unassigned',
+      equipment: r => r.equipment || 'Unknown',
+    },
+    dimLabels: { status: 'Status', org: 'Organisation', equipment: 'Equipment' },
+    metrics: {
+      count: rows => rows.length,
+      sumValue: rows => rows.reduce((s,r)=>s+(r.value||0),0),
+      avgDuration: rows => { const d = rows.filter(r=>r.startDate&&r.returnDate).map(r=>(new Date(r.returnDate)-new Date(r.startDate))/86400000); return d.length ? Math.round(d.reduce((a,b)=>a+b,0)/d.length) : 0; },
+    },
+    metricLabels: { count: 'Count', sumValue: 'Revenue (R)', avgDuration: 'Avg Duration (days)' },
+  },
+  Applications: {
+    rows: () => { let r = DC_DATA.getRentalApplications().filter(a => inRange(a.submittedAt)); if (_orgFilterId) r = r.filter(a => a.orgId === _orgFilterId); return r; },
+    dims: { status: a => titleCase(a.status), org: a => a.orgName || 'Unassigned', creditCheckStatus: a => titleCase(a.creditCheckStatus), equipment: a => a.equipment || 'Unknown' },
+    dimLabels: { status: 'Status', org: 'Organisation', creditCheckStatus: 'Credit Check Status', equipment: 'Equipment' },
+    metrics: {
+      count: rows => rows.length,
+      avgScore: rows => { const s = rows.filter(a=>a.creditCheckScore!=null).map(a=>a.creditCheckScore); return s.length ? Math.round(s.reduce((a,b)=>a+b,0)/s.length) : 0; },
+    },
+    metricLabels: { count: 'Count', avgScore: 'Avg Credit Score' },
+  },
+  Fleet: {
+    rows: () => { let r = DC_DATA.getVehicles(); if (_orgFilterId) r = r.filter(v => v.orgId === _orgFilterId); return r; },
+    dims: { status: v => titleCase(v.status), type: v => titleCase(v.type), org: v => v.orgName || 'Unassigned' },
+    dimLabels: { status: 'Status', type: 'Type', org: 'Organisation' },
+    metrics: {
+      count: rows => rows.length,
+      avgKm: rows => rows.length ? Math.round(rows.reduce((s,v)=>s+(v.km||0),0)/rows.length) : 0,
+    },
+    metricLabels: { count: 'Count', avgKm: 'Avg Odometer (km)' },
+  },
+  Maintenance: {
+    rows: () => { const vehOrg = {}; DC_DATA.getVehicles().forEach(v => { vehOrg[v.id]=v.orgId; }); let r = DC_DATA.getMaintenanceQueries().filter(m => inRange(m.createdAt)); if (_orgFilterId) r = r.filter(m => vehOrg[m.vehicleId] === _orgFilterId); return r; },
+    dims: { status: m => titleCase(m.status), type: m => titleCase(m.type), priority: m => titleCase(m.priority) },
+    dimLabels: { status: 'Status', type: 'Type', priority: 'Priority' },
+    metrics: {
+      count: rows => rows.length,
+      avgResolutionHours: rows => { const r = rows.filter(m=>m.status==='resolved'&&m.resolvedAt&&m.createdAt).map(m=>(new Date(m.resolvedAt)-new Date(m.createdAt))/3600000); return r.length ? Math.round(r.reduce((a,b)=>a+b,0)/r.length) : 0; },
+    },
+    metricLabels: { count: 'Count', avgResolutionHours: 'Avg Resolution (hrs)' },
+  },
+};
+function onCustEntityChange() {
+  const cfg = CUSTOM_ENTITIES[document.getElementById('custEntity').value];
+  document.getElementById('custDim').innerHTML = Object.keys(cfg.dims).map(k => `<option value="${k}">${esc(cfg.dimLabels[k])}</option>`).join('');
+  document.getElementById('custMetric').innerHTML = Object.keys(cfg.metrics).map(k => `<option value="${k}">${esc(cfg.metricLabels[k])}</option>`).join('');
+}
+function aggregateCustom(entityKey, dimKey, metricKey) {
+  const cfg = CUSTOM_ENTITIES[entityKey];
+  const rows = cfg.rows();
+  const groups = {};
+  rows.forEach(r => { const k = cfg.dims[dimKey](r) || 'Unknown'; (groups[k] = groups[k] || []).push(r); });
+  return Object.entries(groups).map(([label, grp]) => ({ label, n: cfg.metrics[metricKey](grp) })).sort((a,b) => b.n - a.n);
+}
+function renderCustomTab() {
+  const entity = document.getElementById('custEntity').value;
+  const dim = document.getElementById('custDim').value;
+  const metric = document.getElementById('custMetric').value;
+  const cfg = CUSTOM_ENTITIES[entity];
+  const rows = aggregateCustom(entity, dim, metric);
+  document.getElementById('custResult').innerHTML = `
+    <div class="glass" style="border-radius:13px;padding:18px">
+      <div class="panelTitle">${esc(entity)} — ${esc(cfg.metricLabels[metric])} by ${esc(cfg.dimLabels[dim])}<button class="btnx" onclick="exportCustomCSV()">Export CSV</button></div>
+      <div id="custBars"></div>
+    </div>`;
+  barList(rows, 'custBars');
+  window._customCache = rows;
+}
+function exportCustomCSV() {
+  exportCSV(window._customCache || [], [{ key: 'label', label: 'Group' }, { key: 'n', label: 'Value' }], 'custom-report.csv');
+}
+
+function renderAll() {
   renderKPIs();
   renderFleetTab();
   renderRentalsTab();
   renderApplicationsTab();
   renderMaintenanceTab();
+  renderDriversTab();
   renderOrgsTab();
   renderUsersTab();
+  renderCustomTab();
+  if (_notifLoaded) renderNotificationsTab();
+  if (_activityLoaded) renderActivityTab();
+}
+
+DC_DATA.init().then(() => {
+  renderRangePresets();
+  renderOrgFilter();
+  document.getElementById('panelCustom').innerHTML = `
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px">
+      <div class="panelTitle" style="margin-bottom:12px">Build a Report</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" class="grid3">
+        <div><label>Entity</label><select id="custEntity" onchange="onCustEntityChange();renderCustomTab()">${Object.keys(CUSTOM_ENTITIES).map(k => `<option value="${k}">${k}</option>`).join('')}</select></div>
+        <div><label>Group By</label><select id="custDim" onchange="renderCustomTab()"></select></div>
+        <div><label>Metric</label><select id="custMetric" onchange="renderCustomTab()"></select></div>
+      </div>
+    </div>
+    <div id="custResult"></div>`;
+  onCustEntityChange();
+  renderAll();
 }).catch(err => {
   document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${EC_SECURITY.sanitizeHtml(err.message)}</div>`);
 });
