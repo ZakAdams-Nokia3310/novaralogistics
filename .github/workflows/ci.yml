@@ -163,24 +163,29 @@ jobs:
           npm ci
           npm ci --prefix functions
 
-      # Written from the secret via an env var (not interpolated directly
-      # into the shell command) so arbitrary JSON content — quotes,
-      # backticks, $ signs — can't break the command it's written with.
-      - name: Write deploy service account key to a temp file
-        env:
-          FIREBASE_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: echo "$FIREBASE_SA_JSON" > "$RUNNER_TEMP/firebase-sa.json"
+      # Google's own officially-maintained action — sets up ADC
+      # (GOOGLE_APPLICATION_CREDENTIALS) AND, with token_format set, mints a
+      # real OAuth2 access token as a step output. Both matter here:
+      # firebase-tools' own "are you logged in" gate does NOT reliably
+      # auto-detect bare ADC (confirmed — a first attempt using only
+      # GOOGLE_APPLICATION_CREDENTIALS failed with "Failed to authenticate,
+      # have you run firebase login?"), so the access token has to be
+      # handed to it explicitly via --token below.
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          token_format: 'access_token'
 
       # Same `firebase deploy` this project has been using manually all
-      # along — CI just runs it non-interactively with a service account
-      # instead of a human's own login. dataconnect (schema.gql/connectors)
-      # is deliberately NOT deployed here — a Postgres schema migration is
-      # exactly the kind of change that deserves a human actually reading
-      # the migration Firebase CLI prints before it runs, not a fully
-      # unattended CI step; keep deploying that with
+      # along — CI just runs it non-interactively with a service account's
+      # token instead of a human's own login. dataconnect (schema.gql/
+      # connectors) is deliberately NOT deployed here — a Postgres schema
+      # migration is exactly the kind of change that deserves a human
+      # actually reading the migration Firebase CLI prints before it runs,
+      # not a fully unattended CI step; keep deploying that with
       # `firebase deploy --only dataconnect` locally, same as every other
       # schema change so far.
       - name: Deploy to Firebase (hosting + functions)
-        run: npx firebase-tools deploy --only hosting,functions --project novara-f985b --non-interactive
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+        run: npx firebase-tools deploy --only hosting,functions --project novara-f985b --non-interactive --token "${{ steps.auth.outputs.access_token }}"
