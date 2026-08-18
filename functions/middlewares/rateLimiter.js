@@ -4,6 +4,8 @@
 // ephemeral and can scale to multiple concurrent instances, so this is a
 // best-effort per-instance limit, not a global one.
 
+const slowDown = require('express-slow-down');
+const { ipKeyGenerator } = require('express-rate-limit');
 const { logEvent } = require('../services/auditLog');
 
 // Default key is per-IP. Pass keyFn to key per-authenticated-user instead
@@ -41,7 +43,11 @@ function makeLimiter({ windowMs, max, keyFn }) {
   return limiter;
 }
 
-const userOrIpKey = (req) => (req.user && req.user.id) ? `u:${req.user.id}` : `ip:${req.ip}`;
+// ipKeyGenerator normalizes an IPv6 address to its /56 subnet before use —
+// without it, a single client can cycle through addresses within its own
+// subnet to dodge an IP-keyed limit (express-slow-down's authSlowDown below
+// enforces this at deploy time and throws ERR_ERL_KEY_GEN_IPV6 without it).
+const userOrIpKey = (req) => (req.user && req.user.id) ? `u:${req.user.id}` : `ip:${ipKeyGenerator(req.ip)}`;
 
 // General-purpose limiter, applied to every request before routing —
 // req.user isn't populated yet at this point, so this is necessarily
@@ -57,6 +63,21 @@ const rateLimiter = makeLimiter({ windowMs: 60 * 1000, max: 60 });
 // could reset their own quota just by rotating IPs.
 const strictRateLimiter = makeLimiter({ windowMs: 15 * 60 * 1000, max: 10, keyFn: userOrIpKey });
 
+// Second layer on top of strictRateLimiter, on the same privileged routes
+// (role/password/email/TOTP changes) — progressively slows responses down
+// BEFORE the hard 10-per-15min cutoff above is even reached, so a scripted
+// attacker pays an increasing time cost per attempt instead of getting instant
+// responses right up until the wall. Same per-account keying as
+// strictRateLimiter, for the same reason (a malicious signed-in user
+// rotating IPs shouldn't reset this either).
+const authSlowDown = slowDown({
+  windowMs: 15 * 60 * 1000,
+  delayAfter: 3,
+  delayMs: (hits) => (hits - 3) * 500, // 0ms for the first 3 hits, then +500ms per hit
+  maxDelayMs: 5000,
+  keyGenerator: userOrIpKey,
+});
+
 // Per-user limit on the general authenticated data-access endpoint
 // (/api/data/execute) — every dashboard read/write funnels through this one
 // route, so it's the highest-value target for a compromised or malicious
@@ -69,4 +90,4 @@ const dataExecuteRateLimiter = makeLimiter({ windowMs: 60 * 1000, max: 120, keyF
 // forms, still generous enough for a real applicant retrying a typo.
 const publicSubmitRateLimiter = makeLimiter({ windowMs: 15 * 60 * 1000, max: 8 });
 
-module.exports = { rateLimiter, strictRateLimiter, dataExecuteRateLimiter, publicSubmitRateLimiter };
+module.exports = { rateLimiter, strictRateLimiter, authSlowDown, dataExecuteRateLimiter, publicSubmitRateLimiter };

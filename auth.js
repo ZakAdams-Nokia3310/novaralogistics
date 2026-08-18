@@ -14,7 +14,6 @@ const EC_AUTH = (() => {
     admin:  'dashboard-admin',
     user:   'dashboard-user',
     driver: 'dashboard-driver',
-    guest:  'dashboard-guest',
   };
 
   const KEY = 'ec_session';
@@ -30,19 +29,54 @@ const EC_AUTH = (() => {
     if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.touchSession();
   }
 
+  // dc.js is a separate, later <script> tag on every page (auth.js, ...,
+  // dc.js, ...) — on a fresh page load where Firebase quickly restores an
+  // already-persisted session (common right after a recent sign-in, since
+  // that state is now warm), onIdTokenChanged can fire and reach
+  // sessionFromFirebaseUser's DC_DATA call before dc.js has finished
+  // executing, throwing "DC_DATA is not defined" — which sessionFromFirebaseUser
+  // treated as a real verification failure and wiped an otherwise-valid
+  // session/signed the user back out. Bounded poll, not a long timeout:
+  // dc.js is a same-page, already-requested script — it finishes in
+  // milliseconds once the engine gets to it, this only covers that gap.
+  function waitForDcData(maxMs = 4000) {
+    if (typeof DC_DATA !== 'undefined') return Promise.resolve(true);
+    return new Promise((resolve) => {
+      const start = Date.now();
+      const poll = () => {
+        if (typeof DC_DATA !== 'undefined') { resolve(true); return; }
+        if (Date.now() - start >= maxMs) { resolve(false); return; }
+        setTimeout(poll, 25);
+      };
+      poll();
+    });
+  }
+
+  // Always also signs out of the underlying Firebase session, not just the
+  // local sessionStorage mirror — otherwise the next onIdTokenChanged fire
+  // (any page load/navigation) silently re-authenticates from the
+  // still-valid Firebase session and whatever cleared this (inactivity
+  // timeout, absolute session-age expiry, a failed re-validation) never
+  // actually sticks. Best-effort/fire-and-forget: callers that already
+  // await their own signOut() right after (onIdTokenChanged's catch,
+  // logout()) just get a harmless no-op duplicate.
   function clear() {
     sessionStorage.removeItem(KEY);
     sessionStorage.removeItem('ec_session_ts');
+    if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
+      firebase.auth().signOut().catch(() => {});
+    }
   }
 
   // Two-factor auth is required for admin accounts (occasional beyond
-  // initial enrollment — see functions/controllers/totpController.js's
-  // REVERIFY_WINDOW_MS). Checked server-side, never assumed client-side:
-  // this only decides whether to route through verify-2fa.html before the
-  // session becomes active, the actual enrollment/challenge verification
-  // happens entirely on the server.
+  // initial enrollment) — required for every admin AND every org-affiliated
+  // user, on every fresh sign-in (see functions/controllers/totpController.js's
+  // status()). Checked server-side, never assumed client-side: this only
+  // decides whether to route through verify-2fa.html before the session
+  // becomes active, the actual enrollment/challenge verification happens
+  // entirely on the server.
   async function checkTotpRequired(session) {
-    if (session.role !== 'admin' || typeof EC_API === 'undefined') return false;
+    if ((session.role !== 'admin' && !session.orgId) || typeof EC_API === 'undefined') return false;
     try {
       const res = await EC_API.authFetch('/auth/totp/status');
       if (!res.ok) return false;
@@ -67,6 +101,7 @@ const EC_AUTH = (() => {
   // caller (login/signup/onIdTokenChanged below) is responsible for signing
   // the now-unusable Firebase session back out.
   async function sessionFromFirebaseUser(fbUser) {
+    await waitForDcData();
     let dbUser;
     try {
       dbUser = await DC_DATA.getUserByEmailLive(fbUser.email);
@@ -109,6 +144,17 @@ const EC_AUTH = (() => {
       } catch { /* best effort — a sync failure here shouldn't block login */ }
     }
 
+    // Custom-role permissions ride along in the session purely for UI
+    // convenience (page/nav visibility, showing or hiding edit controls) —
+    // this is NOT a security boundary. The real enforcement is server-side
+    // (dataController.js's execute(), keyed off the claim + a fresh DB
+    // read), so a client tampering with this object can't grant itself
+    // anything it couldn't already get rejected for on the actual request.
+    let permissions = null;
+    if (dbUser.customRole && dbUser.customRole.permissions) {
+      try { permissions = JSON.parse(dbUser.customRole.permissions); } catch { permissions = null; }
+    }
+
     return {
       id    : fbUser.uid,
       // The Data Connect User row's own id — a different id space from
@@ -122,6 +168,9 @@ const EC_AUTH = (() => {
       role  : (dbUser.role || 'USER').toLowerCase(),
       org   : dbUser.organisation ? dbUser.organisation.name : 'Independent',
       orgId : dbUser.organisation ? dbUser.organisation.id : null,
+      customRoleId  : dbUser.customRole ? dbUser.customRole.id : null,
+      customRoleName: dbUser.customRole ? dbUser.customRole.name : null,
+      permissions,
     };
   }
 
@@ -142,7 +191,30 @@ const EC_AUTH = (() => {
       if (!fbUser) { clear(); return; }
       if (_signupInProgress) return;
       try {
-        save(await sessionFromFirebaseUser(fbUser));
+        const session = await sessionFromFirebaseUser(fbUser);
+
+        // This listener fires independently of login()/checkGoogleRedirectResult()'s
+        // own explicit TOTP-aware flow — including right as a fresh Google
+        // sign-in resolves, in parallel with that flow already redirecting
+        // to verify-2fa.html. Without this check it unconditionally
+        // promoted the active session (KEY) regardless of 2FA state,
+        // which made the TOTP gate bypassable: hit the browser back
+        // button from verify-2fa.html to login.html, and login.html's own
+        // "if already signed in, go straight to the dashboard" check would
+        // find this listener had already populated an active session,
+        // skipping 2FA entirely. Only skip the check when there's already
+        // an ACTIVE session for this exact uid (a routine token refresh on
+        // an already-2FA-verified session) — never for a session that
+        // hasn't been established as active yet.
+        let existing = null;
+        try { existing = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch { /* ignore */ }
+        const isRefreshOfVerifiedSession = existing && existing.id === fbUser.uid;
+
+        if (!isRefreshOfVerifiedSession && await checkTotpRequired(session)) {
+          sessionStorage.setItem(PENDING_KEY, JSON.stringify(session));
+          return;
+        }
+        save(session);
       } catch {
         // Firebase still considers this session valid but the database
         // check failed (row deleted/deactivated since last check, etc.) —
@@ -155,8 +227,15 @@ const EC_AUTH = (() => {
   }
 
   return {
-    async signup(name, email, password) {
-      const cleanName = String(name || '').trim();
+    // profile: { name, email, phone, idNumber, dateOfBirth, address, city,
+    // province, postalCode, employmentStatus, employerName, monthlyIncome,
+    // yearsEmployed, bank, accountType, outstandingCredit, termsAccepted }
+    // — only name/email/termsAccepted are required here; the rest are
+    // whatever signup.html's KYC step collected, validated properly
+    // server-side (see REGISTER_SELF_SCHEMA) before ever reaching the DB.
+    async signup(profile, password) {
+      const cleanName = String((profile && profile.name) || '').trim();
+      const email = profile && profile.email;
       const cleanEmail = (typeof EC_SECURITY !== 'undefined')
         ? EC_SECURITY.sanitizeInput(email, 'email')
         : String(email || '').toLowerCase().trim();
@@ -165,6 +244,7 @@ const EC_AUTH = (() => {
       if (!cleanName || !cleanEmail || !cleanPwd) throw new Error('All fields are required.');
       if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.isValidEmail(cleanEmail)) throw new Error('Please enter a valid email address.');
       if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.isStrongPassword(cleanPwd)) throw new Error('Password must be at least 8 characters and include a letter and a number.');
+      if (!profile || !profile.termsAccepted) throw new Error('You must accept the Terms & Conditions and Privacy Policy.');
 
       let cred;
       _signupInProgress = true;
@@ -186,12 +266,13 @@ const EC_AUTH = (() => {
         // authController.js's setRole already requires for any role change),
         // so sessionFromFirebaseUser's database check below finds a real row
         // instead of rejecting the account it just created.
+        await waitForDcData();
         if (typeof DC_DATA === 'undefined') {
           try { await cred.user.delete(); } catch { /* best effort */ }
           throw new Error('Could not finish creating your account. Please try again.');
         }
         try {
-          await DC_DATA.createUserLive(cleanName, cleanEmail);
+          await DC_DATA.createUserLive({ ...profile, name: cleanName }, cleanEmail);
         } catch (err) {
           try { await cred.user.delete(); } catch { /* best effort */ }
           throw new Error('Could not finish creating your account. Please try again.');
@@ -354,15 +435,15 @@ const EC_AUTH = (() => {
       // Same race as email/password signup (see the guard's comment near
       // the top of this file) — Firebase fires onIdTokenChanged before this
       // function gets a chance to create a first-time account's database row.
+      // This is also the redirect-back landing page load from Google, so it
+      // carries the same dc.js-not-loaded-yet race waitForDcData guards
+      // against elsewhere (see that function's comment).
       _signupInProgress = true;
       let isNewDbUser = false;
       try {
+        await waitForDcData();
         let dbUser = await DC_DATA.getUserByEmailLive(cred.user.email);
         if (!dbUser) {
-          if (typeof DC_DATA === 'undefined') {
-            try { await cred.user.delete(); } catch { /* best effort */ }
-            throw new Error('Could not finish creating your account. Please try again.');
-          }
           const name = cred.user.displayName || cred.user.email.split('@')[0];
           try {
             await DC_DATA.createUserLive(name, cred.user.email);
@@ -452,10 +533,18 @@ const EC_AUTH = (() => {
 
     require(roles) {
       const user = this.current();
-      if (!user || !roles.includes(user.role)) {
+      const page = location.pathname.split('/').pop();
+      // A custom role (see dataconnect/schema/schema.gql's Role type) grants
+      // access to specific admin pages on top of a user's base role — same
+      // check security.js's guardPage() applies (shared via hasPageAccess
+      // so the two never drift), so a page calling require(['admin'])
+      // doesn't bounce a custom-role holder guardPage() would otherwise
+      // have let through.
+      const hasCustomAccess = user && typeof EC_SECURITY !== 'undefined' && EC_SECURITY.hasPageAccess(user, page);
+      if (!user || (!roles.includes(user.role) && !hasCustomAccess)) {
         if (typeof EC_SECURITY !== 'undefined') {
           EC_SECURITY.audit('UNAUTHORIZED_ACCESS_ATTEMPT', {
-            page     : location.pathname.split('/').pop(),
+            page,
             userRole : user?.role || 'none',
             required : roles,
           });
@@ -467,7 +556,7 @@ const EC_AUTH = (() => {
     },
 
     dashFor(role) {
-      return DASH[role] || 'dashboard-guest';
+      return DASH[role] || 'login';
     },
   };
 })();

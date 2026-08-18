@@ -5,7 +5,11 @@
       "Bash(firebase dataconnect:deploy)",
       "mcp__higgsfield__models_explore",
       "Bash(node /private/tmp/claude-501/-Users-zakariyyahadams-novara-terra-industrials/51d35dfa-a99f-4a46-b408-266a350a3e97/scratchpad/cdp-test.mjs)",
-      "Read(//Users/zakariyyahadams/Downloads/UniSafe_API/**)"
+      "Read(//Users/zakariyyahadams/Downloads/UniSafe_API/**)",
+      "Bash(curl -sS https://novara-f985b--preview-minify-bnrhpg75.web.app/auth.js)",
+      "Bash(curl -sS -o /dev/null -w \"%{http_code}\\\\n\" https://novara-f985b--preview-minify-bnrhpg75.web.app/login)",
+      "Bash(curl -sS -o /dev/null -w \"%{http_code}\\\\n\" https://novara-f985b--preview-minify-bnrhpg75.web.app/dc.js)",
+      "Bash(curl -sS -o /dev/null -w \"%{http_code}\\\\n\" https://novara-f985b--preview-minify-bnrhpg75.web.app/theme.css)"
     ]
   }
 }

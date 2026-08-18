@@ -1,14 +1,18 @@
 'use strict';
-// TOTP (2FA) — admin-only. Every handler here operates ONLY on the
-// caller's own row (resolved from their verified email, never a
-// client-supplied target) except disableForUser, which is an explicit
-// admin-to-admin recovery action for a locked-out colleague.
+// TOTP (2FA) — required for every admin AND every org-affiliated user
+// (anyone with req.user.orgId set), re-verified on every fresh sign-in
+// rather than on a grace-period timer — see status() below. Every handler
+// here operates ONLY on the caller's own row (resolved from their verified
+// email, never a client-supplied target) except disableForUser, which is
+// an explicit admin-to-another-user recovery action.
 
 const totp = require('../services/totp');
 const { runQuery, runMutation } = require('../services/dataConnect');
 const { logEvent } = require('../services/auditLog');
 
-const REVERIFY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // "occasional" = 30 days
+function isOrgMemberOrAdmin(user) {
+  return user.role === 'admin' || !!user.orgId;
+}
 
 async function getOwnTotpRow(email) {
   const data = await runQuery('GetUserTotpByEmail', { email });
@@ -17,7 +21,7 @@ async function getOwnTotpRow(email) {
 
 // GET /api/auth/totp/status
 exports.status = async (req, res) => {
-  if (req.user.role !== 'admin') {
+  if (!isOrgMemberOrAdmin(req.user)) {
     return res.status(200).json({ required: false, needsEnrollment: false, needsChallenge: false });
   }
   const row = await getOwnTotpRow(req.user.email);
@@ -26,14 +30,16 @@ exports.status = async (req, res) => {
   if (!row.totpEnabled) {
     return res.status(200).json({ required: true, needsEnrollment: true, needsChallenge: false });
   }
-  const lastVerified = row.totpVerifiedAt ? new Date(row.totpVerifiedAt).getTime() : 0;
-  const stale = Date.now() - lastVerified > REVERIFY_WINDOW_MS;
-  res.status(200).json({ required: true, needsEnrollment: false, needsChallenge: stale });
+  // Challenge required on every fresh sign-in — this endpoint is only ever
+  // called from the login flow (see auth.js's checkTotpRequired), never
+  // from ongoing-session validation, so "always true once enrolled" is
+  // exactly "once per new session, cleared again by the next logout."
+  res.status(200).json({ required: true, needsEnrollment: false, needsChallenge: true });
 };
 
 // POST /api/auth/totp/enroll/start
 exports.enrollStart = async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  if (!isOrgMemberOrAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
 
   const row = await getOwnTotpRow(req.user.email);
   if (!row) return res.status(404).json({ error: 'Account not found' });
@@ -48,7 +54,7 @@ exports.enrollStart = async (req, res) => {
 
 // POST /api/auth/totp/enroll/confirm  { code }
 exports.enrollConfirm = async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  if (!isOrgMemberOrAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
 
   const code = String((req.body && req.body.code) || '');
   const row = await getOwnTotpRow(req.user.email);
@@ -71,7 +77,7 @@ exports.enrollConfirm = async (req, res) => {
 
 // POST /api/auth/totp/challenge  { code }
 exports.challenge = async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  if (!isOrgMemberOrAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
 
   const code = String((req.body && req.body.code) || '').trim();
   const row = await getOwnTotpRow(req.user.email);
@@ -103,9 +109,9 @@ exports.challenge = async (req, res) => {
 };
 
 // POST /api/auth/totp/self-recovery-disable
-// Self-service recovery for an admin who's lost BOTH their authenticator
-// device and their backup codes — the only other path (disableForUser)
-// needs a second admin to exist and be reachable. This substitutes proof
+// Self-service recovery for an admin or org member who's lost BOTH their
+// authenticator device and their backup codes — the only other path
+// (disableForUser) needs an admin to exist and be reachable. This substitutes proof
 // of email ownership for that second admin: the client only reaches this
 // endpoint after firebase.auth().confirmPasswordReset() succeeded against
 // an oobCode Firebase emailed to the account's own verified address (see
@@ -116,7 +122,7 @@ exports.challenge = async (req, res) => {
 // specific recovery sign-in, not just any still-valid token.
 const SELF_RECOVERY_MAX_AGE_S = 5 * 60;
 exports.selfRecoveryDisable = async (req, res) => {
-  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  if (!isOrgMemberOrAdmin(req.user)) return res.status(403).json({ error: 'Forbidden' });
 
   const ageS = Math.floor(Date.now() / 1000) - req.user.authTime;
   if (!req.user.authTime || ageS > SELF_RECOVERY_MAX_AGE_S || ageS < 0) {
@@ -138,8 +144,8 @@ exports.selfRecoveryDisable = async (req, res) => {
 };
 
 // POST /api/auth/totp/disable-for-user  { email }
-// Admin-to-admin recovery for a colleague locked out of their device with
-// no backup codes left. Requires requireAdmin (see routes/totpRoutes.js) —
+// Admin-assisted recovery for any locked-out user (admin or org member)
+// with no backup codes left. Requires requireAdmin (see routes/totpRoutes.js) —
 // the CALLER must already be an admin, same bootstrapping precedent as
 // every other cross-account admin action in this app.
 exports.disableForUser = async (req, res) => {

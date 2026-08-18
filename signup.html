@@ -19,26 +19,50 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;display:flex;align-items:center;justify-content:center;}
+  html{color-scheme:dark;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#080a0e;}
   .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
   .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);}
-  input{width:100%;padding:13px 14px 13px 44px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;}
-  input:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,0.3);}
+  input,select{width:100%;padding:13px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;-moz-appearance:none;appearance:none;}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M3 5l4 4 4-4' fill='none' stroke='%23849495' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
+  input.with-icon{padding-left:44px;}
+  input:focus,select:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,0.3);}
   input::placeholder{color:rgba(255,255,255,0.22);}
-  .btn-main{width:100%;padding:14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 0 30px rgba(0,240,255,0.18);}
+  select option{background:#111317;}
+  label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px;}
+  .field{margin-bottom:14px;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  .btn-main{width:100%;padding:14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 0 30px rgba(0,240,255,0.18);display:flex;align-items:center;justify-content:center;gap:6px;}
   .btn-main:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 6px 36px rgba(0,240,255,0.28);}
   .btn-main:disabled{opacity:.6;cursor:default;transform:none;}
+  .btn-ghost{width:100%;padding:14px;background:rgba(255,255,255,0.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:14px;border:1px solid rgba(255,255,255,0.09);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-ghost:hover{background:rgba(255,255,255,0.08);}
   .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
   @keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
   @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
   .anim{animation:up .5s cubic-bezier(0.4,0,0.2,1) both;}
-  .d1{animation-delay:.06s}.d2{animation-delay:.14s}.d3{animation-delay:.22s}.d4{animation-delay:.3s}
   .pwd-strength{height:3px;border-radius:2px;margin-top:6px;transition:all .3s}
   #gsiLoader{display:none;position:fixed;inset:0;z-index:100000;background:#060810;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
   #gsiLoader .spin{animation:spin 1s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg)}}
   .ec-gsi-returning body > *:not(#gsiLoader){display:none!important;}
   .ec-gsi-returning #gsiLoader{display:flex!important;}
+
+  /* Progress steps (matches apply-rental.html) */
+  .progress-steps{display:flex;gap:0;margin-bottom:28px;}
+  .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+  .step::before{content:'';position:absolute;top:14px;left:50%;width:100%;height:1px;background:rgba(255,255,255,0.1);z-index:0;}
+  .step:last-child::before{display:none;}
+  .step-circle{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;position:relative;z-index:1;transition:all 0.3s;}
+  .step-circle.done{background:#00f0ff;color:#003a3c;}
+  .step-circle.active{background:#00f0ff;color:#003a3c;box-shadow:0 0 16px rgba(0,240,255,0.4);}
+  .step-circle.todo{background:rgba(255,255,255,0.08);color:#849495;border:1px solid rgba(255,255,255,0.1);}
+  .step-label{font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#849495;text-transform:uppercase;letter-spacing:0.08em;margin-top:5px;text-align:center;}
+
+  .info-box{background:rgba(0,240,255,0.04);border:1px solid rgba(0,240,255,0.15);border-radius:10px;padding:12px 14px;display:flex;gap:9px;align-items:flex-start;margin-bottom:16px;font-size:12px;color:#b9cacb;line-height:1.5;}
+  .btn-row{display:flex;gap:10px;}
+  @media(max-width:520px){.grid-2,.grid-3{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -47,10 +71,10 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
   <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;letter-spacing:.1em;text-transform:uppercase">Signing you in…</span>
 </div>
 
-<div style="position:relative;z-index:2;width:100%;max-width:420px;padding:24px">
+<div style="position:relative;z-index:2;width:100%;max-width:560px;padding:24px">
 
   <!-- Logo -->
-  <div class="anim" style="text-align:center;margin-bottom:36px">
+  <div class="anim" style="text-align:center;margin-bottom:28px">
     <a href="/" style="text-decoration:none;display:inline-flex;align-items:center;gap:10px">
       <span style="font-size:26px">⚡</span>
       <span class="grad" style="font-family:'Hanken Grotesk',sans-serif;font-size:28px;font-weight:800;letter-spacing:-0.03em">EquipCore</span>
@@ -59,84 +83,150 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
   </div>
 
   <!-- Card -->
-  <div class="glass anim d1" style="border-radius:20px;padding:36px 32px">
+  <div class="glass anim" style="border-radius:20px;padding:32px 30px">
 
-    <h2 class="d2 anim" style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;margin-bottom:5px">Create your account</h2>
-    <p class="d2 anim" style="color:#b9cacb;font-size:13px;margin-bottom:28px">Sign up to browse fleet, apply for rentals, and manage operations.</p>
+    <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:20px;font-weight:800;margin-bottom:4px">Create your account</h2>
+    <p style="color:#b9cacb;font-size:13px;margin-bottom:20px">A few details now saves you re-entering them every time you apply to rent.</p>
+
+    <!-- Progress -->
+    <div class="progress-steps" id="progressSteps">
+      <div class="step"><div class="step-circle active" id="s1-circle">1</div><div class="step-label">Account</div></div>
+      <div class="step"><div class="step-circle todo" id="s2-circle">2</div><div class="step-label">Personal</div></div>
+      <div class="step"><div class="step-circle todo" id="s3-circle">3</div><div class="step-label">Financial</div></div>
+      <div class="step"><div class="step-circle todo" id="s4-circle">4</div><div class="step-label">Review</div></div>
+    </div>
 
     <form id="signupForm" novalidate>
       <input type="text" name="username" id="hp_signup" data-honeypot tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"/>
 
-      <!-- Name -->
-      <div style="margin-bottom:14px">
-        <label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px">Full Name</label>
-        <div style="position:relative">
-          <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">person</span>
-          <input id="nameInput" type="text" placeholder="Your full name" autocomplete="name" required/>
+      <!-- STEP 1: Account -->
+      <div id="step1">
+        <div class="field">
+          <label>Full Name</label>
+          <div style="position:relative">
+            <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">person</span>
+            <input class="with-icon" id="nameInput" type="text" placeholder="Your full name" autocomplete="name" required/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <div style="position:relative">
+            <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">alternate_email</span>
+            <input class="with-icon" id="emailInput" type="email" placeholder="you@company.com" autocomplete="email" required/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <div style="position:relative">
+            <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">lock</span>
+            <input class="with-icon" id="pwdInput" type="password" placeholder="Min. 8 characters, 1 letter, 1 number" autocomplete="new-password" minlength="8" style="padding-right:46px" required/>
+            <button type="button" id="togglePwd" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#849495;display:flex;align-items:center;padding:4px">
+              <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
+            </button>
+          </div>
+          <div id="pwdStrength" class="pwd-strength" style="width:0%;background:#333"></div>
+        </div>
+        <div class="field">
+          <label>Confirm Password</label>
+          <div style="position:relative">
+            <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">lock</span>
+            <input class="with-icon" id="pwd2Input" type="password" placeholder="Repeat password" autocomplete="new-password" required/>
+          </div>
+        </div>
+        <div id="errBox1" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+        <button type="button" class="btn-main" onclick="goStep(2)">Continue <span class="material-symbols-outlined" style="font-size:18px">arrow_forward</span></button>
+
+        <div style="display:flex;align-items:center;gap:12px;margin:18px 0">
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em">or</span>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
+        </div>
+        <button type="button" id="googleBtn" class="btn-ghost">
+          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.61z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.19l-2.92-2.26c-.81.54-1.85.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.69 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+          Continue with Google
+        </button>
+        <div style="margin-top:16px;text-align:center;font-size:13px;color:#849495">
+          Already have an account? <a href="login" style="color:#00dbe9;text-decoration:none">Sign in →</a>
         </div>
       </div>
 
-      <!-- Email -->
-      <div style="margin-bottom:14px">
-        <label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px">Email Address</label>
-        <div style="position:relative">
-          <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">alternate_email</span>
-          <input id="emailInput" type="email" placeholder="you@company.com" autocomplete="email" required/>
+      <!-- STEP 2: Personal / KYC -->
+      <div id="step2" style="display:none">
+        <div class="info-box">
+          <span class="material-symbols-outlined" style="font-size:16px;color:#00f0ff;flex-shrink:0">shield</span>
+          <span>Saved to your account so you don't have to re-enter it every time you apply for a rental.</span>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Phone Number *</label><input id="f_phone" placeholder="+27 82 000 0000" required/></div>
+          <div class="field"><label>ID / Passport Number *</label><input id="f_id" placeholder="8801015009087" required/></div>
+        </div>
+        <div class="field"><label>Date of Birth *</label><input id="f_dob" type="date" required/></div>
+        <div class="field"><label>Residential Address *</label><input id="f_address" placeholder="123 Main Street, Johannesburg, 2001" required/></div>
+        <div class="grid-3">
+          <div class="field"><label>City</label><input id="f_city" placeholder="Johannesburg"/></div>
+          <div class="field"><label>Province</label><select id="f_province"><option value="">Select…</option><option>Gauteng</option><option>Western Cape</option><option>KwaZulu-Natal</option><option>Eastern Cape</option><option>Mpumalanga</option><option>Limpopo</option><option>North West</option><option>Northern Cape</option><option>Free State</option></select></div>
+          <div class="field"><label>Postal Code</label><input id="f_postal" placeholder="2001"/></div>
+        </div>
+        <div id="errBox2" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+        <div class="btn-row">
+          <button type="button" class="btn-ghost" onclick="goStep(1)"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Back</button>
+          <button type="button" class="btn-main" onclick="goStep(3)">Continue <span class="material-symbols-outlined" style="font-size:18px">arrow_forward</span></button>
         </div>
       </div>
 
-      <!-- Password -->
-      <div style="margin-bottom:14px">
-        <label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px">Password</label>
-        <div style="position:relative">
-          <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">lock</span>
-          <input id="pwdInput" type="password" placeholder="Min. 8 characters, 1 letter, 1 number" autocomplete="new-password" minlength="8" style="padding-right:46px" required/>
-          <button type="button" id="togglePwd" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#849495;display:flex;align-items:center;padding:4px">
-            <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
-          </button>
+      <!-- STEP 3: Financial -->
+      <div id="step3" style="display:none">
+        <div class="info-box">
+          <span class="material-symbols-outlined" style="font-size:16px;color:#00f0ff;flex-shrink:0">info</span>
+          <span>Required for any future rental application's credit assessment — not shared until you actually apply.</span>
         </div>
-        <div id="pwdStrength" class="pwd-strength" style="width:0%;background:#333"></div>
+        <div class="grid-2">
+          <div class="field"><label>Employment Status *</label><select id="f_employment" required><option value="">Select…</option><option>Full-time Employed</option><option>Self-employed</option><option>Business Owner</option><option>Contractor</option></select></div>
+          <div class="field"><label>Employer / Company Name *</label><input id="f_employer" placeholder="Atlas Quarry Ltd" required/></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Monthly Income (R) *</label><input id="f_income" type="number" placeholder="50000" required/></div>
+          <div class="field"><label>Years Employed</label><input id="f_years" type="number" placeholder="3"/></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label>Bank *</label><select id="f_bank" required><option value="">Select your bank…</option><option>ABSA</option><option>FNB</option><option>Standard Bank</option><option>Nedbank</option><option>Capitec</option><option>Investec</option><option>African Bank</option><option>Other</option></select></div>
+          <div class="field"><label>Account Type</label><select id="f_accountType"><option>Cheque Account</option><option>Savings Account</option><option>Business Account</option></select></div>
+        </div>
+        <div class="field">
+          <label>Outstanding Credit / Loans (R)</label>
+          <input type="number" placeholder="0" id="f_credit"/>
+        </div>
+        <div id="errBox3" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+        <div class="btn-row">
+          <button type="button" class="btn-ghost" onclick="goStep(2)"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Back</button>
+          <button type="button" class="btn-main" onclick="goStep(4)">Review <span class="material-symbols-outlined" style="font-size:18px">arrow_forward</span></button>
+        </div>
       </div>
 
-      <!-- Confirm Password -->
-      <div style="margin-bottom:22px">
-        <label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px">Confirm Password</label>
-        <div style="position:relative">
-          <span class="material-symbols-outlined" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">lock</span>
-          <input id="pwd2Input" type="password" placeholder="Repeat password" autocomplete="new-password" required/>
+      <!-- STEP 4: Review & Consent -->
+      <div id="step4" style="display:none">
+        <div id="reviewContent" style="font-size:13px;color:#b9cacb;line-height:2;margin-bottom:16px"></div>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:#e2e2e8;margin-bottom:18px">
+          <input type="checkbox" id="consentTerms" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;"/>
+          <span>I have read and agree to the EquipCore <a href="terms" target="_blank" style="color:#00dbe9">Terms &amp; Conditions</a> and <a href="privacy" target="_blank" style="color:#00dbe9">Privacy Policy</a>.</span>
+        </label>
+        <div id="errBox4" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+        <div class="btn-row">
+          <button type="button" class="btn-ghost" onclick="goStep(3)"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Back</button>
+          <button class="btn-main" id="submitBtn" type="submit">Create Account <span class="material-symbols-outlined" style="font-size:18px">check</span></button>
         </div>
       </div>
-
-      <!-- Error -->
-      <div id="errBox" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
-
-      <button class="btn-main d3 anim" id="submitBtn" type="submit">Create Account</button>
     </form>
 
-    <div id="verifyBox" style="display:none;margin-bottom:14px;padding:16px;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.25);border-radius:10px;font-size:13.5px;color:#e2e2e8">
+    <div id="verifyBox" style="display:none;padding:16px;background:rgba(0,212,170,0.08);border:1px solid rgba(0,212,170,0.25);border-radius:10px;font-size:13.5px;color:#e2e2e8">
       <div style="font-weight:700;margin-bottom:6px;color:#00d4aa">Check your email</div>
       <div id="verifyMsg" style="color:#b9cacb;line-height:1.5"></div>
-      <a href="login" class="btn-main d3 anim" style="display:inline-flex;margin-top:14px">Go to Sign In</a>
-    </div>
-
-    <div class="d3 anim" style="display:flex;align-items:center;gap:12px;margin:20px 0">
-      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
-      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em">or</span>
-      <div style="flex:1;height:1px;background:rgba(255,255,255,0.08)"></div>
-    </div>
-
-    <button type="button" id="googleBtn" class="d3 anim" style="width:100%;padding:13px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;color:#e2e2e8;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,border-color .2s">
-      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.61z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.19l-2.92-2.26c-.81.54-1.85.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.69 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
-      Continue with Google
-    </button>
-
-    <div style="margin-top:20px;text-align:center;font-size:13px;color:#849495">
-      Already have an account? <a href="login" style="color:#00dbe9;text-decoration:none">Sign in →</a>
+      <a href="login" class="btn-main" style="display:flex;margin-top:14px;text-decoration:none">Go to Sign In</a>
     </div>
   </div>
 
   <!-- Status -->
-  <div class="anim d4" style="margin-top:20px;text-align:center;display:flex;align-items:center;justify-content:center;gap:7px">
+  <div class="anim" style="margin-top:20px;text-align:center;display:flex;align-items:center;justify-content:center;gap:7px">
     <span style="width:6px;height:6px;border-radius:50%;background:#00d4aa;box-shadow:0 0 8px #00d4aa;display:inline-block"></span>
     <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(255,255,255,0.22);letter-spacing:.12em">ALL SYSTEMS OPERATIONAL</span>
   </div>
@@ -157,19 +247,75 @@ var _u = EC_AUTH.current();
 if (_u) location.href = EC_AUTH.dashFor(_u.role);
 
 // Landed back here after beginGoogleLogin's redirect to Google — pick up
-// the result. No-ops (resolves null) on an ordinary page load.
+// the result. No-ops (resolves null) on an ordinary page load. Google
+// sign-up skips the KYC steps below entirely (Google's own consent screen
+// doesn't carry that data) — the account starts with just name/email, same
+// as before this change; apply-rental.html fills the gap on first use.
 EC_AUTH.checkGoogleRedirectResult().then(function (user) {
   if (!user) { document.documentElement.classList.remove('ec-gsi-returning'); return; }
   location.href = user._totpPending ? 'verify-2fa' : (EC_AUTH.dashFor(user.role) + '?intro=1');
 }).catch(function (err) {
   document.documentElement.classList.remove('ec-gsi-returning');
-  showErr(EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
+  showErr(1, EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
 });
 
-var form    = document.getElementById('signupForm');
-var btn     = document.getElementById('submitBtn');
-var errBox  = document.getElementById('errBox');
-var pwdBar  = document.getElementById('pwdStrength');
+var form = document.getElementById('signupForm');
+var btn  = document.getElementById('submitBtn');
+var pwdBar = document.getElementById('pwdStrength');
+
+function showErr(step, msg) {
+  var box = document.getElementById('errBox' + step);
+  box.textContent = msg; box.style.display = 'block';
+  var card = form.closest ? form : document.getElementById('signupForm');
+  card.style.animation = 'shake .4s ease';
+  setTimeout(function(){ card.style.animation = ''; }, 400);
+}
+function clearErr(step) { document.getElementById('errBox' + step).style.display = 'none'; }
+
+// ── Step navigation ── each transition is gated on the step being LEFT
+// validating successfully; goStep only ever moves forward once that passes
+// (Back buttons call goStep with a lower n, which needs no validation).
+function goStep(n) {
+  if (n === 2 && !validateStep1()) return;
+  if (n === 3 && !validateStep2()) return;
+  if (n === 4 && !validateStep3()) return;
+  [1,2,3,4].forEach(function(i) {
+    document.getElementById('step' + i).style.display = (i === n ? '' : 'none');
+    var c = document.getElementById('s' + i + '-circle');
+    if (c) c.className = 'step-circle ' + (i < n ? 'done' : i === n ? 'active' : 'todo');
+  });
+  if (n === 4) buildReview();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateStep1() {
+  clearErr(1);
+  var name = document.getElementById('nameInput').value.trim();
+  var email = document.getElementById('emailInput').value.trim();
+  var pwd = document.getElementById('pwdInput').value;
+  var pwd2 = document.getElementById('pwd2Input').value;
+  if (!name || !email || !pwd) { showErr(1, 'All fields are required.'); return false; }
+  if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.isValidEmail(email)) { showErr(1, 'Please enter a valid email address.'); return false; }
+  if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.isStrongPassword(pwd)) { showErr(1, 'Password must be at least 8 characters and include a letter and a number.'); return false; }
+  if (pwd !== pwd2) { showErr(1, 'Passwords do not match.'); return false; }
+  return true;
+}
+function validateStep2() {
+  clearErr(2);
+  var required = ['f_phone', 'f_id', 'f_dob', 'f_address'];
+  for (var i = 0; i < required.length; i++) {
+    if (!document.getElementById(required[i]).value.trim()) { showErr(2, 'Please fill in all required fields.'); return false; }
+  }
+  return true;
+}
+function validateStep3() {
+  clearErr(3);
+  var required = ['f_employment', 'f_employer', 'f_income', 'f_bank'];
+  for (var i = 0; i < required.length; i++) {
+    if (!document.getElementById(required[i]).value.toString().trim()) { showErr(3, 'Please fill in all required fields.'); return false; }
+  }
+  return true;
+}
 
 // Password strength indicator
 document.getElementById('pwdInput').addEventListener('input', function(){
@@ -193,29 +339,83 @@ document.getElementById('togglePwd').addEventListener('click', function(){
   icon.textContent = inp.type === 'password' ? 'visibility' : 'visibility_off';
 });
 
+// Server enums are UPPER_SNAKE_CASE; the selects show human-friendly text —
+// same maps as apply-rental.html.
+var PROVINCE_MAP = {
+  'Gauteng':'GAUTENG', 'Western Cape':'WESTERN_CAPE', 'KwaZulu-Natal':'KWAZULU_NATAL',
+  'Eastern Cape':'EASTERN_CAPE', 'Mpumalanga':'MPUMALANGA', 'Limpopo':'LIMPOPO',
+  'North West':'NORTH_WEST', 'Northern Cape':'NORTHERN_CAPE', 'Free State':'FREE_STATE',
+};
+var EMPLOYMENT_MAP = {
+  'Full-time Employed':'FULL_TIME_EMPLOYED', 'Self-employed':'SELF_EMPLOYED',
+  'Business Owner':'BUSINESS_OWNER', 'Contractor':'CONTRACTOR',
+};
+var BANK_MAP = {
+  'ABSA':'ABSA', 'FNB':'FNB', 'Standard Bank':'STANDARD_BANK', 'Nedbank':'NEDBANK',
+  'Capitec':'CAPITEC', 'Investec':'INVESTEC', 'African Bank':'AFRICAN_BANK', 'Other':'OTHER',
+};
+var ACCOUNT_TYPE_MAP = { 'Cheque Account':'CHEQUE', 'Savings Account':'SAVINGS', 'Business Account':'BUSINESS' };
+
+function buildReview() {
+  var vals = {
+    'Name': document.getElementById('nameInput').value.trim(),
+    'Email': document.getElementById('emailInput').value.trim(),
+    'Phone': document.getElementById('f_phone').value.trim(),
+    'ID Number': document.getElementById('f_id').value.trim(),
+    'Address': document.getElementById('f_address').value.trim(),
+    'Employer': document.getElementById('f_employer').value.trim(),
+    'Monthly Income': document.getElementById('f_income').value ? 'R ' + parseInt(document.getElementById('f_income').value, 10).toLocaleString() : '—',
+  };
+  document.getElementById('reviewContent').innerHTML = Object.entries(vals).map(function(entry) {
+    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span style="color:#849495;font-family:\'JetBrains Mono\',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em">' + EC_SECURITY.sanitizeHtml(entry[0]) + '</span><span style="text-align:right">' + EC_SECURITY.sanitizeHtml(entry[1] || '—') + '</span></div>';
+  }).join('');
+}
+
+function buildProfilePayload() {
+  return {
+    name: document.getElementById('nameInput').value.trim(),
+    email: document.getElementById('emailInput').value.trim(),
+    phone: document.getElementById('f_phone').value.trim() || null,
+    idNumber: document.getElementById('f_id').value.trim() || null,
+    dateOfBirth: document.getElementById('f_dob').value || null,
+    address: document.getElementById('f_address').value.trim() || null,
+    city: document.getElementById('f_city').value.trim() || null,
+    province: PROVINCE_MAP[document.getElementById('f_province').value] || null,
+    postalCode: document.getElementById('f_postal').value.trim() || null,
+    employmentStatus: EMPLOYMENT_MAP[document.getElementById('f_employment').value] || null,
+    employerName: document.getElementById('f_employer').value.trim() || null,
+    monthlyIncome: document.getElementById('f_income').value ? Number(document.getElementById('f_income').value) : null,
+    yearsEmployed: document.getElementById('f_years').value ? Number(document.getElementById('f_years').value) : null,
+    bank: BANK_MAP[document.getElementById('f_bank').value] || null,
+    accountType: ACCOUNT_TYPE_MAP[document.getElementById('f_accountType').value] || null,
+    outstandingCredit: document.getElementById('f_credit').value ? Number(document.getElementById('f_credit').value) : null,
+    termsAccepted: document.getElementById('consentTerms').checked,
+  };
+}
+
 form.addEventListener('submit', function(e){
   e.preventDefault();
 
   if (typeof EC_SECURITY !== 'undefined' && EC_SECURITY.isHoneypotTripped(form)) return;
   if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.checkRateLimit('signup_submit')) {
-    showErr('Too many requests. Please slow down.'); return;
+    showErr(4, 'Too many requests. Please slow down.'); return;
+  }
+  clearErr(4);
+  if (!document.getElementById('consentTerms').checked) {
+    showErr(4, 'You must accept the Terms & Conditions and Privacy Policy to continue.'); return;
   }
 
-  var name  = document.getElementById('nameInput').value.trim();
-  var email = document.getElementById('emailInput').value.trim();
-  var pwd   = document.getElementById('pwdInput').value;
-  var pwd2  = document.getElementById('pwd2Input').value;
-
-  if (!name || !email || !pwd) { showErr('All fields are required.'); return; }
-  if (pwd !== pwd2) { showErr('Passwords do not match.'); return; }
+  var pwd = document.getElementById('pwdInput').value;
+  var profile = buildProfilePayload();
 
   btn.textContent = 'Creating account…'; btn.disabled = true;
 
   setTimeout(async function(){
     try {
-      var user = await EC_AUTH.signup(name, email, pwd);
+      var user = await EC_AUTH.signup(profile, pwd);
       if (user && user._verificationPending) {
         form.style.display = 'none';
+        document.getElementById('progressSteps').style.display = 'none';
         document.getElementById('verifyMsg').textContent =
           'We sent a verification link to ' + user.email + '. Click it, then sign in below.';
         document.getElementById('verifyBox').style.display = 'block';
@@ -223,18 +423,11 @@ form.addEventListener('submit', function(e){
       }
       location.href = EC_AUTH.dashFor(user.role) + '?intro=1';
     } catch (err) {
-      showErr(EC_SECURITY.safeErrMsg(err, 'Sign-up failed.'));
-      btn.textContent = 'Create Account'; btn.disabled = false;
+      showErr(4, EC_SECURITY.safeErrMsg(err, 'Sign-up failed.'));
+      btn.innerHTML = 'Create Account <span class="material-symbols-outlined" style="font-size:18px">check</span>'; btn.disabled = false;
     }
-  }, 500);
+  }, 400);
 });
-
-function showErr(msg) {
-  errBox.textContent = msg; errBox.style.display = 'block';
-  form.style.animation = 'shake .4s ease';
-  setTimeout(function(){ form.style.animation = ''; }, 400);
-  btn.textContent = 'Create Account'; btn.disabled = false;
-}
 
 var googleBtn = document.getElementById('googleBtn');
 googleBtn.addEventListener('click', async function () {
@@ -245,7 +438,7 @@ googleBtn.addEventListener('click', async function () {
     // on the next load, once Google sends the browser back here.
     await EC_AUTH.beginGoogleLogin();
   } catch (err) {
-    showErr(EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
+    showErr(1, EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
     googleBtn.disabled = false;
   }
 });

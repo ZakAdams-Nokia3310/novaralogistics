@@ -41,7 +41,11 @@
   --danger:  #ff6b6b; --danger-bg:  rgba(255,107,107,.1);
   --info:    #00f0ff; --info-bg:    rgba(0,240,255,.1);
   --violet:  #d1bcff; --violet-bg:  rgba(209,188,255,.1);
-  --driver:  #ffb4a2; --driver-bg:  rgba(255,180,162,.1);
+  /* Uniform brand cyan across every role — was a distinct coral/salmon
+     (#ffb4a2) accent for drivers only; kept as an alias (not deleted) so
+     any remaining literal var(--driver, #ffb4a2) fallback references
+     still resolve consistently. */
+  --driver:  var(--accent); --driver-bg:  var(--accent-soft);
 
   /* ── Radii ── */
   --radius-sm: 8px;
@@ -77,7 +81,12 @@
 }
 
 /* ══ Base ══ */
-html { background: var(--bg); scroll-behavior: smooth; }
+/* Tells the browser this page's own UI (not just its content) is dark —
+   without it, mobile Safari/Chrome render native form-control chrome
+   (the text-input fill, date/select pickers) using their LIGHT default
+   theme regardless of this file's own background/color rules below,
+   since color-scheme is a separate signal from ordinary CSS properties. */
+html { background: var(--bg); scroll-behavior: smooth; color-scheme: dark; }
 body { background: transparent; color: var(--text-primary); }
 a:focus-visible, button:focus-visible, select:focus-visible,
 input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
@@ -181,6 +190,12 @@ input, select, textarea {
   background: var(--surface-lo); border: 1px solid var(--border); border-radius: var(--radius-sm);
   color: var(--text-primary); font-family: var(--font-body); font-size: 13px; padding: 9px 12px;
   outline: none; transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
+  /* Without this, mobile Safari/Chrome can render a plain text/date/number
+     input with iOS's own native fill instead of the background/color above
+     — color-scheme (set on html, above) fixes most of this on its own, but
+     appearance:none is what actually forces our CSS to win on every field,
+     not just the ones the browser happens to treat as "themeable". */
+  -webkit-appearance: none; -moz-appearance: none; appearance: none;
 }
 input:hover, select:hover, textarea:hover { border-color: var(--border-strong); }
 input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(0,240,255,.2); background-color: rgba(0,240,255,.03); }

@@ -112,6 +112,9 @@
           </button>
         </div>
       </form>
+
+      <div class="sec"><span class="material-symbols-outlined ms">history</span> Timeline</div>
+      <div class="glass" style="border-radius:13px;padding:18px 20px" id="timelineBody"></div>
     </div>
   </div>
 </div>
@@ -226,6 +229,54 @@ document.getElementById('detailForm').addEventListener('submit', async (e) => {
   }
 });
 
+// ─── Timeline ───────────────────────────────────────────────────────────────
+function fmtDateTime(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : dt.toLocaleString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function titleCase(s) { return (s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+function timelineStatusColor(s) {
+  return { pending: '#d1bcff', active: '#00f0ff', overdue: '#ffd93d', complete: '#00d4aa', cancelled: '#849495' }[s] || '#849495';
+}
+function timelineEntryHtml(label, detail, when, color) {
+  return `<div style="display:flex;gap:12px;padding-bottom:18px;position:relative">
+    <div style="position:absolute;left:4px;top:14px;bottom:0;width:1px;background:rgba(255,255,255,.08)"></div>
+    <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;margin-top:3px;box-shadow:0 0 8px ${color}66"></div>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:600;font-size:13px">${esc(label)}</div>
+      ${detail ? `<div style="font-size:12px;color:#b9cacb;margin-top:2px">${esc(detail)}</div>` : ''}
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:3px">${fmtDateTime(when)}</div>
+    </div>
+  </div>`;
+}
+async function loadTimeline(r) {
+  const box = document.getElementById('timelineBody');
+  box.innerHTML = `<div style="text-align:center;padding:16px;color:#849495;font-size:12px">Loading…</div>`;
+  let events = [];
+  try { events = await DC_DATA.getRentalEvents(r.id); } catch { /* fall through to synthesized entries only */ }
+
+  const entries = [];
+  const app = r.application;
+  if (app) {
+    entries.push({ label: 'Application Submitted', detail: `Ref ${app.ref}`, when: app.submittedAt, color: '#00f0ff' });
+    if (app.status === 'approved') {
+      entries.push({ label: 'Application Approved', detail: app.reviewedByName ? `Reviewed by ${app.reviewedByName}` : null, when: app.reviewedAt, color: '#00d4aa' });
+    } else if (app.status === 'rejected') {
+      entries.push({ label: 'Application Declined', detail: app.rejectionReason || (app.reviewedByName ? `Reviewed by ${app.reviewedByName}` : null), when: app.reviewedAt, color: '#ff6b6b' });
+    }
+  }
+  events.forEach(e => {
+    if (e.type === 'created') entries.push({ label: 'Rental Created', detail: e.description, when: e.createdAt, color: '#00f0ff' });
+    else if (e.type === 'status_changed') entries.push({ label: `Status Changed to ${titleCase(e.toStatus)}`, detail: e.actorName ? `By ${e.actorName}` : null, when: e.createdAt, color: timelineStatusColor(e.toStatus) });
+    else entries.push({ label: 'Note', detail: e.description, when: e.createdAt, color: '#d1bcff' });
+  });
+
+  box.innerHTML = entries.length
+    ? entries.map(en => timelineEntryHtml(en.label, en.detail, en.when, en.color)).join('')
+    : `<div style="color:#849495;font-size:12px;text-align:center;padding:10px 0">No timeline history yet — this was a manually-created rental with no linked application.</div>`;
+}
+
 async function deleteRental() {
   if (!confirm(`Delete this rental for ${_rental.client}? This cannot be undone.`)) return;
   const btn = document.getElementById('deleteBtn');
@@ -246,6 +297,7 @@ async function deleteRental() {
   if (!r) { document.getElementById('notFoundBox').style.display = 'block'; return; }
   document.getElementById('content').style.display = 'block';
   render(r);
+  loadTimeline(r);
 })();
 </script>
 <script src="cookie-consent.js"></script>

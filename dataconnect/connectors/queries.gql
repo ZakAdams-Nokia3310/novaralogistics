@@ -133,8 +133,36 @@ query ListAllRentals @auth(level: NO_ACCESS) {
     valueZar
     status
     notes
+    application {
+      id
+      ref
+      status
+      submittedAt
+      reviewedAt
+      reviewedBy {
+        name
+      }
+      rejectionReason
+    }
     createdAt
     updatedAt
+  }
+}
+
+query ListRentalEvents($rentalId: UUID!, $organisationId: UUID!) @auth(level: NO_ACCESS) {
+  rentalEvents(
+    where: { rentalId: { eq: $rentalId }, rental: { organisationId: { eq: $organisationId } } }
+    orderBy: { createdAt: ASC }
+  ) {
+    id
+    type
+    description
+    fromStatus
+    toStatus
+    actorUser {
+      name
+    }
+    createdAt
   }
 }
 
@@ -161,6 +189,11 @@ query GetRentalById($id: UUID!) @auth(level: NO_ACCESS) {
     valueZar
     status
     notes
+    application {
+      applicantUser {
+        id
+      }
+    }
     createdAt
     updatedAt
   }
@@ -327,6 +360,11 @@ query ListAllUsers @auth(level: NO_ACCESS) {
     position
     department
     phone
+    customRole {
+      id
+      name
+    }
+    totpEnabled
     createdAt
     updatedAt
   }
@@ -375,7 +413,42 @@ query GetUserByEmail($email: String!) @auth(level: NO_ACCESS) {
     position
     department
     phone
+    idNumber
+    dateOfBirth
+    address
+    city
+    province
+    postalCode
+    employmentStatus
+    employerName
+    monthlyIncome
+    yearsEmployed
+    bank
+    accountType
+    outstandingCredit
+    termsAcceptedAt
     createdAt
+    customRole { id name permissions }
+  }
+}
+
+query ListAllRoles @auth(level: NO_ACCESS) {
+  roles(orderBy: { name: ASC }) {
+    id
+    name
+    description
+    permissions
+    createdBy { id name }
+    createdAt
+    updatedAt
+  }
+}
+
+query GetRoleById($id: UUID!) @auth(level: NO_ACCESS) {
+  role(id: $id) {
+    id
+    name
+    permissions
   }
 }
 
@@ -526,11 +599,13 @@ query ListMaintenanceByPriority($priority: MaintenancePriority!) @auth(level: NO
 query ListAllRentalApplications @auth(level: NO_ACCESS) {
   rentalApplications(orderBy: { submittedAt: DESC }) {
     id
+    ref
     firstName
     lastName
     email
     phone
     equipmentName
+    estimatedCost
     vehicle {
       id
       make
@@ -539,6 +614,11 @@ query ListAllRentalApplications @auth(level: NO_ACCESS) {
     startDate
     endDate
     status
+    creditCheckStatus
+    creditCheckScore
+    creditCheckFeeZar
+    creditCheckRequestedAt
+    creditCheckCompletedAt
     submittedAt
     updatedAt
   }
@@ -547,10 +627,15 @@ query ListAllRentalApplications @auth(level: NO_ACCESS) {
 query GetRentalApplicationById($id: UUID!) @auth(level: NO_ACCESS) {
   rentalApplication(id: $id) {
     id
+    ref
     applicantUser {
       id
       name
       email
+    }
+    organisation {
+      id
+      name
     }
     firstName
     lastName
@@ -582,6 +667,12 @@ query GetRentalApplicationById($id: UUID!) @auth(level: NO_ACCESS) {
     purpose
     rentalNotes
     status
+    creditCheckStatus
+    creditCheckScore
+    creditCheckFeeZar
+    creditCheckRequestedAt
+    creditCheckCompletedAt
+    creditCheckDeclinedAcknowledged
     submittedAt
     updatedAt
   }
@@ -834,5 +925,24 @@ query ListContactInquiriesByStatus($status: InquiryStatus!) @auth(level: NO_ACCE
     subject
     status
     submittedAt
+  }
+}
+
+query ListNotifications($userId: UUID!) @auth(level: NO_ACCESS) {
+  notifications(where: { userId: { eq: $userId } }, orderBy: { createdAt: DESC }, limit: 50) {
+    id
+    type
+    title
+    body
+    linkPath
+    read
+    createdAt
+  }
+}
+
+query GetNotificationById($id: UUID!) @auth(level: NO_ACCESS) {
+  notification(id: $id) {
+    id
+    user { id }
   }
 }

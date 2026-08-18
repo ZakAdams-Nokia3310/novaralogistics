@@ -92,6 +92,59 @@
         <div class="fg"><label class="fl">Phone</label><input class="fi" id="fPhone" type="tel" placeholder="+27 ..."/></div>
       </div>
 
+      <!-- Rental / KYC — same fields apply-rental.html asks for, kept here
+           so a returning applicant only ever enters them once. -->
+      <div class="sec"><span class="material-symbols-outlined ms">badge</span> Rental Details <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:#849495">(auto-filled into rental applications)</span></div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="fg"><label class="fl">ID / Passport Number</label><input class="fi" id="fIdNumber" type="text" placeholder="8801015009087"/></div>
+        <div class="fg"><label class="fl">Date of Birth</label><input class="fi" id="fDob" type="date"/></div>
+      </div>
+      <div class="fg"><label class="fl">Residential Address</label><input class="fi" id="fAddress" type="text" placeholder="123 Main Street, Johannesburg, 2001"/></div>
+      <div class="grid2" style="margin-bottom:24px;margin-top:18px">
+        <div class="fg"><label class="fl">City</label><input class="fi" id="fCity" type="text" placeholder="Johannesburg"/></div>
+        <div class="fg"><label class="fl">Province</label>
+          <select class="fi" id="fProvince">
+            <option value="">Select…</option>
+            <option>Gauteng</option><option>Western Cape</option><option>KwaZulu-Natal</option>
+            <option>Eastern Cape</option><option>Mpumalanga</option><option>Limpopo</option>
+            <option>North West</option><option>Northern Cape</option><option>Free State</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:24px"><label class="fl">Postal Code</label><input class="fi" id="fPostal" type="text" placeholder="2001"/></div>
+
+      <!-- Financial — required for a rental application's credit check;
+           kept separate from Rental Details above so it reads as its own
+           category, matching apply-rental.html's own section split. -->
+      <div class="sec"><span class="material-symbols-outlined ms">payments</span> Financial Information <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px;color:#849495">(auto-filled into rental applications)</span></div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="fg"><label class="fl">Employment Status</label>
+          <select class="fi" id="fEmploymentStatus">
+            <option value="">Select…</option>
+            <option>Full-time Employed</option><option>Self-employed</option>
+            <option>Business Owner</option><option>Contractor</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Employer / Company Name</label><input class="fi" id="fEmployerName" type="text" placeholder="Atlas Quarry Ltd"/></div>
+      </div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="fg"><label class="fl">Monthly Income (R)</label><input class="fi" id="fMonthlyIncome" type="number" placeholder="50000"/></div>
+        <div class="fg"><label class="fl">Years Employed</label><input class="fi" id="fYearsEmployed" type="number" placeholder="3"/></div>
+      </div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="fg"><label class="fl">Bank</label>
+          <select class="fi" id="fBank">
+            <option value="">Select your bank…</option>
+            <option>ABSA</option><option>FNB</option><option>Standard Bank</option><option>Nedbank</option>
+            <option>Capitec</option><option>Investec</option><option>African Bank</option><option>Other</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Account Type</label>
+          <select class="fi" id="fAccountType"><option>Cheque Account</option><option>Savings Account</option><option>Business Account</option></select>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:24px"><label class="fl">Outstanding Credit / Loans (R)</label><input class="fi" id="fOutstandingCredit" type="number" placeholder="0"/></div>
+
       <!-- Work -->
       <div class="sec"><span class="material-symbols-outlined ms">work</span> Work Information</div>
       <div class="grid2" style="margin-bottom:16px">
@@ -134,33 +187,34 @@
         <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:-10px;margin-bottom:16px">Leave blank to keep current password</div>
       </div>
 
-      <!-- Permissions (admin only, editing another user) -->
+      <!-- Two-factor auth reset (admin only, editing another user) — an
+           alternative to the self-service "Lost your device?" email flow
+           (verify-2fa.html/totp-recovery.html) for when that isn't reachable
+           (no access to the inbox, email not arriving, etc.) — any admin can
+           unblock a locked-out teammate directly from here. -->
+      <div id="totpSection" style="display:none;margin-bottom:32px">
+        <div class="sec"><span class="material-symbols-outlined ms">shield_lock</span> Two-Factor Authentication</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px">
+          <div>
+            <div style="font-size:13px;color:#e2e2e8;font-weight:600" id="totpStatusLabel">—</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:2px">Resetting clears their current device/backup codes — they'll set up a new authenticator on next sign-in.</div>
+          </div>
+          <button type="button" class="btn-cancel" id="totpResetBtn" style="border-color:rgba(255,107,107,0.25);color:#ff6b6b;flex-shrink:0">
+            <span class="material-symbols-outlined ms" style="font-size:16px">lock_reset</span> Reset 2FA
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom Role (admin only, editing another user) -->
       <div id="permissionsSection" style="display:none;margin-bottom:32px">
-        <div class="sec"><span class="material-symbols-outlined ms">tune</span> Permissions</div>
-        <div class="perm-row">
-          <div><div class="perm-label">Fleet Management</div><div class="perm-desc">View and manage vehicles, service schedules</div></div>
-          <button type="button" class="toggle on" data-perm="fleet" onclick="this.classList.toggle('on')"></button>
+        <div class="sec"><span class="material-symbols-outlined ms">admin_panel_settings</span> Custom Role</div>
+        <div class="fg">
+          <label class="fl">Scoped Admin Access <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional — grants view/edit on specific admin pages without full admin rights)</span></label>
+          <select class="fi" id="fCustomRoleId">
+            <option value="">None</option>
+          </select>
         </div>
-        <div class="perm-row">
-          <div><div class="perm-label">Rental Tracking</div><div class="perm-desc">View rentals, create and manage rental agreements</div></div>
-          <button type="button" class="toggle on" data-perm="rentals" onclick="this.classList.toggle('on')"></button>
-        </div>
-        <div class="perm-row">
-          <div><div class="perm-label">Maintenance Queries</div><div class="perm-desc">Log and manage maintenance issues</div></div>
-          <button type="button" class="toggle on" data-perm="maintenance" onclick="this.classList.toggle('on')"></button>
-        </div>
-        <div class="perm-row">
-          <div><div class="perm-label">Marketplace Access</div><div class="perm-desc">Browse and interact with the equipment marketplace</div></div>
-          <button type="button" class="toggle on" data-perm="marketplace" onclick="this.classList.toggle('on')"></button>
-        </div>
-        <div class="perm-row">
-          <div><div class="perm-label">Cost Calculator</div><div class="perm-desc">Access the rental cost calculator</div></div>
-          <button type="button" class="toggle on" data-perm="calculator" onclick="this.classList.toggle('on')"></button>
-        </div>
-        <div class="perm-row">
-          <div><div class="perm-label">Apply for Rentals</div><div class="perm-desc">Submit rental applications</div></div>
-          <button type="button" class="toggle on" data-perm="apply" onclick="this.classList.toggle('on')"></button>
-        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:8px">Manage available roles and their permissions under <a href="admin-roles" style="color:#00f0ff">Roles &amp; Permissions</a>.</div>
       </div>
 
       <div style="display:flex;gap:12px">
@@ -186,6 +240,28 @@ buildSidebar('profile');
 var currentUser = EC_AUTH.require(['admin','user','driver']);
 document.getElementById('orgLabel').textContent = currentUser.org || 'Independent';
 
+// Server enums are UPPER_SNAKE_CASE; the selects show human-friendly text —
+// same maps as apply-rental.html/signup.html.
+var PROVINCE_MAP = {
+  'Gauteng':'GAUTENG', 'Western Cape':'WESTERN_CAPE', 'KwaZulu-Natal':'KWAZULU_NATAL',
+  'Eastern Cape':'EASTERN_CAPE', 'Mpumalanga':'MPUMALANGA', 'Limpopo':'LIMPOPO',
+  'North West':'NORTH_WEST', 'Northern Cape':'NORTHERN_CAPE', 'Free State':'FREE_STATE',
+};
+var EMPLOYMENT_MAP = {
+  'Full-time Employed':'FULL_TIME_EMPLOYED', 'Self-employed':'SELF_EMPLOYED',
+  'Business Owner':'BUSINESS_OWNER', 'Contractor':'CONTRACTOR',
+};
+var BANK_MAP = {
+  'ABSA':'ABSA', 'FNB':'FNB', 'Standard Bank':'STANDARD_BANK', 'Nedbank':'NEDBANK',
+  'Capitec':'CAPITEC', 'Investec':'INVESTEC', 'African Bank':'AFRICAN_BANK', 'Other':'OTHER',
+};
+var ACCOUNT_TYPE_MAP = { 'Cheque Account':'CHEQUE', 'Savings Account':'SAVINGS', 'Business Account':'BUSINESS' };
+function reverseMap(m) { var r = {}; Object.keys(m).forEach(function(k){ r[m[k]] = k; }); return r; }
+var PROVINCE_REVERSE = reverseMap(PROVINCE_MAP);
+var EMPLOYMENT_REVERSE = reverseMap(EMPLOYMENT_MAP);
+var BANK_REVERSE = reverseMap(BANK_MAP);
+var ACCOUNT_TYPE_REVERSE = reverseMap(ACCOUNT_TYPE_MAP);
+
 // Determine if admin is viewing another user's profile
 var urlParams = new URLSearchParams(window.location.search);
 var viewingId = urlParams.get('id');
@@ -196,9 +272,17 @@ if (isAdminEditingOther) {
   document.getElementById('pageTitle').textContent = 'Edit User Profile';
   document.getElementById('passwordSection').style.display = 'block';
   document.getElementById('permissionsSection').style.display = 'block';
+  document.getElementById('totpSection').style.display = 'block';
   // Show role selector instead of read-only
   document.getElementById('fRoleDisplay').style.display = 'none';
   document.getElementById('fRoleSelect').style.display = 'block';
+  DC_DATA.loadRoles().then(function() {
+    var sel = document.getElementById('fCustomRoleId');
+    var roles = DC_DATA.getRoles();
+    sel.innerHTML = '<option value="">None</option>' +
+      roles.map(function(r) { return '<option value="' + EC_SECURITY.sanitizeHtml(r.id) + '">' + EC_SECURITY.sanitizeHtml(r.name) + '</option>'; }).join('');
+    if (_targetUser) sel.value = _targetUser.customRoleId || '';
+  }).catch(function() {});
 }
 
 function showToast(type, msg) {
@@ -216,6 +300,13 @@ function fillForm(u) {
   document.getElementById('pAvatar').textContent = initials(u.name);
   document.getElementById('pName').textContent = u.name;
   document.getElementById('pEmail').textContent = u.email;
+
+  var totpLabel = document.getElementById('totpStatusLabel');
+  var totpBtn = document.getElementById('totpResetBtn');
+  if (totpLabel && totpBtn) {
+    totpLabel.textContent = u.totpEnabled ? 'Enabled' : 'Not enabled';
+    totpBtn.style.display = u.totpEnabled ? '' : 'none';
+  }
   document.getElementById('pRole').textContent = (u.role || '').toUpperCase();
   document.getElementById('pOrg').textContent = u.orgName || u.org || '';
 
@@ -224,12 +315,28 @@ function fillForm(u) {
   document.getElementById('fPosition').value = u.position || '';
   document.getElementById('fDepartment').value = u.department || '';
   document.getElementById('fBio').value = u.bio || '';
+
+  document.getElementById('fIdNumber').value = u.idNumber || '';
+  document.getElementById('fDob').value = u.dateOfBirth || '';
+  document.getElementById('fAddress').value = u.address || '';
+  document.getElementById('fCity').value = u.city || '';
+  document.getElementById('fProvince').value = PROVINCE_REVERSE[u.province] || '';
+  document.getElementById('fPostal').value = u.postalCode || '';
+  document.getElementById('fEmploymentStatus').value = EMPLOYMENT_REVERSE[u.employmentStatus] || '';
+  document.getElementById('fEmployerName').value = u.employerName || '';
+  document.getElementById('fMonthlyIncome').value = u.monthlyIncome != null ? u.monthlyIncome : '';
+  document.getElementById('fYearsEmployed').value = u.yearsEmployed != null ? u.yearsEmployed : '';
+  document.getElementById('fBank').value = BANK_REVERSE[u.bank] || '';
+  document.getElementById('fAccountType').value = ACCOUNT_TYPE_REVERSE[u.accountType] || 'Cheque Account';
+  document.getElementById('fOutstandingCredit').value = u.outstandingCredit != null ? u.outstandingCredit : '';
   document.getElementById('fOrg').textContent = u.orgName || u.org || 'Independent';
   document.getElementById('fEmail').textContent = u.email;
   document.getElementById('fRoleDisplay').textContent = (u.role || 'user').charAt(0).toUpperCase() + (u.role || 'user').slice(1);
   document.getElementById('fRoleSelect').value = (u.role || 'user').toUpperCase();
   document.getElementById('fJoined').textContent = u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-ZA', {year:'numeric',month:'long',day:'numeric'}) : '—';
   document.getElementById('fStatus').textContent = (u.status || 'active').charAt(0).toUpperCase() + (u.status || 'active').slice(1);
+  var roleSel = document.getElementById('fCustomRoleId');
+  if (roleSel && roleSel.options.length > 1) roleSel.value = u.customRoleId || '';
 }
 
 // Load from DB. ListAllUsers (behind DC_DATA.init()) is admin-only
@@ -257,6 +364,11 @@ if (isAdminEditingOther) {
         status: (u.status || 'ACTIVE').toLowerCase(),
         avatarUrl: u.avatarUrl, bio: u.bio, position: u.position,
         department: u.department, phone: u.phone, createdAt: u.createdAt,
+        idNumber: u.idNumber, dateOfBirth: u.dateOfBirth, address: u.address,
+        city: u.city, province: u.province, postalCode: u.postalCode,
+        employmentStatus: u.employmentStatus, employerName: u.employerName,
+        monthlyIncome: u.monthlyIncome, yearsEmployed: u.yearsEmployed,
+        bank: u.bank, accountType: u.accountType, outstandingCredit: u.outstandingCredit,
       };
     }
     fillForm(_targetUser || currentUser);
@@ -281,6 +393,19 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     position: document.getElementById('fPosition').value.trim() || null,
     department: document.getElementById('fDepartment').value.trim() || null,
     bio: document.getElementById('fBio').value.trim() || null,
+    idNumber: document.getElementById('fIdNumber').value.trim() || null,
+    dateOfBirth: document.getElementById('fDob').value || null,
+    address: document.getElementById('fAddress').value.trim() || null,
+    city: document.getElementById('fCity').value.trim() || null,
+    province: PROVINCE_MAP[document.getElementById('fProvince').value] || null,
+    postalCode: document.getElementById('fPostal').value.trim() || null,
+    employmentStatus: EMPLOYMENT_MAP[document.getElementById('fEmploymentStatus').value] || null,
+    employerName: document.getElementById('fEmployerName').value.trim() || null,
+    monthlyIncome: document.getElementById('fMonthlyIncome').value ? Number(document.getElementById('fMonthlyIncome').value) : null,
+    yearsEmployed: document.getElementById('fYearsEmployed').value ? Number(document.getElementById('fYearsEmployed').value) : null,
+    bank: BANK_MAP[document.getElementById('fBank').value] || null,
+    accountType: ACCOUNT_TYPE_MAP[document.getElementById('fAccountType').value] || null,
+    outstandingCredit: document.getElementById('fOutstandingCredit').value ? Number(document.getElementById('fOutstandingCredit').value) : null,
   };
 
   // Goes through DC_DATA's authenticated backend proxy (see dc.js /
@@ -308,6 +433,12 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
           orgId: _targetUser.orgId || currentUser.orgId || null,
         }),
       }).then(function (r) { if (!r.ok) throw new Error('Failed to update access role'); }));
+    }
+
+    // Custom role (additive scoped-access grant, independent of base role above)
+    var newCustomRoleId = document.getElementById('fCustomRoleId').value || null;
+    if (newCustomRoleId !== (_targetUser.customRoleId || null)) {
+      promises.push(DC_DATA.assignUserCustomRole(_targetUser.id, newCustomRoleId));
     }
 
     // Password change — a client SDK can only ever change the currently
@@ -347,6 +478,42 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">save</span> Save Profile';
   });
 });
+
+// ── Admin-assisted 2FA reset — alternative to the email-based self-service
+// recovery flow (verify-2fa.html's "Lost your device?"), for when that
+// isn't reachable. Goes straight through EC_API, not DC_DATA — this is a
+// TOTP/Auth action, not a Data Connect one (see routes/totpRoutes.js's
+// disable-for-user, requireAdmin-gated).
+var totpResetBtnEl = document.getElementById('totpResetBtn');
+if (totpResetBtnEl) {
+  totpResetBtnEl.addEventListener('click', function () {
+    if (!_targetUser) return;
+    var confirmed = confirm(
+      'Reset two-factor authentication for ' + _targetUser.name + ' (' + _targetUser.email + ')?\n\n' +
+      'This clears their current authenticator and backup codes immediately. ' +
+      'They will be asked to set up a new authenticator the next time they sign in.'
+    );
+    if (!confirmed) return;
+
+    totpResetBtnEl.disabled = true;
+    totpResetBtnEl.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">progress_activity</span> Resetting…';
+    EC_API.authFetch('/auth/totp/disable-for-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: _targetUser.email }),
+    }).then(function (r) {
+      if (!r.ok) return r.json().then(function (b) { throw new Error(b.error || 'Could not reset 2FA'); });
+      showToast('ok', 'Two-factor auth reset for ' + _targetUser.name + '.');
+      document.getElementById('totpStatusLabel').textContent = 'Not enabled';
+      totpResetBtnEl.style.display = 'none';
+    }).catch(function (err) {
+      showToast('err', 'Failed to reset 2FA: ' + err.message);
+    }).finally(function () {
+      totpResetBtnEl.disabled = false;
+      totpResetBtnEl.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">lock_reset</span> Reset 2FA';
+    });
+  });
+}
 </script>
 <script src="cookie-consent.js"></script>
 </body></html>

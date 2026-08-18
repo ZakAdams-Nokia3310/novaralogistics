@@ -13,42 +13,19 @@
   *,*::before,*::after{box-sizing:border-box;margin:0;}
   body{font-family:'Inter',sans-serif;min-height:100vh;}
   .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
-  .grad{background:linear-gradient(135deg,#ffb4a2,#ffd6cc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-  .nl{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-secondary,#b9cacb);text-decoration:none;transition:all .18s;background:none;border:none;cursor:pointer;width:100%;}
-  .nl:hover{color:var(--text-primary,#e2e2e8);background:var(--surface-hover,rgba(255,255,255,.05));}
-  .nl.on{color:#ffb4a2;background:rgba(255,180,162,.08);border:1px solid rgba(255,180,162,.14);}
-  .nl .ms{font-size:16px;}
-  input:focus,select:focus,textarea:focus{border-color:#ffb4a2!important;}
-  .btn-warm{width:100%;padding:13px;background:#ffb4a2;color:#3c0700;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;border:none;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff!important;}
+  .btn-warm{width:100%;padding:13px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:14px;border:none;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;}
   .btn-warm:hover{filter:brightness(1.08);}
   .btnd{width:100%;padding:13px;background:rgba(255,107,107,.1);color:#ff6b6b;border:1px solid rgba(255,107,107,.22);font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;}
   .btnd:hover{background:rgba(255,107,107,.17);}
-  @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
   @media(max-width:960px){#dashSplit{grid-template-columns:1fr!important}}
 </style>
 </head>
 <body>
 
-<aside class="sidebar">
-  <div class="sb-logo-row" style="padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;gap:8px">
-    <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;min-width:0">
-      <span style="font-size:19px;flex-shrink:0">⚡</span>
-      <span class="grad sb-label" style="font-family:'Hanken Grotesk',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.03em;white-space:nowrap;overflow:hidden">EquipCore</span>
-    </a>
-    <button class="sb-toggle" aria-label="Collapse sidebar" title="Collapse sidebar" onclick="toggleSidebarCollapse()"><span class="material-symbols-outlined">chevron_left</span></button>
-  </div>
-  <div style="padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04)">
-    <div class="glass-lo sb-user-card" style="border-radius:10px;padding:9px 10px;display:flex;align-items:center;gap:9px">
-      <div id="sh-avatar" style="width:30px;height:30px;border-radius:8px;background:rgba(255,180,162,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#ffb4a2;flex-shrink:0">DR</div>
-      <div class="sb-label" style="min-width:0;flex:1"><div id="sh-name" style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Driver</div><div id="sh-id" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">—</div></div>
-      <span class="sb-label" style="font-family:'JetBrains Mono',monospace;font-size:9px;background:rgba(255,180,162,.1);color:#ffb4a2;padding:2px 6px;border-radius:999px;border:1px solid rgba(255,180,162,.2);flex-shrink:0">DRIVER</span>
-    </div>
-  </div>
-  <nav id="sh-nav" style="flex:1;min-height:0;overscroll-behavior:contain;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px"></nav>
-  <div style="padding:9px 7px;border-top:1px solid rgba(255,255,255,0.04)">
-    <button onclick="EC_AUTH.logout()" class="nl" title="Sign Out" style="color:#849495"><span class="material-symbols-outlined ms">logout</span><span class="sb-label">Sign Out</span></button>
-  </div>
-</aside>
+<aside id="sidebar-root"></aside>
 
 <div class="main">
   <div class="topbar">
@@ -76,7 +53,7 @@
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
               <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;color:#00f0ff">64%</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Fuel</div></div>
               <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700">84 km/h</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Speed</div></div>
-              <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;color:#ffb4a2">4h 12m</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Remaining</div></div>
+              <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;color:#00f0ff">4h 12m</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Remaining</div></div>
               <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700">142 km</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Today</div></div>
             </div>
           </div>
@@ -128,7 +105,7 @@
           <div style="margin-bottom:11px"><label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">Severity</label>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
               <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:12px"><input type="radio" name="sev" value="minor" style="width:auto;padding:0;background:none;border:none;accent-color:#ffd93d"/>Minor</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:12px"><input type="radio" name="sev" value="moderate" style="width:auto;padding:0;background:none;border:none;accent-color:#ffb4a2"/>Moderate</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:12px"><input type="radio" name="sev" value="moderate" style="width:auto;padding:0;background:none;border:none;accent-color:#ffa94d"/>Moderate</label>
               <label style="display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:8px;border:1px solid rgba(255,107,107,.25);cursor:pointer;font-size:12px"><input type="radio" name="sev" value="critical" checked style="width:auto;padding:0;background:none;border:none;accent-color:#ff6b6b"/>Critical</label>
             </div></div>
           <div style="margin-bottom:14px"><label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:6px">Description</label>
@@ -176,22 +153,16 @@
 <script src="security.js"></script>
 <script src="auth.js"></script>
 <script src="frontend/token-client.js"></script>
+<script src="dc.js?v=2"></script>
 <script src="sidebar.js?v=2"></script>
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
+buildSidebar('dashboard-driver');
 const user = EC_AUTH.require(['driver','admin']);
 const esc = EC_SECURITY.sanitizeHtml;
 if (user) {
-  document.getElementById('sh-name').textContent = user.name;
-  document.getElementById('sh-id').textContent   = user.id;
-  document.getElementById('sh-avatar').textContent = user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('orgLabel').textContent  = user.org || 'Fleet Operations';
-  EC_SHELL.init([
-    {href:'dashboard-driver',icon:'home',          label:'My Dashboard',active:()=>true},
-    {href:'my-rentals',      icon:'receipt_long',  label:'My Rentals'},
-    {href:'calculator',      icon:'calculate',     label:'Calculator'},
-  ]);
 }
 
 // Route map
@@ -207,7 +178,7 @@ const route=[[-26.2041,28.0473],[-25.95,27.9],[-25.78,27.6],[-25.6677,27.2424]];
 L.polyline(route,{color:'#00f0ff',weight:3,opacity:.8,dashArray:'6 4'}).addTo(rm);
 const posIcon=L.divIcon({html:'<div style="width:14px;height:14px;border-radius:50%;background:#00f0ff;border:3px solid white;box-shadow:0 0 14px rgba(0,240,255,.8);"></div>',iconSize:[14,14],iconAnchor:[7,7],className:''});
 L.marker([-25.95,27.9],{icon:posIcon}).addTo(rm).bindPopup('<b>EC-7749-X</b><br>Volvo FH16 · 84 km/h');
-const destIcon=L.divIcon({html:'<div style="width:9px;height:9px;border-radius:50%;background:#ffb4a2;border:2px solid white;box-shadow:0 0 8px rgba(255,180,162,.6);"></div>',iconSize:[9,9],iconAnchor:[4.5,4.5],className:''});
+const destIcon=L.divIcon({html:'<div style="width:9px;height:9px;border-radius:50%;background:#e2e2e8;border:2px solid white;box-shadow:0 0 8px rgba(226,226,232,.6);"></div>',iconSize:[9,9],iconAnchor:[4.5,4.5],className:''});
 L.marker([-25.6677,27.2424],{icon:destIcon}).addTo(rm);
 
 // Callouts
@@ -246,7 +217,7 @@ function renderTrips(){
       { name:'Distance (km)', data: chronological.map(t => t.dist) },
       { name:'Fuel (L)',      data: chronological.map(t => t.fuel || 0) },
     ],
-    colors:['#00f0ff','#ffb4a2'],
+    colors:['#00f0ff','#d1bcff'],
     plotOptions:{ bar:{ columnWidth:'55%', borderRadius:4 } },
     dataLabels:{ enabled:false },
     grid:{ borderColor:'rgba(255,255,255,.05)', strokeDashArray:3 },

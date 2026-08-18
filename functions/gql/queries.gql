@@ -62,6 +62,11 @@ query ListAllUsers {
     position
     department
     phone
+    customRole {
+      id
+      name
+    }
+    totpEnabled
     createdAt
     updatedAt
   }
@@ -118,6 +123,26 @@ query ListAllMaintenanceQueries {
   }
 }
 
+# Server-internal only (not in the registry, never reachable via /api/data/execute)
+# — used to read a rental's current status before a status-changing mutation,
+# so dataController.js can log an accurate from/to RentalEvent.
+query GetRentalById($id: UUID!) {
+  rental(id: $id) {
+    id
+    status
+    organisation {
+      id
+    }
+    # For notifying the renter on a status change — null for a walk-in
+    # rental with no linked application (see logRentalStatusChangeIfNeeded).
+    application {
+      applicantUser {
+        id
+      }
+    }
+  }
+}
+
 query ListAllRentals {
   rentals(orderBy: { updatedAt: DESC }) {
     id
@@ -138,6 +163,19 @@ query ListAllRentals {
     valueZar
     status
     notes
+    # For the rental timeline (see RentalEvent) — "submitted"/"reviewed" entries
+    # are synthesized from these fields rather than duplicated as events.
+    application {
+      id
+      ref
+      status
+      submittedAt
+      reviewedAt
+      reviewedBy {
+        name
+      }
+      rejectionReason
+    }
     createdAt
     updatedAt
   }
@@ -166,8 +204,43 @@ query ListRentalsByOrg($organisationId: UUID!) {
     valueZar
     status
     notes
+    application {
+      id
+      ref
+      status
+      submittedAt
+      reviewedAt
+      reviewedBy {
+        name
+      }
+      rejectionReason
+    }
     createdAt
     updatedAt
+  }
+}
+
+# Timeline entries for a single rental — see dataconnect/schema/schema.gql's
+# RentalEvent doc comment for why "submitted"/"reviewed" aren't stored here.
+# $organisationId is always overridden server-side with the caller's own org
+# (see registry/dataOperations.js's orgField) — filtering on the RELATED
+# rental's organisationId, not a bare column on rental_events itself, so a
+# rentalId belonging to a different org returns an empty timeline rather
+# than another org's data.
+query ListRentalEvents($rentalId: UUID!, $organisationId: UUID!) {
+  rentalEvents(
+    where: { rentalId: { eq: $rentalId }, rental: { organisationId: { eq: $organisationId } } }
+    orderBy: { createdAt: ASC }
+  ) {
+    id
+    type
+    description
+    fromStatus
+    toStatus
+    actorUser {
+      name
+    }
+    createdAt
   }
 }
 
@@ -200,11 +273,13 @@ query ListVehiclesByOrg($organisationId: UUID!) {
 query ListAllRentalApplications {
   rentalApplications(orderBy: { submittedAt: DESC }) {
     id
+    ref
     firstName
     lastName
     email
     phone
     equipmentName
+    estimatedCost
     vehicle {
       id
       make
@@ -213,6 +288,11 @@ query ListAllRentalApplications {
     startDate
     endDate
     status
+    creditCheckStatus
+    creditCheckScore
+    creditCheckFeeZar
+    creditCheckRequestedAt
+    creditCheckCompletedAt
     submittedAt
     updatedAt
   }
@@ -221,10 +301,15 @@ query ListAllRentalApplications {
 query GetRentalApplicationById($id: UUID!) {
   rentalApplication(id: $id) {
     id
+    ref
     applicantUser {
       id
       name
       email
+    }
+    organisation {
+      id
+      name
     }
     firstName
     lastName
@@ -259,6 +344,12 @@ query GetRentalApplicationById($id: UUID!) {
     rentalNotes
     status
     rejectionReason
+    creditCheckStatus
+    creditCheckScore
+    creditCheckFeeZar
+    creditCheckRequestedAt
+    creditCheckCompletedAt
+    creditCheckDeclinedAcknowledged
     submittedAt
     updatedAt
   }
@@ -288,6 +379,85 @@ query GetUserByEmail($email: String!) {
     position
     department
     phone
+    # KYC / rental-readiness fields — see schema.gql's User doc comment.
+    # Fetched here so apply-rental.html can auto-fill its form and
+    # profile.html can show/edit them, without a separate query.
+    idNumber
+    dateOfBirth
+    address
+    city
+    province
+    postalCode
+    employmentStatus
+    employerName
+    monthlyIncome
+    yearsEmployed
+    bank
+    accountType
+    outstandingCredit
+    termsAcceptedAt
     createdAt
+    customRole { id name permissions }
+  }
+}
+
+query ListAllRoles {
+  roles(orderBy: { name: ASC }) {
+    id
+    name
+    description
+    permissions
+    createdBy { id name }
+    createdAt
+    updatedAt
+  }
+}
+
+query GetRoleById($id: UUID!) {
+  role(id: $id) {
+    id
+    name
+    permissions
+  }
+}
+
+# Feeds admin-reports.html's Activity tab — the DB-backed audit trail
+# written by services/auditLog.js's logEvent() on every mutation/denied
+# access, distinct from admin-audit.html's separate client-only
+# (localStorage) log.
+query ListAuditLogs($limit: Int) {
+  auditLogs(orderBy: { createdAt: DESC }, limit: $limit) {
+    id
+    user { id name }
+    userName
+    userRole
+    action
+    details
+    page
+    createdAt
+  }
+}
+
+# ── Notifications ── ListNotifications is client-reachable (ownField-scoped
+# to the caller's own dbId — see registry/dataOperations.js). GetNotificationById
+# is server-internal only, used by dataController.js's MarkNotificationRead
+# special case to verify a notification belongs to the caller before marking
+# it read (Data Connect's generated _update can't filter by user_id itself).
+query ListNotifications($userId: UUID!) {
+  notifications(where: { userId: { eq: $userId } }, orderBy: { createdAt: DESC }, limit: 50) {
+    id
+    type
+    title
+    body
+    linkPath
+    read
+    createdAt
+  }
+}
+
+query GetNotificationById($id: UUID!) {
+  notification(id: $id) {
+    id
+    user { id }
   }
 }

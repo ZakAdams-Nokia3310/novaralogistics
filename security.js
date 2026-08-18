@@ -28,18 +28,11 @@ const EC_SECURITY = (() => {
   // Pages open to unauthenticated visitors
   // NOTE: keys are extensionless (clean URLs — see firebase.json's
   // "cleanUrls" and server.js) and must match location.pathname.split('/').pop().
+  // No guest/anonymous browsing anywhere in the product — every page that
+  // touches real inventory or rental data requires a signed-in account.
   const PUBLIC_PAGES = new Set([
-    '', 'index', 'login', 'about', 'contact',
-    'catalog', 'marketplace', 'calculator',
-    'dashboard-guest', 'dashboard', 'privacy',
-    // Anonymous rental applications are a deliberately-supported path
-    // server-side (CreateRentalApplication is in PUBLIC_SCHEMAS, submitted
-    // via submitPublic with no auth token) — dashboard-guest.html's own
-    // "Apply to Rent" button sends guests straight here. Gating this page
-    // behind login would silently strand every prospective customer who
-    // isn't already an org member, which is exactly the case this form
-    // exists for.
-    'apply-rental',
+    '', 'index', 'login', 'signup', 'about', 'contact',
+    'calculator', 'dashboard', 'privacy', 'terms',
   ]);
 
   const PAGE_ROLES = {
@@ -49,6 +42,8 @@ const EC_SECURITY = (() => {
     'admin-maintenance' : ['admin'],
     'admin-orgs'        : ['admin'],
     'admin-audit'       : ['admin'],
+    'admin-roles'       : ['admin'],
+    'admin-reports'     : ['admin'],
     'add-vehicle'       : ['admin'],
     'dashboard-user'    : ['user'],
     'user-dashboard'    : ['user'],
@@ -59,6 +54,8 @@ const EC_SECURITY = (() => {
     'vehicle-detail'    : ['admin'],
     'rental-detail'     : ['admin'],
     'profile'           : ['admin', 'user', 'driver'],
+    'apply-rental'      : ['admin', 'user', 'driver'],
+    'rent-equipment'    : ['admin', 'user', 'driver'],
   };
 
   // ── Cryptographically secure random ───────────────────────────────────────
@@ -369,6 +366,45 @@ const EC_SECURITY = (() => {
     return true;
   }
 
+  // ── Custom-role edit/view distinction ───────────────────────────────────────
+  // A base admin can always edit anything their role already gates. A
+  // custom-role holder can only edit a page (Add/Edit/Delete/Approve/status
+  // buttons etc.) when their role's grant for that page is specifically
+  // "edit", not just "view" — call this to decide whether to show or hide
+  // a page's mutating controls. UI convenience only, matching guardPage's
+  // note above: the actual write is still rejected server-side regardless
+  // of what this returns.
+  function canEdit(pageKey) {
+    let user = null;
+    try { user = JSON.parse(sessionStorage.getItem('ec_session') || 'null'); } catch {}
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    return !!(user.permissions && user.permissions[pageKey] === 'edit');
+  }
+
+  // Some pages aren't a feature page in their own right but a satellite of
+  // one (add-vehicle.html is only reached from admin-fleet.html; vehicle
+  // detail/rental detail are admin drill-down views) — a custom role's
+  // grant on the owning feature also covers these. All three are
+  // mutation-capable pages, so only an 'edit' grant (never bare 'view')
+  // qualifies.
+  const FEATURE_PAGE_ALIASES = {
+    'add-vehicle'    : 'admin-fleet',
+    'vehicle-detail' : 'admin-fleet',
+    'rental-detail'  : 'admin-rentals',
+  };
+
+  // Single source of truth for "does this custom-role permissions object
+  // grant access to this page" — used by guardPage() (page reachability)
+  // and auth.js's EC_AUTH.require() (per-page role gate), so the two never
+  // drift out of sync.
+  function hasPageAccess(user, page) {
+    if (!user || !user.permissions) return false;
+    if (user.permissions[page]) return true;
+    const alias = FEATURE_PAGE_ALIASES[page];
+    return !!(alias && user.permissions[alias] === 'edit');
+  }
+
   // ── Page access guard ──────────────────────────────────────────────────────
 
   function guardPage() {
@@ -393,11 +429,17 @@ const EC_SECURITY = (() => {
       return;
     }
 
-    if (!allowed.includes(user.role)) {
+    // A custom role (see dataconnect/schema/schema.gql's Role type) grants
+    // page access on top of the base role — view or edit both count, since
+    // this only decides whether the page can be OPENED at all; whether its
+    // mutating controls are shown is a separate check (see canEdit below).
+    // UI convenience only — the real gate is server-side, same as the base
+    // role check above.
+    if (!allowed.includes(user.role) && !hasPageAccess(user, page)) {
       _audit('UNAUTHORIZED_ACCESS_ATTEMPT', { page, userRole: user.role, required: allowed });
       const dashMap = {
         admin: 'dashboard-admin', user: 'dashboard-user',
-        driver: 'dashboard-driver', guest: 'dashboard-guest',
+        driver: 'dashboard-driver',
       };
       location.href = dashMap[user.role] || 'login';
       return;
@@ -418,9 +460,18 @@ const EC_SECURITY = (() => {
       const page = location.pathname.split('/').pop() || '';
       if (!PUBLIC_PAGES.has(page) && PAGE_ROLES[page]) {
         _audit('INACTIVITY_LOGOUT', { page });
-        sessionStorage.removeItem('ec_session');
-        sessionStorage.removeItem(K.SESSION_TS);
-        location.href = 'login';
+        // Must actually sign out of Firebase, not just clear the local
+        // sessionStorage mirror — otherwise the very next page load's
+        // onIdTokenChanged handler (auth.js) silently re-authenticates from
+        // the still-valid Firebase session and this "logout" never sticks.
+        // EC_AUTH.logout() also revokes the refresh token server-side.
+        if (typeof EC_AUTH !== 'undefined') {
+          EC_AUTH.logout();
+        } else {
+          sessionStorage.removeItem('ec_session');
+          sessionStorage.removeItem(K.SESSION_TS);
+          location.href = 'login';
+        }
       }
     }, INACTIVITY_MS);
   }
@@ -566,6 +617,8 @@ const EC_SECURITY = (() => {
 
     // Guard
     guardPage,
+    canEdit,
+    hasPageAccess,
     PAGE_ROLES,
     PUBLIC_PAGES,
   };

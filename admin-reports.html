@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>Reporting — EquipCore Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="theme.css" rel="stylesheet"/>
+<script src="https://unpkg.com/apexcharts"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.85);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .tab-btn{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;padding:8px 16px;border-radius:9px;border:1px solid rgba(255,255,255,.07);background:none;color:#849495;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:7px;}
+  .tab-btn.active{background:rgba(0,240,255,.09);color:#00f0ff;border-color:rgba(0,240,255,.2);}
+  .statCard{border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;}
+  .statVal{font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;}
+  .statLabel{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em;}
+  .panelTitle{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:14px;}
+  .miniStat{border-radius:11px;padding:13px 15px;}
+  .miniStat .v{font-family:'Hanken Grotesk',sans-serif;font-size:19px;font-weight:800;}
+  .miniStat .l{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495;text-transform:uppercase;letter-spacing:.07em;margin-top:2px;}
+  .barRow{display:flex;align-items:center;gap:10px;padding:7px 0;}
+  .barRow .lbl{width:150px;flex-shrink:0;font-size:12px;color:#b9cacb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .barRow .track{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:5px;overflow:hidden;}
+  .barRow .fill{height:100%;border-radius:5px;}
+  .barRow .n{width:34px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;flex-shrink:0;}
+  .tbl{width:100%;border-collapse:collapse;}
+  .tbl th{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05);}
+  .tbl td{padding:9px 12px;font-size:12.5px;border-bottom:1px solid rgba(255,255,255,.03);}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){
+    .body{padding:14px 12px!important}
+    .topbar{padding:0 14px!important;height:auto!important;min-height:56px;gap:6px}
+    #kpiRow{grid-template-columns:repeat(2,1fr)!important}
+    .tab-btn{font-size:10px!important;padding:6px 10px!important;gap:5px}
+    .grid2,.grid3{grid-template-columns:1fr!important}
+  }
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Reporting</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Metrics across every feature — view each individually below</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div id="kpiRow" style="display:grid;grid-template-columns:repeat(6,1fr);gap:11px;margin-bottom:20px"></div>
+
+    <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap" id="tabBar"></div>
+
+    <div id="panelFleet"></div>
+    <div id="panelRentals" style="display:none"></div>
+    <div id="panelApplications" style="display:none"></div>
+    <div id="panelMaintenance" style="display:none"></div>
+    <div id="panelOrgs" style="display:none"></div>
+    <div id="panelUsers" style="display:none"></div>
+    <div id="panelActivity" style="display:none"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js?v=2"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('admin-reports');
+const _ecUser = EC_AUTH.require(['admin']);
+const esc = EC_SECURITY.sanitizeHtml;
+DC_DATA.setOrgScope(_ecUser.orgId);
+
+const TABS = [
+  { key: 'Fleet',        icon: 'garage' },
+  { key: 'Rentals',      icon: 'receipt_long' },
+  { key: 'Applications', icon: 'assignment' },
+  { key: 'Maintenance',  icon: 'build' },
+  { key: 'Orgs',         icon: 'domain', label: 'Organisations' },
+  { key: 'Users',        icon: 'group', label: 'Users & Access' },
+  { key: 'Activity',     icon: 'history' },
+];
+
+document.getElementById('tabBar').innerHTML = TABS.map((t, i) =>
+  `<button class="tab-btn${i === 0 ? ' active' : ''}" id="tab${t.key}" onclick="switchTab('${t.key}')">
+    <span class="material-symbols-outlined ms" style="font-size:15px">${t.icon}</span>${t.label || t.key}
+  </button>`).join('');
+
+let activeTab = 'Fleet';
+function switchTab(key) {
+  activeTab = key;
+  TABS.forEach(t => {
+    document.getElementById('panel' + t.key).style.display = t.key === key ? '' : 'none';
+    document.getElementById('tab' + t.key).className = 'tab-btn' + (t.key === key ? ' active' : '');
+  });
+  if (key === 'Activity') loadActivityTab();
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const COLORS = ['#00f0ff','#00d4aa','#ffd93d','#ff6b6b','#d1bcff','#ffb4a2','#00dbe9','#849495'];
+function lastNMonths(n) {
+  const now = new Date();
+  return Array.from({ length: n }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (n - 1 - i), 1);
+    return { y: d.getFullYear(), m: d.getMonth(), label: d.toLocaleString('en-US', { month: 'short' }) };
+  });
+}
+function inMonth(dateStr, y, m) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  return d.getFullYear() === y && d.getMonth() === m;
+}
+function titleCase(s) { return (s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+function barList(rows, containerId) {
+  const max = Math.max(1, ...rows.map(r => r.n));
+  document.getElementById(containerId).innerHTML = rows.map((r, i) => `
+    <div class="barRow">
+      <div class="lbl">${esc(r.label)}</div>
+      <div class="track"><div class="fill" style="width:${(r.n / max * 100).toFixed(0)}%;background:${COLORS[i % COLORS.length]}"></div></div>
+      <div class="n">${r.n}</div>
+    </div>`).join('') || '<div style="color:#849495;font-size:12px;padding:10px 0">No data yet</div>';
+}
+function donut(elId, rows, totalLabel) {
+  document.getElementById(elId).innerHTML = '';
+  new ApexCharts(document.getElementById(elId), {
+    chart: { type: 'donut', height: 220, fontFamily: "'Inter',sans-serif", background: 'transparent' },
+    series: rows.map(r => r.n),
+    labels: rows.map(r => r.label),
+    colors: rows.map((r, i) => r.color || COLORS[i % COLORS.length]),
+    stroke: { width: 2, colors: ['#0a0a0f'] },
+    dataLabels: { enabled: true, style: { fontSize: '10px', fontFamily: "'JetBrains Mono',monospace", colors: ['#0a0a0f'] } },
+    legend: { position: 'bottom', fontSize: '11px', fontFamily: "'JetBrains Mono',monospace", labels: { colors: '#b9cacb' }, markers: { width: 8, height: 8 } },
+    plotOptions: { pie: { donut: { size: '62%', labels: { show: true, value: { color: '#e7e7ec', fontSize: '19px', fontFamily: "'Hanken Grotesk',sans-serif", fontWeight: 800 }, total: { show: true, label: totalLabel, color: '#849495', fontSize: '9px', fontFamily: "'JetBrains Mono',monospace" } } } } },
+    tooltip: { theme: 'dark' },
+  }).render();
+}
+function trendChart(elId, categories, series) {
+  document.getElementById(elId).innerHTML = '';
+  new ApexCharts(document.getElementById(elId), {
+    chart: { height: 220, toolbar: { show: false }, fontFamily: "'Inter',sans-serif", background: 'transparent' },
+    series,
+    colors: COLORS,
+    stroke: { width: 2, curve: 'smooth' },
+    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: .3, opacityTo: 0, stops: [0, 90] } },
+    markers: { size: 0, hover: { size: 4 } },
+    dataLabels: { enabled: false },
+    grid: { borderColor: 'rgba(255,255,255,.05)', strokeDashArray: 3, padding: { left: 4, right: 4 } },
+    xaxis: { categories, labels: { style: { colors: '#849495', fontFamily: "'JetBrains Mono',monospace", fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: { labels: { style: { colors: '#849495', fontSize: '10px' } } },
+    legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontFamily: "'JetBrains Mono',monospace", labels: { colors: '#b9cacb' } },
+    tooltip: { theme: 'dark' },
+  }).render();
+}
+function miniStats(rows, containerId, cols) {
+  document.getElementById(containerId).innerHTML =
+    `<div style="display:grid;grid-template-columns:repeat(${cols || rows.length},1fr);gap:10px;margin-bottom:18px">` +
+    rows.map(r => `<div class="glass-lo miniStat"><div class="v" style="color:${r.color || '#e2e2e8'}">${r.v}</div><div class="l">${esc(r.l)}</div></div>`).join('') +
+    '</div>';
+}
+
+// ── KPI row ────────────────────────────────────────────────────────────────
+function renderKPIs() {
+  const vehicles = DC_DATA.getVehicles(), rentals = DC_DATA.getRentals();
+  const apps = DC_DATA.getRentalApplications(), maint = DC_DATA.getMaintenanceQueries();
+  const orgs = DC_DATA.getAllOrgs(), users = DC_DATA.getAllUsers();
+  const kpis = [
+    { icon: 'garage',       color: '#00f0ff', v: vehicles.length, l: 'Vehicles' },
+    { icon: 'receipt_long', color: '#00d4aa', v: rentals.filter(r => r.status === 'active').length, l: 'Active Rentals' },
+    { icon: 'assignment',   color: '#ffd93d', v: apps.filter(a => a.status === 'pending').length, l: 'Pending Applications' },
+    { icon: 'build',        color: '#ff6b6b', v: maint.filter(m => m.status !== 'resolved').length, l: 'Open Maintenance' },
+    { icon: 'domain',       color: '#d1bcff', v: orgs.filter(o => o.status === 'active').length, l: 'Active Orgs' },
+    { icon: 'group',        color: '#ffb4a2', v: users.length, l: 'Total Users' },
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+    <div class="glass statCard">
+      <div style="width:36px;height:36px;border-radius:9px;background:${k.color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:${k.color}">${k.icon}</span>
+      </div>
+      <div><div class="statVal" style="color:${k.color}">${k.v}</div><div class="statLabel">${k.l}</div></div>
+    </div>`).join('');
+}
+
+// ── Fleet tab ──────────────────────────────────────────────────────────────
+function renderFleetTab() {
+  const vehicles = DC_DATA.getVehicles();
+  const byStatus = ['available','on_rent','maintenance','retired'].map(s => ({ label: titleCase(s), n: vehicles.filter(v => v.status === s).length }));
+  const typeCounts = {};
+  vehicles.forEach(v => { typeCounts[v.type] = (typeCounts[v.type] || 0) + 1; });
+  const byType = Object.entries(typeCounts).sort((a,b) => b[1]-a[1]).slice(0,8).map(([t,n]) => ({ label: titleCase(t), n }));
+  const dueForService = vehicles.filter(v => (v.nextServiceKm - v.km) <= 2000).length;
+  const avgAge = vehicles.length ? Math.round(vehicles.reduce((s,v) => s + (new Date().getFullYear() - (v.year || new Date().getFullYear())), 0) / vehicles.length) : 0;
+  const months = lastNMonths(6);
+  const added = months.map(({y,m}) => vehicles.filter(v => inMonth(v.addedAt, y, m)).length);
+
+  document.getElementById('panelFleet').innerHTML = `
+    <div id="fleetMini"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="grid2">
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Status Breakdown</div><div id="fleetDonut"></div></div>
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Vehicle Type</div><div id="fleetTypeBars"></div></div>
+    </div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-top:14px"><div class="panelTitle">Vehicles Added — Last 6 Months</div><div id="fleetTrend"></div></div>`;
+  miniStats([
+    { v: dueForService, l: 'Due for Service', color: dueForService ? '#ffd93d' : '#00d4aa' },
+    { v: avgAge + ' yrs', l: 'Average Fleet Age' },
+    { v: vehicles.length, l: 'Total Vehicles' },
+  ], 'fleetMini');
+  donut('fleetDonut', byStatus.filter(r => r.n > 0), 'Total Fleet');
+  barList(byType, 'fleetTypeBars');
+  trendChart('fleetTrend', months.map(m => m.label), [{ name: 'Vehicles Added', type: 'area', data: added }]);
+}
+
+// ── Rentals tab ────────────────────────────────────────────────────────────
+function renderRentalsTab() {
+  const rentals = DC_DATA.getRentals();
+  const byStatus = ['pending','active','overdue','complete','cancelled'].map(s => ({ label: titleCase(s), n: rentals.filter(r => r.status === s).length }));
+  const months = lastNMonths(6);
+  const revenue = months.map(({y,m}) => rentals.filter(r => r.status !== 'cancelled' && inMonth(r.startDate,y,m)).reduce((s,r) => s + (r.value||0), 0));
+  const durations = rentals.filter(r => r.startDate && r.returnDate).map(r => (new Date(r.returnDate) - new Date(r.startDate)) / 86400000);
+  const avgDuration = durations.length ? Math.round(durations.reduce((a,b)=>a+b,0)/durations.length) : 0;
+  const totalRevenue = rentals.filter(r => r.status !== 'cancelled').reduce((s,r) => s + (r.value||0), 0);
+  const equipCounts = {};
+  rentals.forEach(r => { equipCounts[r.equipment] = (equipCounts[r.equipment]||0) + 1; });
+  const topEquip = Object.entries(equipCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([e,n]) => ({ label: e, n }));
+
+  document.getElementById('panelRentals').innerHTML = `
+    <div id="rentalsMini"></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Revenue — Last 6 Months</div><div id="rentalsTrend"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="grid2">
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Status</div><div id="rentalsDonut"></div></div>
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Most-Rented Equipment</div><div id="rentalsTopBars"></div></div>
+    </div>`;
+  miniStats([
+    { v: 'R' + totalRevenue.toLocaleString('en-ZA'), l: 'Total Revenue', color: '#00f0ff' },
+    { v: avgDuration + ' days', l: 'Avg. Rental Duration' },
+    { v: rentals.length, l: 'Total Rentals' },
+  ], 'rentalsMini');
+  trendChart('rentalsTrend', months.map(m => m.label), [{ name: 'Revenue (R)', type: 'area', data: revenue }]);
+  donut('rentalsDonut', byStatus.filter(r => r.n > 0), 'Total Rentals');
+  barList(topEquip, 'rentalsTopBars');
+}
+
+// ── Applications tab ───────────────────────────────────────────────────────
+function renderApplicationsTab() {
+  const apps = DC_DATA.getRentalApplications();
+  const months = lastNMonths(6);
+  const volume = months.map(({y,m}) => apps.filter(a => inMonth(a.submittedAt,y,m)).length);
+  const approved = apps.filter(a => a.status === 'approved').length;
+  const rejected = apps.filter(a => a.status === 'rejected').length;
+  const reviewed = approved + rejected;
+  const approvalRate = reviewed ? Math.round(approved/reviewed*100) : 0;
+  const reviewTimes = apps.filter(a => a.status !== 'pending' && a.submittedAt && a.updatedAt).map(a => (new Date(a.updatedAt) - new Date(a.submittedAt)) / 86400000);
+  const avgReviewDays = reviewTimes.length ? (reviewTimes.reduce((a,b)=>a+b,0)/reviewTimes.length).toFixed(1) : '—';
+  const byStatus = ['pending','approved','rejected','cancelled'].map(s => ({ label: titleCase(s), n: apps.filter(a => a.status === s).length }));
+
+  document.getElementById('panelApplications').innerHTML = `
+    <div id="appsMini"></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Applications Submitted — Last 6 Months</div><div id="appsTrend"></div></div>
+    <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Status</div><div id="appsDonut"></div></div>`;
+  miniStats([
+    { v: approvalRate + '%', l: 'Approval Rate', color: '#00d4aa' },
+    { v: avgReviewDays === '—' ? '—' : avgReviewDays + ' days', l: 'Avg. Time to Review' },
+    { v: apps.length, l: 'Total Applications' },
+  ], 'appsMini');
+  trendChart('appsTrend', months.map(m => m.label), [{ name: 'Applications', type: 'bar', data: volume }]);
+  donut('appsDonut', byStatus.filter(r => r.n > 0), 'Total Applications');
+}
+
+// ── Maintenance tab ────────────────────────────────────────────────────────
+function renderMaintenanceTab() {
+  const maint = DC_DATA.getMaintenanceQueries();
+  const byStatus = ['open','in_progress','resolved'].map(s => ({ label: titleCase(s), n: maint.filter(m => m.status === s).length }));
+  const typeCounts = {}, prioCounts = {};
+  maint.forEach(m => { typeCounts[m.type] = (typeCounts[m.type]||0)+1; prioCounts[m.priority] = (prioCounts[m.priority]||0)+1; });
+  const byType = Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([t,n]) => ({ label: titleCase(t), n }));
+  const byPrio = ['critical','high','medium','low'].map(p => ({ label: titleCase(p), n: prioCounts[p] || 0 }));
+  const resolved = maint.filter(m => m.status === 'resolved' && m.resolvedAt && m.createdAt);
+  const resTimes = resolved.map(m => (new Date(m.resolvedAt) - new Date(m.createdAt)) / 3600000);
+  const avgResHours = resTimes.length ? Math.round(resTimes.reduce((a,b)=>a+b,0)/resTimes.length) : 0;
+  const vehCounts = {};
+  maint.forEach(m => { vehCounts[m.vehicleLabel] = (vehCounts[m.vehicleLabel]||0)+1; });
+  const topVehicles = Object.entries(vehCounts).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([v,n]) => ({ label: v, n }));
+
+  document.getElementById('panelMaintenance').innerHTML = `
+    <div id="maintMini"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px" class="grid2">
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Status</div><div id="maintDonut"></div></div>
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Priority</div><div id="maintPrioBars"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="grid2">
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Type</div><div id="maintTypeBars"></div></div>
+      <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Most-Flagged Vehicles</div><div id="maintVehBars"></div></div>
+    </div>`;
+  miniStats([
+    { v: avgResHours ? avgResHours + 'h' : '—', l: 'Avg. Resolution Time' },
+    { v: maint.filter(m => m.status !== 'resolved').length, l: 'Currently Open', color: '#ff6b6b' },
+    { v: maint.length, l: 'Total Queries' },
+  ], 'maintMini');
+  donut('maintDonut', byStatus.filter(r => r.n > 0), 'Total Queries');
+  barList(byPrio, 'maintPrioBars');
+  barList(byType, 'maintTypeBars');
+  barList(topVehicles, 'maintVehBars');
+}
+
+// ── Organisations tab ──────────────────────────────────────────────────────
+function renderOrgsTab() {
+  const orgs = DC_DATA.getAllOrgs();
+  const byStatus = ['active','suspended'].map(s => ({ label: titleCase(s), n: orgs.filter(o => o.status === s).length }));
+  const months = lastNMonths(6);
+  let cumulative = orgs.filter(o => o.createdAt && new Date(o.createdAt) < new Date(months[0].y, months[0].m, 1)).length;
+  const growth = months.map(({y,m}) => { cumulative += orgs.filter(o => inMonth(o.createdAt,y,m)).length; return cumulative; });
+
+  document.getElementById('panelOrgs').innerHTML = `
+    <div id="orgsMini"></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Organisation Growth — Last 6 Months</div><div id="orgsTrend"></div></div>
+    <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">Active vs Suspended</div><div id="orgsDonut"></div></div>`;
+  miniStats([
+    { v: orgs.length, l: 'Total Organisations' },
+    { v: orgs.filter(o => o.status === 'active').length, l: 'Active', color: '#00d4aa' },
+    { v: orgs.filter(o => o.status === 'suspended').length, l: 'Suspended', color: '#ff6b6b' },
+  ], 'orgsMini');
+  trendChart('orgsTrend', months.map(m => m.label), [{ name: 'Total Orgs', type: 'area', data: growth }]);
+  donut('orgsDonut', byStatus.filter(r => r.n > 0), 'Total Orgs');
+}
+
+// ── Users & Access tab ─────────────────────────────────────────────────────
+function renderUsersTab() {
+  const users = DC_DATA.getAllUsers();
+  const byRole = ['admin','user','driver'].map(r => ({ label: titleCase(r), n: users.filter(u => u.role === r).length }));
+  const months = lastNMonths(6);
+  let cumulative = users.filter(u => u.createdAt && new Date(u.createdAt) < new Date(months[0].y, months[0].m, 1)).length;
+  const growth = months.map(({y,m}) => { cumulative += users.filter(u => inMonth(u.createdAt,y,m)).length; return cumulative; });
+  const totpEligible = users.filter(u => u.role === 'admin' || u.orgId);
+  const totpCompliant = totpEligible.filter(u => u.totpEnabled).length;
+  const totpRate = totpEligible.length ? Math.round(totpCompliant/totpEligible.length*100) : 100;
+  const customRoleUsers = users.filter(u => u.customRoleId).length;
+
+  document.getElementById('panelUsers').innerHTML = `
+    <div id="usersMini"></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">User Growth — Last 6 Months</div><div id="usersTrend"></div></div>
+    <div class="glass" style="border-radius:13px;padding:18px"><div class="panelTitle">By Role</div><div id="usersDonut"></div></div>`;
+  miniStats([
+    { v: users.length, l: 'Total Users' },
+    { v: totpRate + '%', l: '2FA Compliance', color: totpRate === 100 ? '#00d4aa' : '#ffd93d' },
+    { v: customRoleUsers, l: 'Custom-Role Holders', color: '#d1bcff' },
+  ], 'usersMini');
+  trendChart('usersTrend', months.map(m => m.label), [{ name: 'Total Users', type: 'area', data: growth }]);
+  donut('usersDonut', byRole.filter(r => r.n > 0), 'Total Users');
+}
+
+// ── Activity tab (server-side audit log — lazy-loaded) ─────────────────────
+let _activityLoaded = false;
+async function loadActivityTab() {
+  if (_activityLoaded) return;
+  document.getElementById('panelActivity').innerHTML = '<div style="padding:30px;text-align:center;color:#849495">Loading activity…</div>';
+  try {
+    const logs = await DC_DATA.getAuditLogs(200);
+    _activityLoaded = true;
+    const actionCounts = {};
+    logs.forEach(l => { actionCounts[l.action] = (actionCounts[l.action]||0)+1; });
+    const topActions = Object.entries(actionCounts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([a,n]) => ({ label: titleCase(a), n }));
+    const rows = logs.slice(0, 50).map(l => `<tr>
+      <td>${esc(l.userName)}<div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495">${esc(l.userRole || '')}</div></td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00f0ff">${esc(l.action)}</span></td>
+      <td style="color:#b9cacb">${esc(l.page || '—')}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495">${l.createdAt ? new Date(l.createdAt).toLocaleString('en-ZA') : '—'}</td>
+    </tr>`).join('');
+    document.getElementById('panelActivity').innerHTML = `
+      <div id="activityMini"></div>
+      <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">Top Actions</div><div id="activityBars"></div></div>
+      <div class="glass" style="border-radius:13px;overflow-x:auto">
+        <table class="tbl" style="min-width:520px"><thead><tr><th>User</th><th>Action</th><th>Page</th><th>When</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="4" style="text-align:center;padding:30px;color:#849495">No activity recorded yet</td></tr>'}</tbody></table>
+      </div>`;
+    miniStats([{ v: logs.length, l: 'Events (most recent ' + logs.length + ')' }], 'activityMini', 1);
+    barList(topActions, 'activityBars');
+  } catch (err) {
+    document.getElementById('panelActivity').innerHTML = `<div style="padding:30px;text-align:center;color:#ff6b6b">Unable to load activity: ${esc(err.message)}</div>`;
+  }
+}
+
+DC_DATA.init().then(() => {
+  renderKPIs();
+  renderFleetTab();
+  renderRentalsTab();
+  renderApplicationsTab();
+  renderMaintenanceTab();
+  renderOrgsTab();
+  renderUsersTab();
+}).catch(err => {
+  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${EC_SECURITY.sanitizeHtml(err.message)}</div>`);
+});
+</script>
+</body></html>

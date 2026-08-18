@@ -7,6 +7,27 @@ on:
     branches: [main]
 
 jobs:
+  secrets-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history, not just this commit — a secret committed once
+          # and later deleted is still exposed to anyone who clones the
+          # repo, so the scan needs to see every commit, not just HEAD.
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz -o gitleaks.tar.gz
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo mv gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan full git history for secrets
+        run: gitleaks detect --source . --verbose --redact
+
   frontend:
     name: Frontend — install, lint, build-check
     runs-on: ubuntu-latest
@@ -56,14 +77,16 @@ jobs:
       - name: Validate firebase.json
         run: node -e "JSON.parse(require('fs').readFileSync('firebase.json','utf8')); console.log('firebase.json is valid JSON')"
 
-      # Report-only: several moderate-severity findings are transitive,
-      # nested inside firebase-admin's own dependency tree, and only
-      # resolvable via a firebase-admin major-version bump (a deliberate,
-      # separately-scheduled change, not something a routine PR should be
-      # blocked on). High/critical direct findings still show up here for
-      # a human to see on every run.
-      - name: npm audit (report only)
-        run: npm audit --audit-level=high || true
+      # Blocking: as of the audit that added this gate, the only findings
+      # here are moderate-severity and transitive (nested inside
+      # firebase-admin's own dependency tree, only resolvable via a
+      # firebase-admin major-version bump — a deliberate, separately-
+      # scheduled change). A genuine high/critical finding is exactly what
+      # this gate exists to catch — if one ever legitimately can't be fixed
+      # immediately, use `npm audit fix` or package.json's "overrides" field
+      # to pin a safe transitive version, rather than reintroducing `|| true`.
+      - name: npm audit (blocking on high/critical)
+        run: npm audit --audit-level=high
 
   functions:
     name: Cloud Functions — install, build-check
@@ -85,9 +108,9 @@ jobs:
         working-directory: functions
         run: find . -name "*.js" -not -path "./node_modules/*" -print0 | xargs -0 -n1 node --check
 
-      - name: npm audit (report only — see note in frontend job)
+      - name: npm audit (blocking on high/critical — see note in frontend job)
         working-directory: functions
-        run: npm audit --audit-level=high || true
+        run: npm audit --audit-level=high
 
   test:
     name: Firestore security-rules tests
@@ -113,3 +136,47 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  deploy:
+    name: Deploy (hosting + functions)
+    # Only after every other job has actually passed, and only for a real
+    # push to main — never for a pull_request event (a PR from a fork could
+    # otherwise trigger a deploy using this repo's own secrets before a
+    # human ever reviewed it).
+    needs: [secrets-scan, frontend, functions, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies (root + functions)
+        run: |
+          npm ci
+          npm ci --prefix functions
+
+      # Written from the secret via an env var (not interpolated directly
+      # into the shell command) so arbitrary JSON content — quotes,
+      # backticks, $ signs — can't break the command it's written with.
+      - name: Write deploy service account key to a temp file
+        env:
+          FIREBASE_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: echo "$FIREBASE_SA_JSON" > "$RUNNER_TEMP/firebase-sa.json"
+
+      # Same `firebase deploy` this project has been using manually all
+      # along — CI just runs it non-interactively with a service account
+      # instead of a human's own login. dataconnect (schema.gql/connectors)
+      # is deliberately NOT deployed here — a Postgres schema migration is
+      # exactly the kind of change that deserves a human actually reading
+      # the migration Firebase CLI prints before it runs, not a fully
+      # unattended CI step; keep deploying that with
+      # `firebase deploy --only dataconnect` locally, same as every other
+      # schema change so far.
+      - name: Deploy to Firebase (hosting + functions)
+        run: npx firebase-tools deploy --only hosting,functions --project novara-f985b --non-interactive
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json

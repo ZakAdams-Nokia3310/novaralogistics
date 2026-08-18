@@ -3,19 +3,19 @@
 <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
 <title>Apply to Rent — EquipCore</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-  :root{--p:#00f0ff;--bg:#080a0e;}
+  :root{--p:#00f0ff;--bg:#080a0e;color-scheme:dark;}
   *{box-sizing:border-box;margin:0;}
   body{background:var(--bg);color:#e2e2e8;font-family:'Inter',sans-serif;min-height:100vh;}
   .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
   .glass{background:rgba(255,255,255,0.04);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);}
   .topbar{height:56px;background:rgba(8,10,14,0.94);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:40;}
   .page{max-width:900px;margin:0 auto;padding:40px 24px;}
-  input,select,textarea{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;padding:12px 14px;width:100%;outline:none;transition:border-color 0.2s;resize:vertical;}
+  input,select,textarea{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;padding:12px 14px;width:100%;outline:none;transition:border-color 0.2s;resize:vertical;-webkit-appearance:none;-moz-appearance:none;appearance:none;}
   input:focus,select:focus,textarea:focus{border-color:#00f0ff;}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath d='M3 5l4 4 4-4' fill='none' stroke='%23849495' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;cursor:pointer;}
   select option{background:#111317;}
   label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:0.12em;display:block;margin-bottom:7px;}
   .field{margin-bottom:18px;}
@@ -118,7 +118,7 @@
         </div>
         <div class="grid-2">
           <div class="field"><label>Bank *</label><select id="f_bank" required><option value="">Select your bank…</option><option>ABSA</option><option>FNB</option><option>Standard Bank</option><option>Nedbank</option><option>Capitec</option><option>Investec</option><option>African Bank</option><option>Other</option></select></div>
-          <div class="field"><label>Account Type</label><select><option>Cheque Account</option><option>Savings Account</option><option>Business Account</option></select></div>
+          <div class="field"><label>Account Type</label><select id="f_accountType"><option>Cheque Account</option><option>Savings Account</option><option>Business Account</option></select></div>
         </div>
         <div class="field">
           <label>Outstanding Credit / Loans (R)</label>
@@ -156,7 +156,7 @@
         </div>
         <div class="field">
           <label>Purpose of Rental</label>
-          <select>
+          <select id="f_purpose">
             <option>Mining / Extraction</option>
             <option>Construction</option>
             <option>Logistics / Transport</option>
@@ -167,7 +167,7 @@
         </div>
         <div class="field">
           <label>Additional Notes</label>
-          <textarea rows="3" placeholder="Any special requirements, site conditions, or notes for our team…"></textarea>
+          <textarea rows="3" id="f_notes" placeholder="Any special requirements, site conditions, or notes for our team…"></textarea>
         </div>
         <!-- Price estimate -->
         <div id="priceEstimate" style="background:rgba(0,240,255,0.04);border:1px solid rgba(0,240,255,0.15);border-radius:12px;padding:16px;display:none">
@@ -190,16 +190,26 @@
         <div class="section-title"><div class="section-num">4</div>Review & Submit</div>
         <div id="reviewContent" style="font-size:14px;color:#b9cacb;line-height:2"></div>
         <div style="height:1px;background:rgba(255,255,255,0.06);margin:20px 0"></div>
-        <!-- Consent checkboxes -->
+        <!-- Consent checkboxes — text/links are wrapped in a <span> per
+             checkbox, not left as bare siblings of the checkbox inside the
+             flex label: mixed bare text + <a> elements as DIRECT children
+             of a display:flex container each become their own independent
+             flex item (a CSS flexbox gotcha), which broke consent2's
+             wrapping into scrambled-looking fragments on narrow screens
+             specifically because it's the only one of the three with links
+             interrupting its text. -->
         <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
-          <label style="display:flex;align-items:start;gap:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;text-transform:none;letter-spacing:0">
-            <input type="checkbox" id="consent1" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;border:none;background:none;"/> I confirm that all information provided is accurate and I consent to a credit check being performed.
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="consent1" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;"/>
+            <span>I confirm that all information provided is accurate and I consent to a credit check being performed.</span>
           </label>
-          <label style="display:flex;align-items:start;gap:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;text-transform:none;letter-spacing:0">
-            <input type="checkbox" id="consent2" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;border:none;background:none;"/> I have read and agree to the EquipCore <a href="#" style="color:#00dbe9">Rental Terms & Conditions</a> and <a href="#" style="color:#00dbe9">Privacy Policy</a>.
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="consent2" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;"/>
+            <span>I have read and agree to the EquipCore <a href="terms" target="_blank" style="color:#00dbe9">Terms &amp; Conditions</a> and <a href="privacy" target="_blank" style="color:#00dbe9">Privacy Policy</a>.</span>
           </label>
-          <label style="display:flex;align-items:start;gap:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;text-transform:none;letter-spacing:0">
-            <input type="checkbox" id="consent3" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;border:none;background:none;"/> I understand that approval is subject to credit assessment and equipment availability.
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;text-transform:none;letter-spacing:0">
+            <input type="checkbox" id="consent3" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;"/>
+            <span>I understand that approval is subject to credit assessment and equipment availability.</span>
           </label>
         </div>
         <div id="turnstileWidget" style="margin-bottom:4px"></div>
@@ -223,7 +233,7 @@
     <div id="successRef" style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#00f0ff;margin-bottom:14px"></div>
     <p style="font-size:14px;color:#b9cacb;line-height:1.7;margin-bottom:28px">Our team will review your application and perform the credit check within <strong>2–4 business hours</strong>. You will be notified by email.</p>
     <div style="display:flex;gap:10px;justify-content:center">
-      <a href="dashboard-guest" class="btn-p" style="font-size:14px;padding:11px 24px">Browse More</a>
+      <a href="my-rentals" class="btn-p" style="font-size:14px;padding:11px 24px">My Rentals</a>
       <a href="/" style="display:inline-flex;align-items:center;padding:11px 24px;background:rgba(255,255,255,0.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);text-decoration:none">Home</a>
     </div>
   </div>
@@ -256,6 +266,35 @@ if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.turnstileSiteKey) 
   document.head.appendChild(_tsScript);
 }
 
+// Server enums are UPPER_SNAKE_CASE; the selects show human-friendly text.
+// Defined up top (not just near the submit handler) since prefillFromProfile()
+// below needs the reverse direction too, to turn a stored enum value back
+// into the matching <option> text.
+const PROVINCE_MAP = {
+  'Gauteng':'GAUTENG', 'Western Cape':'WESTERN_CAPE', 'KwaZulu-Natal':'KWAZULU_NATAL',
+  'Eastern Cape':'EASTERN_CAPE', 'Mpumalanga':'MPUMALANGA', 'Limpopo':'LIMPOPO',
+  'North West':'NORTH_WEST', 'Northern Cape':'NORTHERN_CAPE', 'Free State':'FREE_STATE',
+};
+const EMPLOYMENT_MAP = {
+  'Full-time Employed':'FULL_TIME_EMPLOYED', 'Self-employed':'SELF_EMPLOYED',
+  'Business Owner':'BUSINESS_OWNER', 'Contractor':'CONTRACTOR',
+};
+const BANK_MAP = {
+  'ABSA':'ABSA', 'FNB':'FNB', 'Standard Bank':'STANDARD_BANK', 'Nedbank':'NEDBANK',
+  'Capitec':'CAPITEC', 'Investec':'INVESTEC', 'African Bank':'AFRICAN_BANK', 'Other':'OTHER',
+};
+const ACCOUNT_TYPE_MAP = { 'Cheque Account':'CHEQUE', 'Savings Account':'SAVINGS', 'Business Account':'BUSINESS' };
+const PURPOSE_MAP = {
+  'Mining / Extraction':'MINING_EXTRACTION', 'Construction':'CONSTRUCTION',
+  'Logistics / Transport':'LOGISTICS_TRANSPORT', 'Warehouse Operations':'WAREHOUSE_OPERATIONS',
+  'Energy / Power':'ENERGY_POWER', 'Other':'OTHER',
+};
+function reverseMap(m) { return Object.fromEntries(Object.entries(m).map(([k, v]) => [v, k])); }
+const PROVINCE_REVERSE = reverseMap(PROVINCE_MAP);
+const EMPLOYMENT_REVERSE = reverseMap(EMPLOYMENT_MAP);
+const BANK_REVERSE = reverseMap(BANK_MAP);
+const ACCOUNT_TYPE_REVERSE = reverseMap(ACCOUNT_TYPE_MAP);
+
 // Generate app ref
 const appRef='APP-'+Math.floor(10000+Math.random()*90000);
 document.getElementById('appRef').textContent=appRef;
@@ -266,13 +305,40 @@ const nextWk=new Date(Date.now()+7*86400000).toISOString().split('T')[0];
 document.getElementById('f_start').value=today;
 document.getElementById('f_end').value=nextWk;
 
-// Pre-fill if logged in
-const u=EC_AUTH.current();
-if(u){
-  document.getElementById('f_email').value=u.email||'';
-  document.getElementById('f_firstname').value=u.name.split(' ')[0]||'';
-  document.getElementById('f_lastname').value=u.name.split(' ').slice(1).join(' ')||'';
+// Every applicant must be signed in — no guest applications.
+const _currentUser = EC_AUTH.require(['admin', 'user', 'driver']);
+document.getElementById('f_email').value=_currentUser.email||'';
+document.getElementById('f_firstname').value=_currentUser.name.split(' ')[0]||'';
+document.getElementById('f_lastname').value=_currentUser.name.split(' ').slice(1).join(' ')||'';
+
+// Auto-fill everything already on file from signup/profile (see
+// dataconnect/schema/schema.gql's User KYC fields) so a returning applicant
+// never has to re-type it — every field stays editable, and whatever they
+// change here gets saved back to their profile on successful submit (see
+// the submit handler below), closing the loop for next time. A brand-new
+// or Google-signed-up account just has nothing to prefill yet, which is a
+// no-op here, not an error.
+async function prefillFromProfile() {
+  let profile;
+  try { profile = await DC_DATA.getUserByEmailLive(_currentUser.email); } catch { return; }
+  if (!profile) return;
+  const set = (id, val) => { if (val != null && val !== '') document.getElementById(id).value = val; };
+  set('f_phone', profile.phone);
+  set('f_id', profile.idNumber);
+  set('f_dob', profile.dateOfBirth);
+  set('f_address', profile.address);
+  set('f_city', profile.city);
+  set('f_province', PROVINCE_REVERSE[profile.province] || '');
+  set('f_postal', profile.postalCode);
+  set('f_employment', EMPLOYMENT_REVERSE[profile.employmentStatus] || '');
+  set('f_employer', profile.employerName);
+  set('f_income', profile.monthlyIncome);
+  set('f_years', profile.yearsEmployed);
+  set('f_bank', BANK_REVERSE[profile.bank] || '');
+  set('f_accountType', ACCOUNT_TYPE_REVERSE[profile.accountType] || '');
+  set('f_credit', profile.outstandingCredit);
 }
+prefillFromProfile();
 
 // Page navigation
 function goPage(n){
@@ -285,56 +351,40 @@ function goPage(n){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-// Equipment picker + price estimator.
-//
-// Signed-in users (with an org) pick from their org's real Vehicle fleet —
-// live status included, so a vehicle currently On Rent/Maintenance shows up
-// but can't be selected. Guests (and signed-in users with no org) fall back
-// to the public CatalogItem marketing list, as before. RATES keyed by the
-// selected option's id — only CatalogItem entries carry a rate; real
-// Vehicle rows don't, so the estimate is omitted for those instead of
+// Equipment picker — every applicant is a signed-in org member (guest
+// browsing/applying was removed entirely), so this always draws from the
+// caller's own org's real Vehicle fleet. Live status included, so a
+// vehicle currently On Rent/Maintenance shows up but can't be selected.
+// Vehicle rows carry no rate (unlike the old CatalogItem marketing table),
+// so the price estimate always reads "Confirmed by admin" instead of
 // fabricating a number.
-let RATES = {};
 const _preselectVehicleId = new URLSearchParams(location.search).get('vehicleId');
-const _currentUser = (typeof EC_AUTH !== 'undefined') ? EC_AUTH.current() : null;
 
 async function loadEquipmentOptions(){
   const sel = document.getElementById('f_equip');
-  if (_currentUser && _currentUser.orgId) {
-    try {
-      DC_DATA.setOrgScope(_currentUser.orgId);
-      await DC_DATA.initForOrg(_currentUser.orgId);
-    } catch {
-      sel.innerHTML = '<option value="">Unable to load your fleet — please refresh</option>';
-      return;
-    }
-    const vehicles = DC_DATA.getVehicles();
-    const label = { on_rent: 'On Rent', maintenance: 'Maintenance', retired: 'Retired' };
-    sel.innerHTML = '<option value="">Select equipment…</option>' +
-      vehicles.map(v => {
-        const name = `${v.make} ${v.model}`;
-        const disabled = v.status !== 'available' ? ' disabled' : '';
-        const suffix = v.status !== 'available' ? ` — ${label[v.status] || v.status}` : '';
-        return `<option value="${EC_SECURITY.sanitizeHtml(v.id)}" data-name="${EC_SECURITY.sanitizeHtml(name)}" data-vehicle="1"${disabled}>${EC_SECURITY.sanitizeHtml(name)}${suffix}</option>`;
-      }).join('');
-    RATES = {};
-    if (_preselectVehicleId && vehicles.some(v => v.id === _preselectVehicleId && v.status === 'available')) {
-      sel.value = _preselectVehicleId;
-    }
-    updateEstimate();
+  if (!_currentUser || !_currentUser.orgId) {
+    sel.innerHTML = '<option value="">No organisation on your account — contact an admin</option>';
     return;
   }
-
   try {
-    await DC_DATA.initPublicCatalog();
+    DC_DATA.setOrgScope(_currentUser.orgId);
+    await DC_DATA.initForOrg(_currentUser.orgId);
   } catch {
-    sel.innerHTML = '<option value="">Unable to load equipment — please refresh</option>';
+    sel.innerHTML = '<option value="">Unable to load your fleet — please refresh</option>';
     return;
   }
-  const items = DC_DATA.getCatalogItems().filter(c => c.status === 'available');
+  const vehicles = DC_DATA.getVehicles();
+  const label = { on_rent: 'On Rent', maintenance: 'Maintenance', retired: 'Retired' };
   sel.innerHTML = '<option value="">Select equipment…</option>' +
-    items.map(c => `<option value="${EC_SECURITY.sanitizeHtml(c.id)}" data-rate="${c.dailyRate}" data-name="${EC_SECURITY.sanitizeHtml(c.name)}">${EC_SECURITY.sanitizeHtml(c.name)} — R${Math.round(c.dailyRate).toLocaleString()}/day</option>`).join('');
-  RATES = Object.fromEntries(items.map(c => [c.id, c.dailyRate]));
+    vehicles.map(v => {
+      const name = `${v.make} ${v.model}`;
+      const disabled = v.status !== 'available' ? ' disabled' : '';
+      const suffix = v.status !== 'available' ? ` — ${label[v.status] || v.status}` : '';
+      return `<option value="${EC_SECURITY.sanitizeHtml(v.id)}" data-name="${EC_SECURITY.sanitizeHtml(name)}"${disabled}>${EC_SECURITY.sanitizeHtml(name)}${suffix}</option>`;
+    }).join('');
+  if (_preselectVehicleId && vehicles.some(v => v.id === _preselectVehicleId && v.status === 'available')) {
+    sel.value = _preselectVehicleId;
+  }
   updateEstimate();
 }
 loadEquipmentOptions();
@@ -347,8 +397,7 @@ function updateEstimate(){
   const days=Math.max(1,Math.round((new Date(e)-new Date(s))/(86400000)));
   document.getElementById('est-equip').textContent=document.getElementById('f_equip').selectedOptions[0]?.dataset.name||'';
   document.getElementById('est-days').textContent=days+' day'+(days!==1?'s':'');
-  const rate=RATES[eq];
-  document.getElementById('est-total').textContent = rate != null ? 'R '+(rate*days).toLocaleString() : 'Confirmed by admin';
+  document.getElementById('est-total').textContent='Confirmed by admin';
   document.getElementById('priceEstimate').style.display='block';
 }
 document.getElementById('f_equip').addEventListener('change',updateEstimate);
@@ -369,24 +418,10 @@ function buildReview(){
     'Start Date': document.getElementById('f_start').value||'—',
     'End Date': document.getElementById('f_end').value||'—',
     'Delivery Site': document.getElementById('f_site').value||'—',
+    'Purpose': document.getElementById('f_purpose').value||'—',
   };
   document.getElementById('reviewContent').innerHTML=Object.entries(vals).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:0.08em">${EC_SECURITY.sanitizeHtml(k)}</span><span style="font-size:13px;color:#e2e2e8;font-weight:500;max-width:60%;text-align:right">${EC_SECURITY.sanitizeHtml(v)}</span></div>`).join('');
 }
-
-// Server enums are UPPER_SNAKE_CASE; the selects show human-friendly text.
-const PROVINCE_MAP = {
-  'Gauteng':'GAUTENG', 'Western Cape':'WESTERN_CAPE', 'KwaZulu-Natal':'KWAZULU_NATAL',
-  'Eastern Cape':'EASTERN_CAPE', 'Mpumalanga':'MPUMALANGA', 'Limpopo':'LIMPOPO',
-  'North West':'NORTH_WEST', 'Northern Cape':'NORTHERN_CAPE', 'Free State':'FREE_STATE',
-};
-const EMPLOYMENT_MAP = {
-  'Full-time Employed':'FULL_TIME_EMPLOYED', 'Self-employed':'SELF_EMPLOYED',
-  'Business Owner':'BUSINESS_OWNER', 'Contractor':'CONTRACTOR',
-};
-const BANK_MAP = {
-  'ABSA':'ABSA', 'FNB':'FNB', 'Standard Bank':'STANDARD_BANK', 'Nedbank':'NEDBANK',
-  'Capitec':'CAPITEC', 'Investec':'INVESTEC', 'African Bank':'AFRICAN_BANK', 'Other':'OTHER',
-};
 
 // Submit
 document.getElementById('rentalForm').addEventListener('submit', async e => {
@@ -410,14 +445,11 @@ document.getElementById('rentalForm').addEventListener('submit', async e => {
   const equipOpt = document.getElementById('f_equip').selectedOptions[0];
   const start = document.getElementById('f_start').value;
   const end = document.getElementById('f_end').value;
-  const days = Math.max(1, Math.round((new Date(end) - new Date(start)) / 86400000));
-  const dailyRate = equipOpt && equipOpt.dataset.rate != null ? Number(equipOpt.dataset.rate) : null;
-  const isRealVehicle = !!(equipOpt && equipOpt.dataset.vehicle === '1');
 
   const payload = {
     ref: appRef,
-    applicantUserId: (typeof EC_AUTH !== 'undefined' && EC_AUTH.current()) ? EC_AUTH.current().dbId : null,
-    organisationId: (typeof EC_AUTH !== 'undefined' && EC_AUTH.current()) ? EC_AUTH.current().orgId : null,
+    applicantUserId: _currentUser.dbId,
+    organisationId: _currentUser.orgId || null,
     firstName: document.getElementById('f_firstname').value.trim(),
     lastName: document.getElementById('f_lastname').value.trim(),
     idNumber: document.getElementById('f_id').value.trim(),
@@ -433,26 +465,22 @@ document.getElementById('rentalForm').addEventListener('submit', async e => {
     monthlyIncome: Number(document.getElementById('f_income').value),
     yearsEmployed: document.getElementById('f_years').value ? Number(document.getElementById('f_years').value) : null,
     bank: BANK_MAP[document.getElementById('f_bank').value],
-    // Both NOT NULL in the DB with a default (CHEQUE / 0) — a schema
-    // default only applies when a column is *omitted* from the insert, not
-    // when explicitly set to null, so null here would violate the NOT NULL
-    // constraint. No UI field for account type, so use the same default.
-    accountType: 'CHEQUE',
+    accountType: ACCOUNT_TYPE_MAP[document.getElementById('f_accountType').value] || 'CHEQUE',
     outstandingCredit: document.getElementById('f_credit').value ? Number(document.getElementById('f_credit').value) : 0,
     creditCheckConsent: document.getElementById('consent1').checked,
-    // vehicleId only set when the picker drew from the signed-in user's own
-    // org fleet (isRealVehicle) — those option values are real Vehicle ids.
-    // Guest/CatalogItem picks have no matching Vehicle row, so stays null;
-    // an admin matches those to a real Vehicle when approving.
-    vehicleId: isRealVehicle ? equipOpt.value : null,
+    // Every applicant is signed in and picking from their own org's real
+    // fleet, so the selected option's value is always a real Vehicle id.
+    vehicleId: equipOpt ? equipOpt.value : null,
     equipmentName: equipOpt ? (equipOpt.dataset.name || equipOpt.text) : '',
-    dailyRate,
+    dailyRate: null,
     startDate: start,
     endDate: end,
-    estimatedCost: dailyRate != null ? dailyRate * days : null,
+    // Real Vehicle rows carry no rate — an admin confirms pricing when
+    // reviewing the application, not the applicant at submission time.
+    estimatedCost: null,
     deliveryAddress: document.getElementById('f_site').value.trim(),
-    purpose: null,
-    rentalNotes: null,
+    purpose: PURPOSE_MAP[document.getElementById('f_purpose').value] || null,
+    rentalNotes: document.getElementById('f_notes').value.trim() || null,
     consentCreditCheck: document.getElementById('consent1').checked,
     consentTerms: document.getElementById('consent2').checked,
     consentUnderstanding: document.getElementById('consent3').checked,
@@ -461,6 +489,18 @@ document.getElementById('rentalForm').addEventListener('submit', async e => {
   try {
     await DC_DATA.submitRentalApplication(payload);
     if (typeof EC_SECURITY !== 'undefined') EC_SECURITY.audit('RENTAL_APPLICATION_SUBMITTED', { ref: appRef });
+    // Save whatever KYC info was entered/changed here back to the user's
+    // own profile — fire-and-forget, a failure here must never block a
+    // successful application from showing as submitted. Closes the loop:
+    // the NEXT application (or a Google sign-up's very first one) has
+    // nothing left to auto-fill only once, not every time.
+    DC_DATA.updateUserProfile(_currentUser.dbId, {
+      phone: payload.phone, idNumber: payload.idNumber, dateOfBirth: payload.dateOfBirth,
+      address: payload.address, city: payload.city, province: payload.province, postalCode: payload.postalCode,
+      employmentStatus: payload.employmentStatus, employerName: payload.employerName,
+      monthlyIncome: payload.monthlyIncome, yearsEmployed: payload.yearsEmployed,
+      bank: payload.bank, accountType: payload.accountType, outstandingCredit: payload.outstandingCredit,
+    }).catch(() => { /* best effort */ });
     document.getElementById('successRef').textContent='Reference: '+appRef;
     document.getElementById('successOverlay').style.display='flex';
   } catch (err) {

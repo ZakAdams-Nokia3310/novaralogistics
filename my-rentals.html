@@ -32,6 +32,11 @@
   @media(max-width:600px){.stats-grid{grid-template-columns:repeat(2,1fr) !important}}
   @media(max-width:380px){.stats-grid{grid-template-columns:1fr !important}}
   .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(8,10,14,.85);backdrop-filter:blur(12px);z-index:900;align-items:center;justify-content:center;}
+  .modal-bg.show{display:flex;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .modal-bg.show .modal-card{animation:slideUp .22s ease both;}
+  @media(max-width:600px){.modal-bg{align-items:flex-end!important}.modal-bg .modal-card{border-radius:16px 16px 0 0!important;width:100%!important;max-width:100%!important;margin:0!important;max-height:85vh!important;overflow-y:auto!important}}
 </style>
 </head>
 <body>
@@ -43,104 +48,42 @@
       <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">My Rentals</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Active, upcoming and past rental history</div>
     </div>
-    <a href="apply-rental" class="btnp"><span class="material-symbols-outlined ms" style="font-size:15px">add</span>Apply to Rent</a>
+    <a href="rent-equipment" class="btnp"><span class="material-symbols-outlined ms" style="font-size:15px">add</span>Apply to Rent</a>
   </div>
 
   <div class="body">
     <!-- Stats -->
     <div class="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:20px">
-      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#00f0ff;margin-bottom:2px">4</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Active</div></div>
-      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#ffd93d;margin-bottom:2px">1</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Upcoming</div></div>
-      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#d1bcff;margin-bottom:2px">18</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Completed</div></div>
-      <div class="glass-lo" style="border-radius:12px;padding:15px"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;margin-bottom:2px">R142k</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Total Spent</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div id="stActive" style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#00f0ff;margin-bottom:2px">—</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Active</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div id="stUpcoming" style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#ffd93d;margin-bottom:2px">—</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Upcoming</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div id="stPast" style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;color:#d1bcff;margin-bottom:2px">—</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Completed</div></div>
+      <div class="glass-lo" style="border-radius:12px;padding:15px"><div id="stTotal" style="font-family:'Hanken Grotesk',sans-serif;font-size:22px;font-weight:800;margin-bottom:2px">—</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em">Total Value</div></div>
     </div>
 
     <!-- Tabs -->
     <div style="display:flex;gap:3px;background:rgba(255,255,255,.04);padding:4px;border-radius:11px;width:fit-content;margin-bottom:20px;border:1px solid rgba(255,255,255,.06)" id="tabs">
-      <button class="tab-btn on" data-tab="active">Active (4)</button>
-      <button class="tab-btn" data-tab="upcoming">Upcoming (1)</button>
-      <button class="tab-btn" data-tab="past">Past (18)</button>
+      <button class="tab-btn on" data-tab="active">Active</button>
+      <button class="tab-btn" data-tab="upcoming">Upcoming</button>
+      <button class="tab-btn" data-tab="past">Past</button>
     </div>
 
-    <!-- Active -->
-    <div id="tab-active">
-      <div class="glass" style="border-radius:13px;overflow:hidden;margin-bottom:12px">
-        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
-          <div style="width:64px;height:58px;border-radius:10px;overflow:hidden;flex-shrink:0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl_y15epJuonz3E-t3iWCBJXshwATQKMAd06A5SevQDKLuVo0MiEssY_huGzaf0yHgpvUgLZev71AFf9ceEZesXTCr7zF0KXckYeigSrTpfdwrwHE_JNEXUVaeK7-s-qbMcrub3vhO5taAAoUP1ozQu9WEqlCdyOMVfRpSCGVAazKsXOQbn5Em3RFLahOER-1ATJ1c6a06jzVkopmDMEe76_iqgDDljlIveCaruhdlNQJCypZzUyV9Q7hh3Z-x94lsX4Jvk18WB-8" style="width:100%;height:100%;object-fit:cover"/></div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Cat 320 GC Excavator</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4821 · Sandton Site C</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">R22,400</div><span class="b ba">Active</span></div></div>
-            <div style="font-size:12px;color:#849495;margin-bottom:8px">28 May – 12 Jun 2026 · 12 days remaining</div>
-            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px;margin-bottom:10px"><div style="width:65%;height:100%;background:#00f0ff;border-radius:999px"></div></div>
-            <div style="display:flex;gap:8px"><button class="btng" style="font-size:12px;padding:6px 11px">Details</button><button class="btng" style="font-size:12px;padding:6px 11px">Invoice</button><button class="btnp" style="font-size:12px;padding:6px 11px" onclick="alert('Extension request submitted for #RNT-4821.')">Request Extension</button></div>
-          </div>
-        </div>
-      </div>
-      <div class="glass" style="border-radius:13px;overflow:hidden;margin-bottom:12px">
-        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
-          <div style="width:64px;height:58px;border-radius:10px;overflow:hidden;flex-shrink:0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeUtKz6a__P0G7rMBEJ5GxUBEsVjv41hJkCUJVLiDayl2PqH-WUP95NErXlfC9g2pbM6dkaWYK3OJ9XtqN1olhpQI2TMLSl3CI_4D-q8UR5aDXQrbfetvHMVphYgqllAowLW5yGUq1c3BtRNAq87o3vgcKZ8kJpM1xI-PNMjC_eM9ZUvoQ84tDrFbHj9WH06gqq74pSHlfIkjANgjdCHQpXOdwVWzY5XVROJLRe8x_XgKL5JkVDoa4X3oNtZdldYfpJmnte5mnpSg" style="width:100%;height:100%;object-fit:cover"/></div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Scania R500 Truck</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4802 · Port Elizabeth Hub</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">R8,200/d</div><span class="b ba">Active</span></div></div>
-            <div style="font-size:12px;color:#849495;margin-bottom:8px">1 Jun – 5 Nov 2026 · 24 days remaining</div>
-            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px;margin-bottom:10px"><div style="width:20%;height:100%;background:#00f0ff;border-radius:999px"></div></div>
-            <div style="display:flex;gap:8px"><button class="btng" style="font-size:12px;padding:6px 11px">Details</button><button class="btng" style="font-size:12px;padding:6px 11px">Invoice</button><button class="btnp" style="font-size:12px;padding:6px 11px" onclick="alert('Extension request submitted for #RNT-4802.')">Request Extension</button></div>
-          </div>
-        </div>
-      </div>
-      <div class="glass" style="border-radius:13px;overflow:hidden;margin-bottom:12px">
-        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
-          <div style="width:64px;height:58px;border-radius:10px;background:rgba(255,255,255,.04);flex-shrink:0;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:24px;color:#849495">bolt</span></div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Aggreko 500kVA Generator</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4808 · Mine Site B</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">R14,700</div><span class="b ba">Active</span></div></div>
-            <div style="font-size:12px;color:#849495;margin-bottom:8px">3 Jun – 17 Jun 2026 · 13 days remaining</div>
-            <div style="height:4px;background:rgba(255,255,255,.06);border-radius:999px;margin-bottom:10px"><div style="width:10%;height:100%;background:#00f0ff;border-radius:999px"></div></div>
-            <div style="display:flex;gap:8px"><button class="btng" style="font-size:12px;padding:6px 11px">Details</button><button class="btng" style="font-size:12px;padding:6px 11px">Invoice</button><button class="btnp" style="font-size:12px;padding:6px 11px" onclick="alert('Extension requested.')">Request Extension</button></div>
-          </div>
-        </div>
-      </div>
-      <div class="glass" style="border-radius:13px;overflow:hidden">
-        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
-          <div style="width:64px;height:58px;border-radius:10px;background:rgba(255,255,255,.04);flex-shrink:0;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:24px;color:#849495">local_shipping</span></div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Volvo A40G Haul Truck</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4810 · Rustenburg Site</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">R20,600</div><span class="b bp">Pending</span></div></div>
-            <div style="font-size:12px;color:#ffd93d">Awaiting provider confirmation</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id="tab-active"></div>
+    <div id="tab-upcoming" style="display:none"></div>
+    <div id="tab-past" style="display:none"></div>
+  </div>
+</div>
 
-    <!-- Upcoming (hidden) -->
-    <div id="tab-upcoming" style="display:none">
-      <div class="glass" style="border-radius:13px;overflow:hidden">
-        <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
-          <div style="width:64px;height:58px;border-radius:10px;background:rgba(255,255,255,.04);flex-shrink:0;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:24px;color:#849495">construction</span></div>
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px"><div><div style="font-weight:700;font-size:14px">Liebherr LTM 1100 Crane</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4825 · Johannesburg CBD</div></div><div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">R32,000</div><span class="b bc">Confirmed</span></div></div>
-            <div style="font-size:12px;color:#849495">Starts 15 Jun 2026 · 11 days from now</div>
-          </div>
-        </div>
+<!-- Rental Timeline Modal -->
+<div class="modal-bg" id="timelineModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:26px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;border-color:rgba(0,240,255,.14)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <div>
+        <div id="timelineTitle" style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Rental Timeline</div>
+        <div id="timelineSub" style="font-size:12px;color:#849495;margin-top:2px"></div>
       </div>
+      <button onclick="closeTimeline()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:20px;line-height:1">×</button>
     </div>
-
-    <!-- Past (hidden) -->
-    <div id="tab-past" style="display:none">
-      <div class="glass tbl-scroll" style="border-radius:13px;overflow:hidden">
-        <table style="width:100%;border-collapse:collapse;min-width:520px">
-          <thead><tr style="background:rgba(255,255,255,.02)">
-            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">ID</th>
-            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Equipment</th>
-            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Period</th>
-            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Total</th>
-            <th style="padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.05)"></th>
-          </tr></thead>
-          <tbody>
-            <tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4780</td><td style="padding:11px 14px;font-size:13px">Liebherr R 9400</td><td style="padding:11px 14px;font-size:13px;color:#b9cacb">10–28 May 2026</td><td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">R52,000</td><td style="padding:11px 14px"><button class="btng" style="font-size:12px;padding:5px 10px">Invoice</button></td></tr>
-            <tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4765</td><td style="padding:11px 14px;font-size:13px">Komatsu WA470</td><td style="padding:11px 14px;font-size:13px;color:#b9cacb">1–15 May 2026</td><td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">R13,300</td><td style="padding:11px 14px"><button class="btng" style="font-size:12px;padding:5px 10px">Invoice</button></td></tr>
-            <tr style="border-bottom:1px solid rgba(255,255,255,.03)"><td style="padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4749</td><td style="padding:11px 14px;font-size:13px">Atlas Copco FlexiROC</td><td style="padding:11px 14px;font-size:13px;color:#b9cacb">15 Apr–5 May</td><td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">R41,000</td><td style="padding:11px 14px"><button class="btng" style="font-size:12px;padding:5px 10px">Invoice</button></td></tr>
-            <tr><td style="padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">#RNT-4730</td><td style="padding:11px 14px;font-size:13px">JCB 3CX Backhoe</td><td style="padding:11px 14px;font-size:13px;color:#b9cacb">10–31 Mar 2026</td><td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">R9,800</td><td style="padding:11px 14px"><button class="btng" style="font-size:12px;padding:5px 10px">Invoice</button></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <div id="timelineBody"></div>
   </div>
 </div>
 
@@ -150,10 +93,13 @@
 <script src="security.js"></script>
 <script src="auth.js"></script>
 <script src="frontend/token-client.js"></script>
+<script src="dc.js"></script>
 <script src="sidebar.js?v=2"></script>
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
+const user = EC_AUTH.require(['admin', 'user', 'driver']);
+const esc = EC_SECURITY.sanitizeHtml;
 buildSidebar('my-rentals');
 
 document.querySelectorAll('#tabs .tab-btn').forEach(btn => {
@@ -162,6 +108,139 @@ document.querySelectorAll('#tabs .tab-btn').forEach(btn => {
     btn.classList.add('on');
     ['active','upcoming','past'].forEach(t=>{ document.getElementById('tab-'+t).style.display = t===btn.dataset.tab?'':'none'; });
   });
+});
+
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function fmtMoney(v) {
+  return 'R' + Math.round(v || 0).toLocaleString('en-ZA');
+}
+function statusBadge(s) {
+  if (s === 'active')   return `<span class="b ba">Active</span>`;
+  if (s === 'overdue')  return `<span class="b bp">Overdue</span>`;
+  if (s === 'pending')  return `<span class="b bc">Pending</span>`;
+  if (s === 'complete') return `<span class="b ba">Complete</span>`;
+  return `<span class="b">${esc(s)}</span>`;
+}
+function rentalCard(r) {
+  return `<div class="glass" style="border-radius:13px;overflow:hidden;margin-bottom:12px;cursor:pointer" onclick="openTimeline('${escA(r.id)}')" title="View timeline">
+    <div style="display:flex;gap:14px;padding:16px 18px;align-items:flex-start">
+      <div style="width:64px;height:58px;border-radius:10px;background:rgba(255,255,255,.04);flex-shrink:0;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:24px;color:#849495">local_shipping</span></div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:4px">
+          <div><div style="font-weight:700;font-size:14px">${esc(r.equipment)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${esc(r.client)}</div></div>
+          <div style="text-align:right"><div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;color:#00f0ff;font-size:15px">${fmtMoney(r.value)}</div>${statusBadge(r.status)}</div>
+        </div>
+        <div style="font-size:12px;color:#849495">${fmtDate(r.startDate)} – ${fmtDate(r.returnDate)}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── Timeline ───────────────────────────────────────────────────────────────
+const escA = EC_SECURITY.escJsAttr;
+
+function fmtDateTime(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : dt.toLocaleString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function titleCase(s) { return (s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+function statusColor(s) {
+  return { pending: '#d1bcff', active: '#00f0ff', overdue: '#ffd93d', complete: '#00d4aa', cancelled: '#849495' }[s] || '#849495';
+}
+function timelineEntryHtml(label, detail, when, color) {
+  return `<div style="display:flex;gap:12px;padding-bottom:18px;position:relative">
+    <div style="position:absolute;left:4px;top:14px;bottom:0;width:1px;background:rgba(255,255,255,.08)"></div>
+    <div style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0;margin-top:3px;box-shadow:0 0 8px ${color}66"></div>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:600;font-size:13px">${esc(label)}</div>
+      ${detail ? `<div style="font-size:12px;color:#b9cacb;margin-top:2px">${esc(detail)}</div>` : ''}
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:3px">${fmtDateTime(when)}</div>
+    </div>
+  </div>`;
+}
+function buildTimelineHtml(rental, events) {
+  const entries = [];
+  const app = rental.application;
+  if (app) {
+    entries.push({ label: 'Application Submitted', detail: `Ref ${app.ref}`, when: app.submittedAt, color: '#00f0ff' });
+    if (app.status === 'approved') {
+      entries.push({ label: 'Application Approved', detail: app.reviewedByName ? `Reviewed by ${app.reviewedByName}` : null, when: app.reviewedAt, color: '#00d4aa' });
+    } else if (app.status === 'rejected') {
+      entries.push({ label: 'Application Declined', detail: app.rejectionReason || (app.reviewedByName ? `Reviewed by ${app.reviewedByName}` : null), when: app.reviewedAt, color: '#ff6b6b' });
+    }
+  }
+  events.forEach(e => {
+    if (e.type === 'created') entries.push({ label: 'Rental Created', detail: e.description, when: e.createdAt, color: '#00f0ff' });
+    else if (e.type === 'status_changed') entries.push({ label: `Status Changed to ${titleCase(e.toStatus)}`, detail: e.actorName ? `By ${e.actorName}` : null, when: e.createdAt, color: statusColor(e.toStatus) });
+    else entries.push({ label: 'Note', detail: e.description, when: e.createdAt, color: '#d1bcff' });
+  });
+  if (!entries.length) return `<div style="color:#849495;font-size:12px;padding:20px 0;text-align:center">No timeline history yet.</div>`;
+  return entries.map(en => timelineEntryHtml(en.label, en.detail, en.when, en.color)).join('');
+}
+async function openTimeline(rentalId) {
+  const rental = DC_DATA.getRentalById(rentalId);
+  if (!rental) return;
+  document.getElementById('timelineTitle').textContent = rental.equipment;
+  document.getElementById('timelineSub').textContent = `${fmtDate(rental.startDate)} – ${fmtDate(rental.returnDate)}`;
+  document.getElementById('timelineBody').innerHTML = `<div style="text-align:center;padding:20px;color:#849495">Loading…</div>`;
+  document.getElementById('timelineModal').classList.add('show');
+  try {
+    const events = await DC_DATA.getRentalEvents(rentalId);
+    document.getElementById('timelineBody').innerHTML = buildTimelineHtml(rental, events);
+  } catch {
+    document.getElementById('timelineBody').innerHTML = `<div style="color:#ff6b6b;font-size:12px;padding:20px 0;text-align:center">Unable to load timeline.</div>`;
+  }
+}
+function closeTimeline() {
+  document.getElementById('timelineModal').classList.remove('show');
+}
+function pastRow(r) {
+  return `<tr style="border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer" onclick="openTimeline('${EC_SECURITY.escJsAttr(r.id)}')" title="View timeline">
+    <td style="padding:11px 14px;font-size:13px">${esc(r.equipment)}</td>
+    <td style="padding:11px 14px;font-size:13px;color:#b9cacb">${fmtDate(r.startDate)} – ${fmtDate(r.returnDate)}</td>
+    <td style="padding:11px 14px;font-size:13px;color:#00f0ff;font-weight:600">${fmtMoney(r.value)}</td>
+    <td style="padding:11px 14px">${statusBadge(r.status)}</td>
+  </tr>`;
+}
+
+DC_DATA.initForOrg(user.orgId).then(() => {
+  const rentals = DC_DATA.getRentals();
+  const active = rentals.filter(r => r.status === 'active' || r.status === 'overdue');
+  const upcoming = rentals.filter(r => r.status === 'pending');
+  const past = rentals.filter(r => r.status === 'complete' || r.status === 'cancelled');
+
+  document.getElementById('stActive').textContent = active.length;
+  document.getElementById('stUpcoming').textContent = upcoming.length;
+  document.getElementById('stPast').textContent = past.filter(r => r.status === 'complete').length;
+  document.getElementById('stTotal').textContent = fmtMoney(rentals.reduce((s, r) => s + (r.value || 0), 0));
+
+  document.getElementById('tab-active').innerHTML = active.length
+    ? active.map(rentalCard).join('')
+    : `<div class="glass-lo" style="border-radius:13px;padding:30px;text-align:center;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No active rentals.</div>`;
+  document.getElementById('tab-upcoming').innerHTML = upcoming.length
+    ? upcoming.map(rentalCard).join('')
+    : `<div class="glass-lo" style="border-radius:13px;padding:30px;text-align:center;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No upcoming rentals.</div>`;
+  document.getElementById('tab-past').innerHTML = past.length
+    ? `<div class="glass tbl-scroll" style="border-radius:13px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;min-width:480px">
+          <thead><tr style="background:rgba(255,255,255,.02)">
+            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Equipment</th>
+            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Period</th>
+            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Total</th>
+            <th style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#849495;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.05)">Status</th>
+          </tr></thead>
+          <tbody>${past.map(pastRow).join('')}</tbody>
+        </table>
+      </div>`
+    : `<div class="glass-lo" style="border-radius:13px;padding:30px;text-align:center;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No past rentals.</div>`;
+}).catch(() => {
+  ['stActive','stUpcoming','stPast','stTotal'].forEach(id => document.getElementById(id).textContent = '—');
+  document.getElementById('tab-active').innerHTML = `<div class="glass-lo" style="border-radius:13px;padding:30px;text-align:center;color:#ff6b6b;font-family:'JetBrains Mono',monospace;font-size:12px">Unable to load rentals.</div>`;
 });
 </script>
 </body></html>

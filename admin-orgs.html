@@ -132,7 +132,7 @@
           <option value="user">User</option>
           <option value="driver">Driver</option>
         </select>
-        <button class="btnp" onclick="openAddUserStandalone()" style="font-size:12px;padding:7px 13px;margin-left:auto">
+        <button class="btnp" id="addUserStandaloneBtn" onclick="openAddUserStandalone()" style="font-size:12px;padding:7px 13px;margin-left:auto">
           <span class="material-symbols-outlined ms" style="font-size:15px">person_add</span>Add User
         </button>
       </div>
@@ -180,6 +180,12 @@
         <label>Organisation <span style="font-size:10px;color:#849495;text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label>
         <select id="addUserOrgId">
           <option value="">No Organisation</option>
+        </select>
+      </div>
+      <div>
+        <label>Custom Role <span style="font-size:10px;color:#849495;text-transform:none;letter-spacing:0;font-weight:400">(optional — scoped admin-page access, see Roles &amp; Permissions)</span></label>
+        <select id="auCustomRoleId">
+          <option value="">None</option>
         </select>
       </div>
       <div id="auErr" style="display:none;padding:9px 12px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:8px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
@@ -233,6 +239,8 @@ const _ecUser = EC_AUTH.require(['admin']);
 // this admin's session when reviewed here. esc() for text content, escA()
 // for values embedded inside onclick="fn('...')" JS-string arguments.
 const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
+const _canEdit = EC_SECURITY.canEdit('admin-orgs');
+if (!_canEdit) document.getElementById('addUserStandaloneBtn').style.display = 'none';
 DC_DATA.setOrgScope(_ecUser.orgId);
 
 let expandedOrgId = null;
@@ -295,14 +303,14 @@ function renderRequests() {
   tbody.innerHTML = reqs.map(r => {
     const statusMap = { pending: '<span class="b bp">Pending Review</span>', approved: '<span class="b ba">Approved</span>', rejected: '<span class="b bo">Declined</span>' };
     const actions = r.status === 'pending'
-      ? `<div style="display:flex;gap:6px">
+      ? (_canEdit ? `<div style="display:flex;gap:6px">
           <button class="btnp" style="font-size:11px;padding:5px 10px" onclick="approveRequest('${r.id}')">
             <span class="material-symbols-outlined ms" style="font-size:13px">check</span>Approve
           </button>
           <button class="btnr" style="font-size:11px;padding:5px 10px" onclick="openReject('${r.id}')">
             <span class="material-symbols-outlined ms" style="font-size:13px">close</span>Decline
           </button>
-         </div>`
+         </div>` : '<span style="color:#849495;font-size:11px">View only</span>')
       : `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${r.notes ? esc(r.notes.slice(0,40)) : '—'}</span>`;
     return `<tr>
       <td data-label="Organisation"><div style="font-weight:600">${esc(r.orgName)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(r.regId)}</div></td>
@@ -354,9 +362,9 @@ function renderOrgs() {
             <span class="material-symbols-outlined ms" style="font-size:13px">${isExpanded ? 'expand_less' : 'group'}</span>
             ${isExpanded ? 'Hide' : 'Users'}
           </button>
-          ${o.status === 'active'
+          ${_canEdit ? (o.status === 'active'
             ? `<button class="btnr" style="font-size:11px;padding:5px 10px" onclick="suspendOrg('${o.id}')"><span class="material-symbols-outlined ms" style="font-size:13px">block</span>Suspend</button>`
-            : `<button class="btng" style="font-size:11px;padding:5px 10px;color:#00d4aa;border-color:rgba(0,212,170,.2)" onclick="reinstateOrg('${o.id}')"><span class="material-symbols-outlined ms" style="font-size:13px">check_circle</span>Reinstate</button>`}
+            : `<button class="btng" style="font-size:11px;padding:5px 10px;color:#00d4aa;border-color:rgba(0,212,170,.2)" onclick="reinstateOrg('${o.id}')"><span class="material-symbols-outlined ms" style="font-size:13px">check_circle</span>Reinstate</button>`) : ''}
         </div>
       </td>
     </tr>
@@ -371,7 +379,7 @@ function renderOrgs() {
 function buildUsersPanel(org, users) {
   const rows = users.length
     ? users.map(u => {
-        const roleColors = { admin: '#00f0ff', user: '#00dbe9', driver: '#ffb4a2' };
+        const roleColors = { admin: '#00f0ff', user: '#00dbe9', driver: '#7df4ff' };
         const rc = roleColors[u.role] || '#849495';
         const init = u.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
         return `<tr style="border-bottom:1px solid rgba(255,255,255,.03)">
@@ -388,14 +396,14 @@ function buildUsersPanel(org, users) {
           <td style="padding:10px 16px"><span class="b ${u.status === 'active' ? 'ba' : 'bo'}">${u.status === 'active' ? 'Active' : 'Inactive'}</span></td>
           <td style="padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(u.id)}</td>
           <td style="padding:10px 16px">
-            <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${_canEdit ? `<div style="display:flex;gap:5px;flex-wrap:wrap">
               <button class="btng" style="font-size:11px;padding:4px 9px" onclick="DC_DATA.toggleUserStatus('${escA(u.id)}').then(renderAll)">
                 ${u.status === 'active' ? 'Deactivate' : 'Reactivate'}
               </button>
               <button class="btng" style="font-size:11px;padding:4px 9px" onclick="sendPasswordReset('${escA(u.email)}','${escA(u.name)}')">
                 <span class="material-symbols-outlined ms" style="font-size:12px">lock_reset</span>Reset Password
               </button>
-            </div>
+            </div>` : ''}
           </td>
         </tr>`;
       }).join('')
@@ -406,9 +414,9 @@ function buildUsersPanel(org, users) {
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#849495">
         Users in ${esc(org.name)}
       </div>
-      <button class="btnp" style="font-size:11px;padding:6px 12px" onclick="openAddUser('${escA(org.id)}','${escA(org.name)}')">
+      ${_canEdit ? `<button class="btnp" style="font-size:11px;padding:6px 12px" onclick="openAddUser('${escA(org.id)}','${escA(org.name)}')">
         <span class="material-symbols-outlined ms" style="font-size:13px">person_add</span>Add User
-      </button>
+      </button>` : ''}
     </div>
     <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><table style="width:100%;border-collapse:collapse;min-width:460px">
       <thead><tr style="border-bottom:1px solid rgba(255,255,255,.05)">
@@ -438,7 +446,7 @@ function renderUsers() {
     return;
   }
   tbody.innerHTML = users.map(u => {
-    const roleColors = { admin: '#00f0ff', user: '#00dbe9', driver: '#ffb4a2' };
+    const roleColors = { admin: '#00f0ff', user: '#00dbe9', driver: '#7df4ff' };
     const rc = roleColors[u.role] || '#849495';
     return `<tr onclick="location.href='profile?id=${escA(u.id)}'" style="cursor:pointer" title="View profile">
       <td data-label="Name">
@@ -454,11 +462,11 @@ function renderUsers() {
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap" onclick="event.stopPropagation()">
           <button class="btng" style="font-size:11px;padding:5px 10px" onclick="location.href='profile?id=${escA(u.id)}'">
-            <span class="material-symbols-outlined ms" style="font-size:13px">edit</span>Edit
+            <span class="material-symbols-outlined ms" style="font-size:13px">${_canEdit ? 'edit' : 'visibility'}</span>${_canEdit ? 'Edit' : 'View'}
           </button>
-          <button class="btng" style="font-size:11px;padding:5px 10px" onclick="DC_DATA.toggleUserStatus('${escA(u.id)}').then(renderAll)">
+          ${_canEdit ? `<button class="btng" style="font-size:11px;padding:5px 10px" onclick="DC_DATA.toggleUserStatus('${escA(u.id)}').then(renderAll)">
             ${u.status === 'active' ? 'Deactivate' : 'Reactivate'}
-          </button>
+          </button>` : ''}
         </div>
       </td>
     </tr>`;
@@ -495,11 +503,20 @@ function populateOrgSelect() {
     orgs.map(o => `<option value="${esc(o.id)}">${esc(o.name)}</option>`).join('');
 }
 
+async function populateCustomRoleSelect() {
+  const sel = document.getElementById('auCustomRoleId');
+  await DC_DATA.loadRoles();
+  const roles = DC_DATA.getRoles();
+  sel.innerHTML = '<option value="">None</option>' +
+    roles.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('');
+}
+
 function openAddUser(orgId, orgName) {
   document.getElementById('addUserForm').reset();
   document.getElementById('auErr').style.display = 'none';
   document.getElementById('addUserOrgLabel').textContent = orgName || 'New User';
   populateOrgSelect();
+  populateCustomRoleSelect();
   document.getElementById('addUserOrgId').value = orgId || '';
   document.getElementById('addUserModal').classList.add('show');
 }
@@ -509,6 +526,7 @@ function openAddUserStandalone() {
   document.getElementById('auErr').style.display = 'none';
   document.getElementById('addUserOrgLabel').textContent = 'New User';
   populateOrgSelect();
+  populateCustomRoleSelect();
   document.getElementById('addUserOrgId').value = '';
   document.getElementById('addUserModal').classList.add('show');
 }
@@ -523,6 +541,7 @@ document.getElementById('addUserForm').addEventListener('submit', async e => {
   const email = document.getElementById('auEmail').value.trim().toLowerCase();
   const role  = document.getElementById('auRole').value;
   const orgId = document.getElementById('addUserOrgId').value || null;
+  const customRoleId = document.getElementById('auCustomRoleId').value || null;
   const existing = DC_DATA.getUsers().find(u => u.email === email);
   if (existing) {
     const err = document.getElementById('auErr');
@@ -530,7 +549,7 @@ document.getElementById('addUserForm').addEventListener('submit', async e => {
     err.style.display = 'block';
     return;
   }
-  await DC_DATA.addUser({ name, email, role, orgId });
+  await DC_DATA.addUser({ name, email, role, orgId, customRoleId });
   closeAddUser();
   renderAll();
 });

@@ -13,20 +13,12 @@
 const DC_DATA = (() => {
 
   // ─── Config ─────────────────────────────────────────────────────────────────
-  const API_KEY    = (typeof FIREBASE_CONFIG !== 'undefined') ? FIREBASE_CONFIG.apiKey : '';
-  const PROJECT_ID = (typeof FIREBASE_CONFIG !== 'undefined') ? FIREBASE_CONFIG.projectId : 'novara-f985b';
-  const LOCATION   = 'us-east1';
-  const SERVICE_ID = 'novara-f985b-service';
-  const CONNECTOR_ID = 'equipcore';
-
-  const CONNECTOR = `projects/${PROJECT_ID}/locations/${LOCATION}/services/${SERVICE_ID}/connectors/${CONNECTOR_ID}`;
-  const BASE      = `https://firebasedataconnect.googleapis.com/v1/${CONNECTOR}`;
-  const QUERY_URL = `${BASE}:executeQuery?key=${API_KEY}`;
-  const MUT_URL   = `${BASE}:executeMutation?key=${API_KEY}`;
+  const API_KEY = (typeof FIREBASE_CONFIG !== 'undefined') ? FIREBASE_CONFIG.apiKey : '';
 
   // ─── In-memory cache ────────────────────────────────────────────────────────
   let _orgs = [], _orgRequests = [], _users = [], _vehicles = [];
-  let _maintenance = [], _rentals = [], _catalogItems = [], _rentalApplications = [];
+  let _maintenance = [], _rentals = [], _rentalApplications = [];
+  let _roles = [];
   let _ready = false;
   let _orgScope = null;
 
@@ -39,7 +31,7 @@ const DC_DATA = (() => {
         ts: Date.now(),
         orgs: _orgs, orgRequests: _orgRequests, users: _users,
         vehicles: _vehicles, maintenance: _maintenance,
-        rentals: _rentals, catalogItems: _catalogItems,
+        rentals: _rentals,
         rentalApplications: _rentalApplications,
       }));
     } catch(_) {}
@@ -54,49 +46,18 @@ const DC_DATA = (() => {
       _orgs = c.orgs || []; _orgRequests = c.orgRequests || [];
       _users = c.users || []; _vehicles = c.vehicles || [];
       _maintenance = c.maintenance || []; _rentals = c.rentals || [];
-      _catalogItems = c.catalogItems || [];
       _rentalApplications = c.rentalApplications || [];
       return true;
     } catch(_) { return false; }
   }
 
-  // ─── Core fetch (genuinely public operations only) ─────────────────────────
-  // Data Connect's connector denies every OTHER operation to every client
-  // (@auth(level: NO_ACCESS) in dataconnect/connectors/*.gql) — only the
-  // read-only catalog browse and anonymous-submission forms in
-  // PUBLIC_QUERIES/PUBLIC_MUTATIONS below are still reachable this way.
-  // Everything else goes through authProxy(), which calls this project's
-  // own authenticated backend (functions/routes/dataRoutes.js), the same
-  // way /api/auth/* already works.
-  async function dc(url, operationName, variables = {}) {
-    let res;
-    try {
-      res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: CONNECTOR, operationName, variables }),
-      });
-    } catch {
-      if (_ready) window.showToast?.('error', 'Network error. Check your connection and try again.');
-      throw new Error('Network error. Check your connection and try again.');
-    }
-    if (!res.ok) {
-      if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
-      throw new Error('Unable to complete request. Please try again.');
-    }
-    let json;
-    try { json = await res.json(); } catch {
-      throw new Error('Unable to complete request. Please try again.');
-    }
-    if (json.errors?.length) {
-      if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
-      throw new Error('Unable to complete request. Please try again.');
-    }
-    return json.data || {};
-  }
-
   // ─── Authenticated proxy (everything else) ─────────────────────────────────
-  async function authProxy(operationName, variables = {}) {
+  // Returns the full parsed response body — authProxy() below (used by every
+  // ordinary query()/mutate() call) unwraps just `.data` from this; a couple
+  // of special-case mutations (e.g. CompleteMockCreditCheck) carry extra
+  // top-level fields the generic path doesn't know about, so they call this
+  // directly instead.
+  async function authProxyRaw(operationName, variables = {}) {
     if (typeof EC_API === 'undefined') {
       throw new Error('Not signed in.');
     }
@@ -115,7 +76,10 @@ const DC_DATA = (() => {
       if (_ready) window.showToast?.('error', 'Unable to complete request. Please try again.');
       throw new Error('Unable to complete request. Please try again.');
     }
-    const json = await res.json();
+    return res.json();
+  }
+  async function authProxy(operationName, variables = {}) {
+    const json = await authProxyRaw(operationName, variables);
     return json.data || {};
   }
 
@@ -154,20 +118,16 @@ const DC_DATA = (() => {
     return json.data || {};
   }
 
-  // Operations still declared @auth(level: PUBLIC) in the connector —
-  // read-only catalog browsing, safe to call directly.
-  const PUBLIC_QUERIES = new Set([
-    'ListAllCatalogItems', 'ListCatalogItemsByCategory',
-    'GetCatalogItemById', 'ListAvailableCatalogItems', 'ListCatalogImages',
-  ]);
+  // No guest/anonymous browsing anywhere in the product anymore — every
+  // read goes through the authenticated proxy. Anonymous-submission forms
+  // (rental applications, contact inquiries) still exist for people
+  // reaching out before they have an account, hence PUBLIC_MUTATIONS below.
   const PUBLIC_MUTATIONS = new Set([
     'CreateOrgRequest', 'CreateRentalApplication', 'JoinWaitlist', 'CreateContactInquiry',
   ]);
 
   function query(operationName, variables = {}) {
-    return PUBLIC_QUERIES.has(operationName)
-      ? dc(QUERY_URL, operationName, variables)
-      : authProxy(operationName, variables);
+    return authProxy(operationName, variables);
   }
   function mutate(operationName, variables = {}) {
     return PUBLIC_MUTATIONS.has(operationName)
@@ -215,15 +175,31 @@ const DC_DATA = (() => {
 
   function normUser(u) {
     return {
-      id:        u.id,
-      name:      u.name,
-      email:     u.email,
-      role:      lo(u.role),
-      orgId:     u.organisation?.id   || null,
-      orgName:   u.organisation?.name || null,
-      status:    lo(u.status),
-      avatarUrl: u.avatarUrl || null,
-      createdAt: toDate(u.createdAt),
+      id:             u.id,
+      name:           u.name,
+      email:          u.email,
+      role:           lo(u.role),
+      orgId:          u.organisation?.id   || null,
+      orgName:        u.organisation?.name || null,
+      status:         lo(u.status),
+      avatarUrl:      u.avatarUrl || null,
+      customRoleId:   u.customRole?.id   || null,
+      customRoleName: u.customRole?.name || null,
+      totpEnabled:    !!u.totpEnabled,
+      createdAt:      toDate(u.createdAt),
+    };
+  }
+
+  function normRole(r) {
+    let permissions = {};
+    try { permissions = JSON.parse(r.permissions || '{}'); } catch (_) {}
+    return {
+      id:          r.id,
+      name:        r.name,
+      description: r.description || '',
+      permissions,
+      createdAt:   toDate(r.createdAt),
+      updatedAt:   toDate(r.updatedAt),
     };
   }
 
@@ -280,37 +256,46 @@ const DC_DATA = (() => {
       value:      r.valueZar,
       status:     lo(r.status),
       notes:      r.notes || '',
+      // Source application, if this rental was auto-created from one (see
+      // dataconnect/schema/schema.gql's Rental.application) — null for a
+      // walk-in/manual rental. Used to synthesize "Application Submitted"/
+      // "Application Reviewed" timeline entries without duplicating them
+      // as RentalEvent rows.
+      application: r.application ? {
+        id:               r.application.id,
+        ref:              r.application.ref,
+        status:           lo(r.application.status),
+        submittedAt:      r.application.submittedAt,
+        reviewedAt:       r.application.reviewedAt || null,
+        reviewedByName:   r.application.reviewedBy?.name || null,
+        rejectionReason:  r.application.rejectionReason || null,
+      } : null,
     };
   }
 
   function normRentalApplication(a) {
     return {
       id:            a.id,
+      ref:           a.ref,
       applicantName: [a.firstName, a.lastName].filter(Boolean).join(' '),
       email:         a.email,
       phone:         a.phone,
       equipment:     a.equipmentName,
+      estimatedCost: a.estimatedCost ?? null,
       vehicleId:     a.vehicle?.id || null,
       vehicleLabel:  a.vehicle ? `${a.vehicle.make} ${a.vehicle.model}` : null,
       startDate:     a.startDate,
       endDate:       a.endDate,
       status:        lo(a.status),
+      // Credit-check state — see dataconnect/schema/schema.gql's
+      // CreditCheckStatus enum and functions/services/creditCheck.js.
+      creditCheckStatus:      lo(a.creditCheckStatus || 'NOT_REQUESTED'),
+      creditCheckScore:       a.creditCheckScore ?? null,
+      creditCheckFeeZar:      a.creditCheckFeeZar ?? 250,
+      creditCheckRequestedAt: a.creditCheckRequestedAt ? toDate(a.creditCheckRequestedAt) : null,
+      creditCheckCompletedAt: a.creditCheckCompletedAt ? toDate(a.creditCheckCompletedAt) : null,
       submittedAt:   toDate(a.submittedAt),
       updatedAt:     toDate(a.updatedAt),
-    };
-  }
-
-  function normCatalog(c) {
-    return {
-      id:          c.id,
-      name:        c.name,
-      subtitle:    c.subtitle || null,
-      category:    c.category,
-      description: c.description || null,
-      specs:       c.specs || null,
-      dailyRate:   c.dailyRate,
-      status:      lo(c.status),
-      imageUrl:    c.imageUrl,
     };
   }
 
@@ -396,27 +381,17 @@ const DC_DATA = (() => {
     const d = await query('ListAllRentals');
     _rentals = (d.rentals || []).map(normRental);
   }
-  async function _loadCatalog() {
-    const d = await query('ListAllCatalogItems');
-    _catalogItems = (d.catalogItems || []).map(normCatalog);
-  }
   async function _loadRentalApplications() {
     const d = await query('ListAllRentalApplications');
     _rentalApplications = (d.rentalApplications || []).map(normRentalApplication);
   }
+  async function _loadRoles() {
+    const d = await query('ListAllRoles');
+    _roles = (d.roles || []).map(normRole);
+  }
 
   // ─── Public API ──────────────────────────────────────────────────────────────
   return {
-
-    // Guest-safe alternative to init() — used by pages an anonymous visitor
-    // can reach (catalog/marketplace/dashboard-guest/apply-rental). init()
-    // bundles in ListAllUsers/ListAllVehicles/etc, all admin-only server-side
-    // now; calling it unauthenticated 403s on the very first request. This
-    // loads only the catalog, which is genuinely public (@auth(level: PUBLIC)).
-    async initPublicCatalog() {
-      if (_catalogItems.length) return;
-      await _loadCatalog();
-    },
 
     async submitRentalApplication(data) {
       await mutate('CreateRentalApplication', data);
@@ -435,19 +410,29 @@ const DC_DATA = (() => {
       }
       // Serve from sessionStorage cache if fresh (avoids refetch on page navigation)
       if (loadCache()) { _ready = true; return; }
-      try {
-        await Promise.all([
-          _loadOrgs(), _loadOrgRequests(), _loadUsers(),
-          _loadVehicles(), _loadMaintenance(), _loadRentals(), _loadCatalog(),
-          _loadRentalApplications(),
-        ]);
-        _ready = true;
-        saveCache();
-      } catch (err) {
+      // allSettled, not all — a custom-role caller (see dataconnect/schema/
+      // schema.gql's Role type) may legitimately be authorized for only ONE
+      // of these seven lists (e.g. view-only on admin-rentals) and gets a
+      // correct, expected 403 on the rest. Promise.all would fail the whole
+      // page load over that; each loader instead just leaves its array at
+      // its initial [] on failure, and the page only errors out if NOTHING
+      // came back at all (a real auth/network failure, not partial access).
+      const results = await Promise.allSettled([
+        _loadOrgs(), _loadOrgRequests(), _loadUsers(),
+        _loadVehicles(), _loadMaintenance(), _loadRentals(),
+        _loadRentalApplications(),
+      ]);
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length) {
+        failures.forEach(f => console.debug('[DC_DATA.init] partial load failure (expected for restricted access):', f.reason?.message));
+      }
+      if (failures.length === results.length) {
         window.showToast?.('error', 'Unable to load data. Please refresh or try again later.');
         setTimeout(() => { window.location.href = 'error'; }, 2000);
-        throw err;
+        throw failures[0].reason;
       }
+      _ready = true;
+      saveCache();
     },
 
     // Narrow, non-admin-safe alternative to init() — used by pages a
@@ -518,7 +503,54 @@ const DC_DATA = (() => {
     getRentals()            { return _orgScope ? _rentals.filter(r => r.org === _orgScope) : _rentals; },
     getAllRentals()          { return _rentals; },
     getRentalById(id)       { return _rentals.find(r => r.id === id) || null; },
-    getCatalogItems()       { return _catalogItems; },
+
+    // Timeline for one rental — fetched fresh on demand (not part of the
+    // main cache), same precedent as getRentalApplicationDetail() below.
+    // organisationId is resolved from the already-cached rental itself; the
+    // server always overrides it with the caller's own org for a
+    // user/driver caller regardless of what's sent (see
+    // registry/dataOperations.js's ListRentalEvents), so this only matters
+    // for an admin caller, who needs the rental's REAL org for the match to
+    // find anything.
+    async getRentalEvents(rentalId) {
+      const rental = _rentals.find(r => r.id === rentalId);
+      if (!rental || !rental.org) return [];
+      const d = await query('ListRentalEvents', { rentalId, organisationId: rental.org });
+      return (d.rentalEvents || []).map(e => ({
+        id:          e.id,
+        type:        lo(e.type),
+        description: e.description,
+        fromStatus:  e.fromStatus ? lo(e.fromStatus) : null,
+        toStatus:    e.toStatus ? lo(e.toStatus) : null,
+        actorName:   e.actorUser?.name || null,
+        createdAt:   e.createdAt,
+      }));
+    },
+
+    // ── Notifications ── fetched fresh on demand (not part of the main
+    // cache, same precedent as getRentalEvents above) — the sidebar bell
+    // (sidebar.js) polls this itself rather than depending on init().
+    // userId is the caller's own dbId (EC_AUTH.current().dbId), same
+    // pass-it-yourself pattern used for applicantUserId elsewhere — the
+    // server independently verifies it via registry/dataOperations.js's
+    // ownField, so a spoofed value here is just rejected, never trusted.
+    async getNotifications(userId) {
+      if (!userId) return [];
+      const d = await query('ListNotifications', { userId });
+      return (d.notifications || []).map(n => ({
+        id:        n.id,
+        type:      lo(n.type),
+        title:     n.title,
+        body:      n.body,
+        linkPath:  n.linkPath || null,
+        read:      n.read,
+        createdAt: n.createdAt,
+      }));
+    },
+    async markNotificationRead(id) {
+      await mutate('MarkNotificationRead', { id });
+    },
+
     // Note: RentalApplication records aren't org-tagged in the schema, so this
     // is intentionally unscoped (same precedent as getOrgRequests()).
     getRentalApplications() { return _rentalApplications; },
@@ -537,6 +569,29 @@ const DC_DATA = (() => {
     // injectOwnIdAs), so it can never be spoofed as a different admin.
     async reviewRentalApplication(id, status, rejectionReason) {
       await mutate('ReviewRentalApplication', { id, status, rejectionReason: rejectionReason || null });
+      await _loadRentalApplications();
+    },
+
+    // ── Credit-check workflow ──────────────────────────────────────────────
+    // score is intentionally not a parameter on completeMockCreditCheck —
+    // the server always computes and injects it itself (see
+    // dataController.js's CompleteMockCreditCheck special case); a client-
+    // supplied score would just be overwritten.
+    async requestCreditCheck(id) {
+      await mutate('RequestCreditCheck', { id });
+      await _loadRentalApplications();
+    },
+    // Returns the full XDS-shaped report (see functions/services/creditCheck.js)
+    // — not persisted server-side beyond the score, so callers that want to
+    // redisplay it later (without re-running the check) should cache it
+    // client-side themselves.
+    async completeMockCreditCheck(id) {
+      const json = await authProxyRaw('CompleteMockCreditCheck', { id, score: 0 });
+      await _loadRentalApplications();
+      return json.creditCheckReport || null;
+    },
+    async declineCreditCheck(id) {
+      await mutate('DeclineCreditCheck', { id, acknowledged: true });
       await _loadRentalApplications();
     },
 
@@ -572,12 +627,15 @@ const DC_DATA = (() => {
     // (admin-only in the registry) — that endpoint hardcodes role USER and
     // no organisation server-side, so this can never be used to self-grant
     // anything more than a bare account; an admin assigns both afterward.
-    async createUserLive(name, email) {
+    // profile carries name plus whatever KYC fields signup.html collected
+    // (see REGISTER_SELF_SCHEMA for the accepted shape) — email/role/org are
+    // never taken from it, same server-side guarantee as before.
+    async createUserLive(profile, email) {
       if (typeof EC_API === 'undefined') throw new Error('Not signed in.');
       const res = await EC_API.authFetch('/data/register-self', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(profile),
       });
       if (!res.ok) {
         throw new Error('Unable to complete request. Please try again.');
@@ -640,6 +698,10 @@ const DC_DATA = (() => {
     },
 
     // ── User mutations ──────────────────────────────────────────────────────
+    // customRoleId is applied as a second mutation after creation —
+    // CreateUser itself has no such parameter (see functions/gql/mutations.gql),
+    // so a freshly-created user is resolved back out of the reloaded list by
+    // their (unique) email to get the id AssignUserCustomRole needs.
     async addUser(data) {
       await mutate('CreateUser', {
         name:           data.name,
@@ -648,7 +710,15 @@ const DC_DATA = (() => {
         organisationId: data.orgId || null,
         avatarUrl:      data.avatarUrl || null,
       });
-      await _loadUsers(); saveCache();
+      await _loadUsers();
+      if (data.customRoleId) {
+        const created = _users.find(u => u.email === data.email);
+        if (created) {
+          await mutate('AssignUserCustomRole', { id: created.id, customRoleId: data.customRoleId });
+          await _loadUsers();
+        }
+      }
+      saveCache();
     },
 
     async toggleUserStatus(id) {
@@ -662,16 +732,21 @@ const DC_DATA = (() => {
     // Self-service (own profile) or admin (editing another user) — the
     // backend's ownField check in registry/dataOperations.js allows both;
     // it rejects anyone else's id for a non-admin caller.
+    // Only fields actually present as keys in `data` are sent — profile.html
+    // manages name/bio/position/department/phone/avatarUrl and always
+    // supplies all of them (so leaving one blank there correctly clears it),
+    // while apply-rental.html's post-submit sync-back only ever supplies the
+    // KYC fields it collected. Neither caller should be able to accidentally
+    // null out fields the OTHER one owns just by omitting them.
     async updateUserProfile(id, data) {
-      await mutate('UpdateUserProfile', {
-        id,
-        name:       data.name       ?? null,
-        bio:        data.bio        ?? null,
-        position:   data.position   ?? null,
-        department: data.department ?? null,
-        phone:      data.phone      ?? null,
-        avatarUrl:  data.avatarUrl  ?? null,
-      });
+      const vars = { id };
+      [
+        'name', 'bio', 'position', 'department', 'phone', 'avatarUrl',
+        'idNumber', 'dateOfBirth', 'address', 'city', 'province', 'postalCode',
+        'employmentStatus', 'employerName', 'monthlyIncome', 'yearsEmployed',
+        'bank', 'accountType', 'outstandingCredit',
+      ].forEach(f => { if (f in data) vars[f] = data[f]; });
+      await mutate('UpdateUserProfile', vars);
       // Refreshes the cached admin user list so admin-orgs.html-style views
       // reflect the edit immediately — but this mutation is also callable by
       // any signed-in user editing their own profile (ownField-authorized),
@@ -684,6 +759,64 @@ const DC_DATA = (() => {
     async updateUserRole(id, role) {
       await mutate('UpdateUserRole', { id, role });
       await _loadUsers(); saveCache();
+    },
+
+    // Admin-only. Sets/clears a user's additive custom role — see
+    // dataconnect/schema/schema.gql's Role type. customRoleId may be null
+    // to revoke a custom role, leaving the user's base role unchanged.
+    async assignUserCustomRole(id, customRoleId) {
+      await mutate('AssignUserCustomRole', { id, customRoleId: customRoleId || null });
+      await _loadUsers(); saveCache();
+    },
+
+    // ── Audit logs (server-side, DB-backed) ──────────────────────────────
+    // Not part of init()'s Promise.all — only admin-reports.html's Activity
+    // tab needs this, and it's a live/paged view rather than a cached list.
+    async getAuditLogs(limit = 200) {
+      const d = await query('ListAuditLogs', { limit });
+      return (d.auditLogs || []).map(l => ({
+        id:        l.id,
+        userId:    l.user?.id || null,
+        userName:  l.userName || l.user?.name || 'System',
+        userRole:  lo(l.userRole || ''),
+        action:    l.action,
+        details:   l.details || '',
+        page:      l.page || '',
+        createdAt: l.createdAt,
+      }));
+    },
+
+    // ── Custom roles ──────────────────────────────────────────────────────
+    // Not part of init()'s Promise.all — only admin-roles.html and the Add
+    // User / profile "Custom Role" pickers need this list, so it's fetched
+    // on demand rather than on every admin page load.
+    async loadRoles() { await _loadRoles(); },
+    getRoles()        { return _roles; },
+    getRoleById(id)   { return _roles.find(r => r.id === id) || null; },
+
+    async addRole(data) {
+      await mutate('CreateRole', {
+        name:        data.name,
+        description: data.description || null,
+        permissions: JSON.stringify(data.permissions || {}),
+        createdById: data.createdById || null,
+      });
+      await _loadRoles();
+    },
+
+    async updateRole(id, data) {
+      await mutate('UpdateRole', {
+        id,
+        name:        data.name,
+        description: data.description || null,
+        permissions: JSON.stringify(data.permissions || {}),
+      });
+      await _loadRoles();
+    },
+
+    async deleteRole(id) {
+      await mutate('DeleteRole', { id });
+      await _loadRoles();
     },
 
     // ── Vehicle mutations ───────────────────────────────────────────────────

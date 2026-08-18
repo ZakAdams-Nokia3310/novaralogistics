@@ -26,6 +26,11 @@ async function authenticateToken(req, res, next) {
       role  : decoded.role || 'user',
       org   : decoded.org || null,
       orgId : decoded.orgId || null,
+      // Optional custom-role assignment (see dataOperations.js's featureKey
+      // doc comment) — only the id travels in the claim; the actual
+      // permissions are always re-read fresh from the DB at authorization
+      // time, never trusted from here.
+      customRoleId: decoded.customRoleId || null,
       // Seconds-since-epoch of the actual sign-in that produced this token
       // (not when the token was refreshed) — lets sensitive actions (see
       // totpController.js's selfRecoveryDisable) require a genuinely fresh

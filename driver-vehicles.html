@@ -26,7 +26,7 @@
   @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important;}}
 </style>
 <script id="tailwind-config">
-tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","background":"#111317","primary":"#dbfcff","primary-container":"#00f0ff","on-primary-container":"#006970","primary-fixed-dim":"#00dbe9","secondary-container":"#7000ff","on-secondary-container":"#ddcdff","surface-container":"#1e2024","surface-container-lowest":"#0c0e12","surface-container-high":"#282a2e","on-surface":"#e2e2e8","on-surface-variant":"#b9cacb","tertiary-fixed-dim":"#ffb4a2","tertiary-container":"#ffcec2","error":"#ffb4ab","error-container":"#93000a","secondary":"#d1bcff","outline":"#849495"},fontFamily:{"body-md":["Inter"],"headline-lg":["Hanken Grotesk"],"label-sm":["JetBrains Mono"],"display-lg":["Hanken Grotesk"]},fontSize:{"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}]},spacing:{"max-width":"1440px","base":"8px","margin-mobile":"16px","gutter":"24px","margin-desktop":"48px"}}}}
+tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","background":"#111317","primary":"#dbfcff","primary-container":"#00f0ff","on-primary-container":"#006970","primary-fixed-dim":"#00dbe9","secondary-container":"#7000ff","on-secondary-container":"#ddcdff","surface-container":"#1e2024","surface-container-lowest":"#0c0e12","surface-container-high":"#282a2e","on-surface":"#e2e2e8","on-surface-variant":"#b9cacb","tertiary-fixed-dim":"#00dbe9","tertiary-container":"#003a3c","error":"#ffb4ab","error-container":"#93000a","secondary":"#d1bcff","outline":"#849495"},fontFamily:{"body-md":["Inter"],"headline-lg":["Hanken Grotesk"],"label-sm":["JetBrains Mono"],"display-lg":["Hanken Grotesk"]},fontSize:{"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.05em","fontWeight":"500"}],"display-lg":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}]},spacing:{"max-width":"1440px","base":"8px","margin-mobile":"16px","gutter":"24px","margin-desktop":"48px"}}}}
 </script>
 </head>
 <body class="bg-background text-on-surface font-body-md overflow-x-hidden">
@@ -77,7 +77,7 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","ba
             <div class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary-fixed-dim font-label-sm text-label-sm mb-4">
               <span class="material-symbols-outlined text-sm mr-2 pulse-dot" style="font-variation-settings:'FILL' 1">circle</span>LIVE ASSIGNMENT
             </div>
-            <h2 class="font-display-lg text-display-lg text-primary leading-tight">Volvo FH16 <br/><span class="text-on-surface-variant opacity-70">Plate: EC-7749-X</span></h2>
+            <h2 class="font-display-lg text-display-lg text-primary leading-tight" id="heroVehicle">Loading… <br/><span class="text-on-surface-variant opacity-70" id="heroPlate"></span></h2>
           </div>
           <div class="grid grid-cols-2 gap-6 mt-8">
             <div class="glass-float p-4 rounded-xl border-white/5"><p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Time Remaining</p><p class="font-headline-lg text-headline-lg text-primary">4h 12m</p></div>
@@ -146,10 +146,10 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","ba
           </div>
         </div>
         <div class="space-y-3">
-          <button onclick="alert('Roadside assistance requested. ETA: 25 minutes.')" class="w-full bg-primary text-on-primary font-bold py-4 rounded-xl flex items-center justify-center gap-2 cyan-glow hover:brightness-110 transition-all">
+          <button id="roadsideBtn" onclick="reportIssue('roadside')" class="w-full bg-primary text-on-primary font-bold py-4 rounded-xl flex items-center justify-center gap-2 cyan-glow hover:brightness-110 transition-all">
             <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">emergency_share</span>REQUEST ROADSIDE ASSIST
           </button>
-          <button onclick="alert('Failure report submitted. Reference: #MF-' + Math.floor(Math.random()*9000+1000))" class="w-full border border-white/10 text-on-surface py-4 rounded-xl hover:bg-white/5 transition-all">REPORT MECHANICAL FAILURE</button>
+          <button id="failureBtn" onclick="reportIssue('driver_issue')" class="w-full border border-white/10 text-on-surface py-4 rounded-xl hover:bg-white/5 transition-all">REPORT MECHANICAL FAILURE</button>
         </div>
       </div>
     </div>
@@ -184,6 +184,65 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","ba
   <a href="calculator" class="flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">payments</span><span class="font-label-sm text-label-sm">Calculator</span></a>
   <a href="user-dashboard" class="flex flex-col items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined">person</span><span class="font-label-sm text-label-sm">Profile</span></a>
 </nav>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js"></script>
+<script>
+const _user = EC_AUTH.require(['driver', 'admin']);
+let _assignedVehicle = null;
+
+if (_user.orgId) {
+  DC_DATA.setOrgScope(_user.orgId);
+  DC_DATA.initForOrg(_user.orgId).then(() => {
+    const vehicles = DC_DATA.getVehicles();
+    _assignedVehicle = vehicles.find(v => v.status === 'on_rent') || vehicles[0] || null;
+    if (_assignedVehicle) {
+      document.getElementById('heroVehicle').childNodes[0].textContent = `${_assignedVehicle.make} ${_assignedVehicle.model} `;
+      document.getElementById('heroPlate').textContent = `Plate: ${_assignedVehicle.regPlate}`;
+    } else {
+      document.getElementById('heroVehicle').childNodes[0].textContent = 'No vehicle assigned ';
+      document.getElementById('heroPlate').textContent = '';
+    }
+  }).catch(() => {
+    document.getElementById('heroVehicle').childNodes[0].textContent = 'Unable to load vehicle ';
+  });
+} else {
+  document.getElementById('heroVehicle').childNodes[0].textContent = 'No organisation on account ';
+}
+
+async function reportIssue(type) {
+  if (!_assignedVehicle) { alert('No vehicle on record to report against.'); return; }
+  const isRoadside = type === 'roadside';
+  const description = isRoadside
+    ? 'Roadside assistance requested by driver via the fleet app.'
+    : 'Mechanical failure reported by driver via the fleet app.';
+  const btn = document.getElementById(isRoadside ? 'roadsideBtn' : 'failureBtn');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  try {
+    await DC_DATA.addMaintenanceQuery({
+      vehicleId: _assignedVehicle.id,
+      vehicleLabel: `${_assignedVehicle.make} ${_assignedVehicle.model} · ${_assignedVehicle.regPlate}`,
+      type,
+      priority: isRoadside ? 'critical' : 'high',
+      description,
+      loggedBy: _user.name,
+      loggedByUserId: _user.dbId,
+    });
+    alert(isRoadside ? 'Roadside assistance requested — dispatch has been notified.' : 'Mechanical failure reported to the maintenance team.');
+  } catch (err) {
+    alert(EC_SECURITY.safeErrMsg(err, 'Could not submit this report. Please try again.'));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+</script>
 <script>
   // Leaflet route map
   const rMap = L.map('routeMap', {zoomControl:false, attributionControl:false}).setView([-26.0,27.8], 8);
@@ -196,7 +255,7 @@ tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface":"#111317","ba
   const posIcon = L.divIcon({html:'<div style="width:18px;height:18px;border-radius:50%;background:#00f0ff;border:3px solid white;box-shadow:0 0 18px rgba(0,240,255,.8);"></div>',iconSize:[18,18],iconAnchor:[9,9],className:''});
   L.marker([-25.95,27.9],{icon:posIcon}).addTo(rMap).bindPopup('<b>EC-7749-X</b><br>Volvo FH16<br>84 km/h · Fuel 64%');
 
-  const destIcon = L.divIcon({html:'<div style="width:12px;height:12px;border-radius:50%;background:#ffb4a2;border:2px solid white;box-shadow:0 0 10px rgba(255,180,162,.6);"></div>',iconSize:[12,12],iconAnchor:[6,6],className:''});
+  const destIcon = L.divIcon({html:'<div style="width:12px;height:12px;border-radius:50%;background:#e2e2e8;border:2px solid white;box-shadow:0 0 10px rgba(226,226,232,.6);"></div>',iconSize:[12,12],iconAnchor:[6,6],className:''});
   L.marker([-25.6677,27.2424],{icon:destIcon}).addTo(rMap);
 
   document.getElementById('fuelForm').addEventListener('submit', (e) => {

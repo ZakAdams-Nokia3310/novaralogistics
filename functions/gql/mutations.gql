@@ -179,6 +179,21 @@ mutation CreateUser(
   $role: UserRole!
   $organisationId: UUID
   $avatarUrl: String
+  $phone: String
+  $idNumber: String
+  $dateOfBirth: Date
+  $address: String
+  $city: String
+  $province: SaProvince
+  $postalCode: String
+  $employmentStatus: EmploymentStatus
+  $employerName: String
+  $monthlyIncome: Float
+  $yearsEmployed: Int
+  $bank: BankName
+  $accountType: AccountType
+  $outstandingCredit: Float
+  $termsAcceptedAt: Timestamp
 ) {
   user_insert(data: {
     name: $name
@@ -189,6 +204,21 @@ mutation CreateUser(
     avatarUrl: $avatarUrl
     emailVerified: false
     failedAttempts: 0
+    phone: $phone
+    idNumber: $idNumber
+    dateOfBirth: $dateOfBirth
+    address: $address
+    city: $city
+    province: $province
+    postalCode: $postalCode
+    employmentStatus: $employmentStatus
+    employerName: $employerName
+    monthlyIncome: $monthlyIncome
+    yearsEmployed: $yearsEmployed
+    bank: $bank
+    accountType: $accountType
+    outstandingCredit: $outstandingCredit
+    termsAcceptedAt: $termsAcceptedAt
   })
 }
 
@@ -212,6 +242,19 @@ mutation UpdateUserProfile(
   $department: String
   $phone: String
   $avatarUrl: String
+  $idNumber: String
+  $dateOfBirth: Date
+  $address: String
+  $city: String
+  $province: SaProvince
+  $postalCode: String
+  $employmentStatus: EmploymentStatus
+  $employerName: String
+  $monthlyIncome: Float
+  $yearsEmployed: Int
+  $bank: BankName
+  $accountType: AccountType
+  $outstandingCredit: Float
 ) {
   user_update(id: $id, data: {
     name: $name
@@ -220,6 +263,19 @@ mutation UpdateUserProfile(
     department: $department
     phone: $phone
     avatarUrl: $avatarUrl
+    idNumber: $idNumber
+    dateOfBirth: $dateOfBirth
+    address: $address
+    city: $city
+    province: $province
+    postalCode: $postalCode
+    employmentStatus: $employmentStatus
+    employerName: $employerName
+    monthlyIncome: $monthlyIncome
+    yearsEmployed: $yearsEmployed
+    bank: $bank
+    accountType: $accountType
+    outstandingCredit: $outstandingCredit
     updatedAt_expr: "request.time"
   })
 }
@@ -349,6 +405,7 @@ mutation CreateRental(
   $valueZar: Float!
   $status: RentalStatus
   $notes: String
+  $applicationId: UUID
 ) {
   rental_insert(data: {
     vehicleId: $vehicleId
@@ -360,11 +417,57 @@ mutation CreateRental(
     valueZar: $valueZar
     status: $status
     notes: $notes
+    applicationId: $applicationId
+  })
+}
+
+mutation CreateRentalEvent(
+  $rentalId: UUID!
+  $type: RentalEventType!
+  $description: String!
+  $fromStatus: RentalStatus
+  $toStatus: RentalStatus
+  $actorUserId: UUID
+) {
+  rentalEvent_insert(data: {
+    rentalId: $rentalId
+    type: $type
+    description: $description
+    fromStatus: $fromStatus
+    toStatus: $toStatus
+    actorUserId: $actorUserId
   })
 }
 
 mutation UpdateRentalStatus($id: UUID!, $status: RentalStatus!) {
   rental_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
+
+# ── Notifications ── see controllers/dataController.js's createNotification()
+# helper. CreateNotification is server-internal only (never in the registry,
+# same precedent as CreateRentalEvent above). MarkNotificationRead's
+# ownership check happens BEFORE this runs (dataController.js fetches the
+# notification via GetNotificationById and verifies it belongs to the
+# caller) — the mutation itself is PK-only, Data Connect's generated
+# _update can't filter by user_id too.
+mutation CreateNotification(
+  $userId: UUID!
+  $type: NotificationType!
+  $title: String!
+  $body: String!
+  $linkPath: String
+) {
+  notification_insert(data: {
+    userId: $userId
+    type: $type
+    title: $title
+    body: $body
+    linkPath: $linkPath
+  })
+}
+
+mutation MarkNotificationRead($id: UUID!) {
+  notification_update(id: $id, data: { read: true })
 }
 
 mutation UpdateRental(
@@ -465,4 +568,69 @@ mutation ReviewRentalApplication(
     reviewedAt_expr: "request.time"
     updatedAt_expr: "request.time"
   })
+}
+
+# ── Credit check ── see functions/services/creditCheck.js. CompleteMockCreditCheck's
+# $score is always server-computed and injected by dataController.js's
+# execute() (see its CompleteMockCreditCheck special case) — never trusted
+# from the client, same principle as reviewedById above.
+mutation RequestCreditCheck($id: UUID!) {
+  rentalApplication_update(id: $id, data: {
+    creditCheckStatus: REQUESTED
+    creditCheckRequestedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation CompleteMockCreditCheck($id: UUID!, $score: Int!) {
+  rentalApplication_update(id: $id, data: {
+    creditCheckStatus: COMPLETED
+    creditCheckScore: $score
+    creditCheckCompletedAt_expr: "request.time"
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeclineCreditCheck($id: UUID!, $acknowledged: Boolean!) {
+  rentalApplication_update(id: $id, data: {
+    creditCheckStatus: DECLINED
+    creditCheckDeclinedAcknowledged: $acknowledged
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation CreateRole(
+  $name: String!
+  $description: String
+  $permissions: String!
+  $createdById: UUID
+) {
+  role_insert(data: {
+    name: $name
+    description: $description
+    permissions: $permissions
+    createdById: $createdById
+  })
+}
+
+mutation UpdateRole(
+  $id: UUID!
+  $name: String!
+  $description: String
+  $permissions: String!
+) {
+  role_update(id: $id, data: {
+    name: $name
+    description: $description
+    permissions: $permissions
+    updatedAt_expr: "request.time"
+  })
+}
+
+mutation DeleteRole($id: UUID!) {
+  role_delete(id: $id)
+}
+
+mutation AssignUserCustomRole($id: UUID!, $customRoleId: UUID) {
+  user_update(id: $id, data: { customRoleId: $customRoleId, updatedAt_expr: "request.time" })
 }

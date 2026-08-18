@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>Roles &amp; Permissions — EquipCore Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="theme.css" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);}
+  .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.85);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:filter .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:background .18s;}
+  .btng:hover{background:rgba(255,255,255,.09);}
+  .btnr{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,107,107,.08);color:#ff6b6b;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,107,107,.18);cursor:pointer;transition:background .18s;}
+  .btnr:hover{background:rgba(255,107,107,.14);}
+  input,select,textarea{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;width:100%;outline:none;transition:border-color .18s;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+  label{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:5px;}
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(8,10,14,.85);backdrop-filter:blur(12px);z-index:900;align-items:center;justify-content:center;}
+  .modal-bg.show{display:flex;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .modal-bg.show .modal-card{animation:slideUp .22s ease both;}
+  .roleCard{border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;}
+  .permRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+  .permRow:last-child{border-bottom:none;}
+  .seg{display:inline-flex;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.08);}
+  .seg button{background:rgba(255,255,255,.03);color:#849495;border:none;padding:6px 11px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:all .15s;}
+  .seg button+button{border-left:1px solid rgba(255,255,255,.08);}
+  .seg button.active[data-v="none"]{background:rgba(255,255,255,.08);color:#e2e2e8;}
+  .seg button.active[data-v="view"]{background:rgba(255,217,61,.14);color:#ffd93d;}
+  .seg button.active[data-v="edit"]{background:rgba(0,240,255,.14);color:#00f0ff;}
+  .pbadge{font-family:'JetBrains Mono',monospace;font-size:9.5px;padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){
+    .body{padding:14px 12px!important}
+    .topbar{padding:0 14px!important;height:auto!important;min-height:56px;gap:6px}
+    #rolesGrid{grid-template-columns:1fr!important}
+    .modal-bg{align-items:flex-end!important}
+    .modal-bg .modal-card{border-radius:16px 16px 0 0!important;width:100%!important;max-width:100%!important;margin:0!important;max-height:88vh!important;overflow-y:auto!important}
+    .btnp,.btng,.btnr{min-height:42px}
+  }
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Roles &amp; Permissions</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Custom staff roles with per-feature view/edit access — admin only</div>
+    </div>
+    <button class="btnp" onclick="openCreateRole()" style="font-size:12px;padding:7px 13px">
+      <span class="material-symbols-outlined ms" style="font-size:15px">add</span>Create Role
+    </button>
+  </div>
+
+  <div class="body">
+    <div id="rolesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px"></div>
+    <div id="rolesEmpty" style="display:none;text-align:center;padding:60px 20px;color:#849495">
+      <span class="material-symbols-outlined ms" style="font-size:36px;opacity:.5">admin_panel_settings</span>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:8px">No custom roles yet — create one to grant scoped admin access without making someone a full admin.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Create / Edit Role Modal -->
+<div class="modal-bg" id="roleModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:480px;border-color:rgba(0,240,255,.14);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:#00f0ff">admin_panel_settings</span>
+      </div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px" id="roleModalTitle">Create Role</div>
+        <div style="font-size:12px;color:#849495">Grant view or edit access per feature</div>
+      </div>
+      <button onclick="closeRoleModal()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:20px;line-height:1">×</button>
+    </div>
+    <form id="roleForm" style="display:flex;flex-direction:column;gap:14px">
+      <input type="hidden" id="rId"/>
+      <div><label>Role Name</label><input id="rName" placeholder="e.g. Reception" required maxlength="100"/></div>
+      <div><label>Description <span style="font-size:10px;color:#849495;text-transform:none;letter-spacing:0;font-weight:400">(optional)</span></label><textarea id="rDesc" rows="2" placeholder="What this role is for…" maxlength="2000" style="resize:vertical"></textarea></div>
+      <div>
+        <label style="margin-bottom:9px">Feature Access</label>
+        <div class="glass-lo" style="border-radius:10px;padding:4px 14px" id="permGrid"></div>
+      </div>
+      <div id="rErr" style="display:none;padding:9px 12px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:8px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+      <button class="btnp" type="submit" style="width:100%;justify-content:center;padding:11px" id="roleSubmitBtn">Create Role</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js?v=2"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('admin-roles');
+const _ecUser = EC_AUTH.require(['admin']);
+const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
+
+// Must match functions/validation/dataSchemas.js's FEATURE_KEYS exactly —
+// a key here that isn't in that list would validate-fail server-side.
+const FEATURES = [
+  { key: 'admin-fleet',       label: 'Fleet Management',   icon: 'garage' },
+  { key: 'admin-rentals',     label: 'Rental Tracking',    icon: 'receipt_long' },
+  { key: 'admin-maintenance', label: 'Maintenance Queries', icon: 'build' },
+  { key: 'admin-orgs',        label: 'Organisations & Users', icon: 'domain' },
+  { key: 'admin-audit',       label: 'Audit Logs',         icon: 'policy' },
+  { key: 'admin-reports',     label: 'Reporting',          icon: 'monitoring' },
+];
+
+let editingPermissions = {};
+
+function buildPermGrid() {
+  document.getElementById('permGrid').innerHTML = FEATURES.map(f => `
+    <div class="permRow">
+      <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+        <span class="material-symbols-outlined ms" style="font-size:16px;color:#849495">${f.icon}</span>${esc(f.label)}
+      </div>
+      <div class="seg" data-feature="${f.key}">
+        <button type="button" data-v="none">No Access</button>
+        <button type="button" data-v="view">View</button>
+        <button type="button" data-v="edit">Edit</button>
+      </div>
+    </div>`).join('');
+
+  document.querySelectorAll('.seg').forEach(seg => {
+    seg.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        editingPermissions[seg.dataset.feature] = btn.dataset.v;
+      });
+    });
+  });
+  setPermGridValues({});
+}
+
+function setPermGridValues(permissions) {
+  editingPermissions = {};
+  document.querySelectorAll('.seg').forEach(seg => {
+    const key = seg.dataset.feature;
+    const v = permissions[key] || 'none';
+    editingPermissions[key] = v;
+    seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  });
+}
+
+function permissionsPayload() {
+  const out = {};
+  for (const [key, v] of Object.entries(editingPermissions)) {
+    if (v === 'view' || v === 'edit') out[key] = v;
+  }
+  return out;
+}
+
+function permBadges(permissions) {
+  const entries = Object.entries(permissions);
+  if (!entries.length) return `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">No feature access granted</span>`;
+  return entries.map(([key, v]) => {
+    const f = FEATURES.find(x => x.key === key);
+    const label = f ? f.label : key;
+    const editMode = v === 'edit';
+    return `<span class="pbadge" style="background:${editMode ? 'rgba(0,240,255,.12)' : 'rgba(255,217,61,.12)'};color:${editMode ? '#00f0ff' : '#ffd93d'}">${esc(label)} · ${v}</span>`;
+  }).join(' ');
+}
+
+function openCreateRole() {
+  document.getElementById('roleForm').reset();
+  document.getElementById('rId').value = '';
+  document.getElementById('rErr').style.display = 'none';
+  document.getElementById('roleModalTitle').textContent = 'Create Role';
+  document.getElementById('roleSubmitBtn').textContent = 'Create Role';
+  buildPermGrid();
+  document.getElementById('roleModal').classList.add('show');
+}
+
+function openEditRole(id) {
+  const role = DC_DATA.getRoleById(id);
+  if (!role) return;
+  document.getElementById('roleForm').reset();
+  document.getElementById('rId').value = role.id;
+  document.getElementById('rName').value = role.name;
+  document.getElementById('rDesc').value = role.description || '';
+  document.getElementById('rErr').style.display = 'none';
+  document.getElementById('roleModalTitle').textContent = 'Edit Role';
+  document.getElementById('roleSubmitBtn').textContent = 'Save Changes';
+  buildPermGrid();
+  setPermGridValues(role.permissions || {});
+  document.getElementById('roleModal').classList.add('show');
+}
+
+function closeRoleModal() {
+  document.getElementById('roleModal').classList.remove('show');
+}
+
+document.getElementById('roleForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const id = document.getElementById('rId').value;
+  const name = document.getElementById('rName').value.trim();
+  const description = document.getElementById('rDesc').value.trim();
+  const permissions = permissionsPayload();
+  const err = document.getElementById('rErr');
+  if (!name) { err.textContent = 'Role name is required.'; err.style.display = 'block'; return; }
+  const dup = DC_DATA.getRoles().find(r => r.name.toLowerCase() === name.toLowerCase() && r.id !== id);
+  if (dup) { err.textContent = 'A role with this name already exists.'; err.style.display = 'block'; return; }
+  try {
+    if (id) {
+      await DC_DATA.updateRole(id, { name, description, permissions });
+    } else {
+      await DC_DATA.addRole({ name, description, permissions, createdById: _ecUser.dbId });
+    }
+    closeRoleModal();
+    renderRoles();
+  } catch {
+    err.textContent = 'Unable to save role. Please try again.';
+    err.style.display = 'block';
+  }
+});
+
+async function deleteRole(id, name, userCount) {
+  const msg = userCount
+    ? `Delete "${name}"? ${userCount} user(s) currently hold this role and will lose the access it grants.`
+    : `Delete "${name}"? This cannot be undone.`;
+  if (!confirm(msg)) return;
+  try {
+    await DC_DATA.deleteRole(id);
+    renderRoles();
+  } catch {
+    window.showToast?.('error', 'Unable to delete role. Please try again.');
+  }
+}
+
+function renderRoles() {
+  const roles = DC_DATA.getRoles();
+  const users = DC_DATA.getAllUsers();
+  const grid = document.getElementById('rolesGrid');
+  const empty = document.getElementById('rolesEmpty');
+  if (!roles.length) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  grid.innerHTML = roles.map(r => {
+    const count = users.filter(u => u.customRoleId === r.id).length;
+    return `<div class="glass roleCard">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">${esc(r.name)}</div>
+          <div style="font-size:12px;color:#849495;margin-top:2px">${r.description ? esc(r.description) : 'No description'}</div>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#00f0ff;background:rgba(0,240,255,.1);padding:3px 9px;border-radius:999px;white-space:nowrap">${count} user${count === 1 ? '' : 's'}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">${permBadges(r.permissions)}</div>
+      <div style="display:flex;gap:8px;margin-top:2px">
+        <button class="btng" style="flex:1;justify-content:center;font-size:12px" onclick="openEditRole('${escA(r.id)}')">
+          <span class="material-symbols-outlined ms" style="font-size:14px">edit</span>Edit
+        </button>
+        <button class="btnr" style="flex:1;justify-content:center;font-size:12px" onclick="deleteRole('${escA(r.id)}','${escA(r.name)}',${count})">
+          <span class="material-symbols-outlined ms" style="font-size:14px">delete</span>Delete
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+Promise.all([DC_DATA.init(), DC_DATA.loadRoles()]).then(() => {
+  renderRoles();
+}).catch(err => {
+  document.body.insertAdjacentHTML('afterbegin', `<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#ff6b6b;color:#000;padding:10px 16px;font-family:monospace;font-size:12px">⚠ Data Connect error: ${EC_SECURITY.sanitizeHtml(err.message)}</div>`);
+});
+</script>
+</body></html>

@@ -88,6 +88,13 @@ enum ApplicationStatus {
   CANCELLED
 }
 
+enum CreditCheckStatus {
+  NOT_REQUESTED
+  REQUESTED
+  COMPLETED
+  DECLINED
+}
+
 enum EmploymentStatus {
   FULL_TIME_EMPLOYED
   SELF_EMPLOYED
@@ -205,6 +212,28 @@ type User @table(name: "users") {
   position: String @col(dataType: "varchar(200)")
   department: String @col(dataType: "varchar(200)")
   phone: String @col(dataType: "varchar(30)")
+  # ── KYC / rental-readiness fields — collected at signup (signup.html) or
+  # profile.html, and auto-filled into apply-rental.html's application form
+  # so a returning applicant never has to re-type them. All nullable: a
+  # pre-existing account or a Google-auto-registered one may have none of
+  # this yet, and apply-rental.html still asks for (and can save back)
+  # whatever's missing at application time.
+  idNumber: String @col(dataType: "varchar(20)")
+  dateOfBirth: Date
+  address: String @col(dataType: "varchar(400)")
+  city: String @col(dataType: "varchar(100)")
+  province: SaProvince
+  postalCode: String @col(dataType: "varchar(10)")
+  employmentStatus: EmploymentStatus
+  employerName: String @col(dataType: "varchar(200)")
+  monthlyIncome: Float
+  yearsEmployed: Int
+  bank: BankName
+  accountType: AccountType
+  outstandingCredit: Float
+  # Timestamped when the user ticks the signup consent box — a record of
+  # WHEN they accepted, not just that they did, for compliance purposes.
+  termsAcceptedAt: Timestamp
   emailVerified: Boolean! @default(value: false)
   lastLoginAt: Timestamp
   failedAttempts: Int! @default(value: 0)
@@ -219,6 +248,31 @@ type User @table(name: "users") {
   totpSecretEnc: String @col(dataType: "text")
   totpBackupCodesEnc: String @col(dataType: "text")
   totpVerifiedAt: Timestamp
+  # Optional, additive on top of `role` above — grants access to specific
+  # admin pages without making someone a full admin (e.g. a "Reception"
+  # role that can view Rentals but nothing else). See Role below.
+  customRole: Role
+}
+
+# ─── Custom roles ───────────────────────────────────────────────────────────────
+# Admin-defined roles beyond the fixed admin/user/driver/guest set — grant
+# scoped access to specific admin pages, view-only or edit, without making
+# someone a full admin. The 4 built-in roles above are untouched by this;
+# a custom role is assigned to a User in ADDITION to their base role.
+
+type Role @table(name: "roles") {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String! @col(dataType: "varchar(100)") @unique
+  description: String @col(dataType: "text")
+  # JSON object: { "admin-fleet": "view", "admin-rentals": "edit", ... } —
+  # keys are the same page slugs used in security.js's PAGE_ROLES; a key
+  # absent from this object means no access at all. One column, not a join
+  # table — this data is small and bounded, and a single save avoids N
+  # separate mutation calls per role edit.
+  permissions: String! @col(dataType: "text")
+  createdBy: User
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 # ─── Vehicle ──────────────────────────────────────────────────────────────────
@@ -288,8 +342,37 @@ type Rental @table(name: "rentals") {
   valueZar: Float! @default(value: 0)
   status: RentalStatus! @default(value: PENDING)
   notes: String @col(dataType: "text")
+  # Set when this Rental was auto-created from an approved RentalApplication
+  # (see functions/controllers/dataController.js's createRentalForApprovedApplication)
+  # — null for a walk-in/manual rental created directly via admin-rentals.html's
+  # "Add Rental", which has no prior application.
+  application: RentalApplication
   createdAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── RentalEvent ──────────────────────────────────────────────────────────────
+# Timeline entries for a Rental, shown to the customer (my-rentals.html) and
+# the admin (rental-detail.html). "Application submitted"/"reviewed" entries
+# are NOT stored here — the UI synthesizes those directly from
+# RentalApplication's own submittedAt/status/reviewedAt/reviewedBy fields via
+# Rental.application, avoiding duplicated data.
+
+enum RentalEventType {
+  CREATED
+  STATUS_CHANGED
+  NOTE
+}
+
+type RentalEvent @table(name: "rental_events") {
+  id: UUID! @default(expr: "uuidV4()")
+  rental: Rental!
+  type: RentalEventType!
+  description: String! @col(dataType: "text")
+  fromStatus: RentalStatus
+  toStatus: RentalStatus
+  actorUser: User
+  createdAt: Timestamp! @default(expr: "request.time")
 }
 
 # ─── RentalApplication ────────────────────────────────────────────────────────
@@ -336,8 +419,46 @@ type RentalApplication @table(name: "rental_applications") {
   reviewedBy: User
   reviewedAt: Timestamp
   rejectionReason: String @col(dataType: "text")
+  # ── Credit check (admin-triggered, distinct from creditCheckConsent/
+  # consentCreditCheck above, which just record the applicant's own consent
+  # at submission time) — see functions/services/creditCheck.js. Mock
+  # provider for now: creditCheckScore is generated, not from a real bureau.
+  creditCheckStatus: CreditCheckStatus! @default(value: NOT_REQUESTED)
+  creditCheckScore: Int
+  creditCheckFeeZar: Float @default(value: 250)
+  creditCheckRequestedAt: Timestamp
+  creditCheckCompletedAt: Timestamp
+  # True once an admin has explicitly confirmed the liability warning shown
+  # when skipping the check — never set any other way.
+  creditCheckDeclinedAcknowledged: Boolean! @default(value: false)
   submittedAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── Notification ─────────────────────────────────────────────────────────────
+# Created server-side at the same key transitions RentalEvent already logs
+# (application submitted/approved/rejected, credit-check requested/completed/
+# declined, rental status changed) — see controllers/dataController.js's
+# createNotification(). linkPath lets the frontend deep-link the bell
+# dropdown straight to the relevant page (e.g. "my-rentals" or
+# "admin-rentals").
+
+enum NotificationType {
+  APPLICATION_STATUS
+  RENTAL_STATUS
+  CREDIT_CHECK
+  MAINTENANCE
+}
+
+type Notification @table(name: "notifications") {
+  id: UUID! @default(expr: "uuidV4()")
+  user: User!
+  type: NotificationType!
+  title: String! @col(dataType: "varchar(200)")
+  body: String! @col(dataType: "text")
+  linkPath: String @col(dataType: "varchar(200)")
+  read: Boolean! @default(value: false)
+  createdAt: Timestamp! @default(expr: "request.time")
 }
 
 # ─── CatalogItem ──────────────────────────────────────────────────────────────

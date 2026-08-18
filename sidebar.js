@@ -13,13 +13,13 @@
       { href:'admin-fleet',      icon:'garage',        label:'Fleet' },
       { href:'add-vehicle',      icon:'add_box',       label:'Add Vehicle' },
       { href:'admin-maintenance',icon:'build',         label:'Maintenance' },
+      { href:'admin-reports',    icon:'monitoring',    label:'Reporting' },
       { section: 'Tools' },
       { href:'calculator',       icon:'calculate',     label:'Calculator' },
-      { href:'catalog',          icon:'inventory_2',   label:'Equipment Catalog' },
-      { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
       { section: 'Security' },
       { href:'admin-audit',      icon:'policy',        label:'Audit Logs' },
       { href:'admin-orgs#users', icon:'manage_accounts', label:'User Management' },
+      { href:'admin-roles',      icon:'admin_panel_settings', label:'Roles & Permissions' },
       { section: 'Account' },
       { href:'profile',          icon:'person',        label:'My Profile' },
     ],
@@ -28,11 +28,9 @@
       { href:'dashboard-user',   icon:'dashboard',     label:'My Dashboard' },
       { href:'my-rentals',       icon:'receipt_long',  label:'My Rentals' },
       { href:'messages',         icon:'chat',          label:'Messages' },
-      { href:'apply-rental',     icon:'add_circle',    label:'Apply to Rent' },
+      { href:'rent-equipment',   icon:'add_circle',    label:'Apply to Rent' },
       { section: 'Browse' },
       { href:'calculator',       icon:'calculate',     label:'Calculator' },
-      { href:'catalog',          icon:'inventory_2',   label:'Catalog' },
-      { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
       { section: 'Account' },
       { href:'profile',          icon:'person',        label:'My Profile' },
     ],
@@ -45,20 +43,24 @@
       { section: 'Account' },
       { href:'profile',          icon:'person',        label:'My Profile' },
     ],
-    guest: [
-      { section: 'Browse' },
-      { href:'dashboard-guest',  icon:'inventory_2',   label:'Browse Fleet' },
-      { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
-      { href:'calculator',       icon:'calculate',     label:'Calculator' },
-      { section: 'Info' },
-      { href:'about',            icon:'info',          label:'About' },
-      { href:'contact',          icon:'mail',          label:'Contact' },
-    ],
   };
 
   const ROLE_COLOUR = {
     admin: 'var(--accent, #00f0ff)', user: 'var(--accent, #00f0ff)',
-    driver: 'var(--driver, #ffb4a2)', guest: 'var(--text-muted, #849495)'
+    driver: 'var(--driver, #ffb4a2)',
+  };
+
+  // Feature key -> nav entry, for custom-role-granted pages (see
+  // dataconnect/schema/schema.gql's Role type). Only listed here so a
+  // custom-role holder (base role user/driver, not in NAV.admin) still
+  // gets a link to whatever admin pages their role actually grants them.
+  const FEATURE_NAV = {
+    'admin-fleet':       { href: 'admin-fleet',       icon: 'garage',       label: 'Fleet' },
+    'admin-rentals':     { href: 'admin-rentals',     icon: 'receipt_long', label: 'Rental Tracking' },
+    'admin-maintenance': { href: 'admin-maintenance', icon: 'build',        label: 'Maintenance' },
+    'admin-orgs':        { href: 'admin-orgs',        icon: 'domain',       label: 'Organisations' },
+    'admin-audit':       { href: 'admin-audit',       icon: 'policy',       label: 'Audit Logs' },
+    'admin-reports':     { href: 'admin-reports',     icon: 'monitoring',   label: 'Reporting' },
   };
 
   window.buildSidebar = function (currentHref) {
@@ -66,9 +68,19 @@
     if (!el) return;
 
     const user    = (typeof EC_AUTH !== 'undefined') ? EC_AUTH.current() : null;
-    const role    = user?.role || 'guest';
+    const role    = user?.role || '';
     const rc      = ROLE_COLOUR[role] || '#00f0ff';
-    const links   = NAV[role] || NAV.guest;
+    const links   = (NAV[role] || []).slice();
+    if (user && user.permissions) {
+      const already = new Set(links.filter(l => l.href).map(l => l.href.split('#')[0]));
+      const extra = Object.keys(user.permissions)
+        .map(key => FEATURE_NAV[key])
+        .filter(entry => entry && !already.has(entry.href));
+      if (extra.length) {
+        links.push({ section: 'Assigned Access' });
+        links.push(...extra);
+      }
+    }
     const current = currentHref || location.pathname.split('/').pop();
 
     const icon = (name) =>
@@ -243,11 +255,104 @@
       _tb.insertBefore(b, _tb.firstChild);
     }
 
+    // Notification bell — inserted once per page, same "leading child of
+    // .topbar" technique as the burger button above. Guarded on a real
+    // session + dc.js being loaded, so it's a no-op on public pages.
+    if (_tb && user && typeof DC_DATA !== 'undefined' && !document.getElementById('sb-notif-btn')) {
+      const nb = document.createElement('button');
+      nb.id = 'sb-notif-btn';
+      nb.setAttribute('aria-label', 'Notifications');
+      nb.style.cssText = 'position:relative;display:flex;align-items:center;justify-content:center;min-width:40px;height:40px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;cursor:pointer;flex-shrink:0;margin-right:8px';
+      nb.innerHTML = icon('notifications') +
+        '<span id="sb-notif-badge" style="display:none;position:absolute;top:4px;right:4px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:#ff6b6b;color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:9px;font-weight:700;align-items:center;justify-content:center;line-height:1"></span>';
+      nb.addEventListener('click', (e) => { e.stopPropagation(); window.toggleNotifPanel?.(nb); });
+      _tb.insertBefore(nb, _tb.firstChild);
+      refreshNotifications(user.dbId);
+    }
+
     // Wire close button inside sidebar
     document.getElementById('sb-close')?.addEventListener('click', () => window.closeSbMobile?.());
   };
 
-  // EC_SHELL: populates #sh-nav on inline-sidebar dashboard pages
+  // ── Notification bell panel ─────────────────────────────────────────────
+  let _notifCache = [];
+  let _notifUserId = null;
+
+  async function refreshNotifications(userId) {
+    _notifUserId = userId;
+    try {
+      _notifCache = await DC_DATA.getNotifications(userId);
+    } catch (_) {
+      _notifCache = [];
+    }
+    const unread = _notifCache.filter(n => !n.read).length;
+    const badge = document.getElementById('sb-notif-badge');
+    if (badge) {
+      badge.textContent = unread > 9 ? '9+' : String(unread);
+      badge.style.display = unread > 0 ? 'flex' : 'none';
+    }
+  }
+
+  function notifTimeAgo(dateVal) {
+    const mins = Math.floor((Date.now() - new Date(dateVal).getTime()) / 60000);
+    if (mins < 1)  return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)  return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  }
+
+  const NOTIF_ICON = { application_status: 'description', rental_status: 'local_shipping', credit_check: 'fact_check', maintenance: 'build' };
+
+  function renderNotifPanel(panel) {
+    const esc = (typeof EC_SECURITY !== 'undefined') ? EC_SECURITY.sanitizeHtml : (s => s);
+    if (!_notifCache.length) {
+      panel.innerHTML = '<div style="padding:24px;text-align:center;color:#849495;font-size:12px;font-family:\'JetBrains Mono\',monospace">No notifications yet</div>';
+      return;
+    }
+    panel.innerHTML = _notifCache.map(n => `
+      <div class="sb-notif-item" data-id="${n.id}" data-link="${n.linkPath ? esc(n.linkPath) : ''}" style="display:flex;gap:10px;padding:11px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05);${n.read ? '' : 'background:rgba(0,240,255,.04)'}">
+        <span class="material-symbols-outlined" style="font-size:17px;color:${n.read ? '#849495' : '#00f0ff'};flex-shrink:0;margin-top:1px">${NOTIF_ICON[n.type] || 'notifications'}</span>
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12.5px;font-weight:${n.read ? '500' : '700'};color:${n.read ? '#b9cacb' : '#e2e2e8'}">${esc(n.title)}</div>
+          <div style="font-size:11.5px;color:#849495;margin-top:2px;line-height:1.4">${esc(n.body)}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#556;margin-top:4px">${notifTimeAgo(n.createdAt)}</div>
+        </div>
+      </div>`).join('');
+    panel.querySelectorAll('.sb-notif-item').forEach(el => {
+      el.addEventListener('click', async () => {
+        const id = el.dataset.id;
+        const link = el.dataset.link;
+        const n = _notifCache.find(x => x.id === id);
+        if (n && !n.read) {
+          n.read = true;
+          try { await DC_DATA.markNotificationRead(id); } catch (_) { /* best effort */ }
+          refreshNotifications(_notifUserId);
+        }
+        if (link) location.href = link;
+        window.closeNotifPanel?.();
+      });
+    });
+  }
+
+  window.toggleNotifPanel = function (trigger) {
+    const existing = document.getElementById('sb-notif-panel');
+    if (existing) { window.closeNotifPanel(); return; }
+    const r = trigger.getBoundingClientRect();
+    const panel = document.createElement('div');
+    panel.id = 'sb-notif-panel';
+    panel.style.cssText = `position:fixed;top:${r.bottom + 6}px;left:${r.left}px;width:320px;max-height:420px;overflow-y:auto;background:rgba(10,12,16,.98);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.1);border-radius:12px;z-index:9999;box-shadow:0 12px 36px rgba(0,0,0,.5)`;
+    document.body.appendChild(panel);
+    renderNotifPanel(panel);
+    setTimeout(() => document.addEventListener('click', window._notifOutsideClick = (e) => {
+      if (!panel.contains(e.target) && e.target !== trigger) window.closeNotifPanel?.();
+    }), 0);
+  };
+  window.closeNotifPanel = function () {
+    document.getElementById('sb-notif-panel')?.remove();
+    if (window._notifOutsideClick) { document.removeEventListener('click', window._notifOutsideClick); window._notifOutsideClick = null; }
+  };
+
   // ── Custom Select ────────────────────────────────────────────
   window.initCustomSelects = function(root) {
     (root || document).querySelectorAll('select').forEach(sel => {
@@ -353,30 +458,5 @@
     document.getElementById('sidebar-root').classList.remove('mob');
     const o = document.getElementById('sb-overlay');
     if (o) o.classList.remove('on');
-  };
-
-  // ── EC_SHELL ──────────────────────────────────────────────────
-  window.EC_SHELL = {
-    init(items) {
-      const nav = document.getElementById('sh-nav');
-      if (!nav) return;
-      const user = (typeof EC_AUTH !== 'undefined') ? EC_AUTH.current() : null;
-      const role = user?.role || 'guest';
-      const rc   = ROLE_COLOUR[role] || '#00f0ff';
-      const current = location.pathname.split('/').pop();
-      nav.innerHTML = items.map(item => {
-        const isActive = item.active ? item.active() : (current === item.href);
-        const base = `display:flex;align-items:center;gap:9px;padding:9px 11px;padding-left:14px;border-radius:10px;` +
-          `font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;` +
-          `letter-spacing:.1em;text-decoration:none;transition:all .18s;border:1px solid transparent;`;
-        // Active item: left accent bar + soft glow, not a solid fill block.
-        const activeStyle = `color:${rc};background:rgba(0,240,255,.04);box-shadow:inset 3px 0 0 0 ${rc},0 0 16px -8px rgba(0,240,255,.6);`;
-        const inactiveStyle = `color:var(--text-secondary, #b9cacb);`;
-        return `<a href="${item.href}" title="${item.label}" data-nav-active="${isActive ? '1' : ''}" style="${base}${isActive ? activeStyle : inactiveStyle}"` +
-          ` onmouseover="if(!this.dataset.navActive)this.style.background='var(--surface-hover, rgba(255,255,255,.05))'"` +
-          ` onmouseout="if(!this.dataset.navActive)this.style.background='transparent'">` +
-          `<span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;flex-shrink:0">${item.icon}</span><span class="sb-label">${item.label}</span></a>`;
-      }).join('');
-    }
   };
 })();

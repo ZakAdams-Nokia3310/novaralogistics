@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>Browse Equipment — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="theme.css" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btnp:disabled,.btnp.disabled{opacity:.4;cursor:not-allowed;filter:none;}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  .bblue{background:rgba(125,211,252,.1);color:#7dd3fc;}
+  input,select{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;outline:none;transition:border-color .18s;}
+  input:focus,select:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+
+  .eqgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+  .eqcard{border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .18s,transform .18s;}
+  .eqcard:hover{border-color:rgba(0,240,255,.2);transform:translateY(-2px);}
+  .eqcard-img{height:140px;background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .eqcard-img img{width:100%;height:100%;object-fit:cover;}
+  .eqcard-body{padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1;}
+  .eqcard-name{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;}
+  .eqcard-meta{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495;}
+  .eqcard-actions{margin-top:auto;padding-top:6px;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){.body{padding:14px 12px!important}.filterbar{flex-direction:column;align-items:stretch!important}}
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Browse Equipment</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Find equipment and apply to rent it</div>
+    </div>
+    <a href="my-rentals" class="btng"><span class="material-symbols-outlined ms" style="font-size:15px">receipt_long</span>My Rentals</a>
+  </div>
+
+  <div class="body">
+    <!-- Filters -->
+    <div class="filterbar" style="display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap">
+      <div style="position:relative;flex:1;min-width:200px">
+        <span class="material-symbols-outlined ms" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:#849495;pointer-events:none">search</span>
+        <input id="qSearch" placeholder="Search make, model, or reg plate…" style="padding-left:36px;width:100%" oninput="renderGrid()"/>
+      </div>
+      <select id="qType" onchange="renderGrid()" style="min-width:170px">
+        <option value="all">All Equipment Types</option>
+      </select>
+      <select id="qStatus" onchange="renderGrid()" style="min-width:150px">
+        <option value="available">Available Now</option>
+        <option value="all">All Statuses</option>
+      </select>
+    </div>
+
+    <div id="resultCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;margin-bottom:12px"></div>
+    <div class="eqgrid" id="eqGrid"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js?v=2"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('rent-equipment');
+const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
+const user = EC_AUTH.require(['admin', 'user', 'driver']);
+
+function titleCase(snake) {
+  return (snake || '').toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+function statusBadge(s) {
+  if (s === 'available')   return `<span class="b ba">Available</span>`;
+  if (s === 'on_rent')     return `<span class="b bblue">On Rent</span>`;
+  if (s === 'maintenance') return `<span class="b bp">Maintenance</span>`;
+  if (s === 'retired')     return `<span class="b bo">Retired</span>`;
+  return `<span class="b">${esc(s)}</span>`;
+}
+
+function populateTypeFilter() {
+  const types = [...new Set(DC_DATA.getVehicles().map(v => v.type).filter(Boolean))].sort();
+  const sel = document.getElementById('qType');
+  sel.innerHTML = '<option value="all">All Equipment Types</option>' +
+    types.map(t => `<option value="${esc(t)}">${esc(titleCase(t))}</option>`).join('');
+}
+
+function renderGrid() {
+  const q = document.getElementById('qSearch').value.trim().toLowerCase();
+  const typeFilter = document.getElementById('qType').value;
+  const statusFilter = document.getElementById('qStatus').value;
+
+  let vehicles = DC_DATA.getVehicles().slice();
+  if (statusFilter !== 'all') vehicles = vehicles.filter(v => v.status === statusFilter);
+  if (typeFilter !== 'all') vehicles = vehicles.filter(v => v.type === typeFilter);
+  if (q) {
+    vehicles = vehicles.filter(v =>
+      `${v.make} ${v.model} ${v.regPlate}`.toLowerCase().includes(q));
+  }
+  vehicles.sort((a, b) => {
+    if (a.status === 'available' && b.status !== 'available') return -1;
+    if (b.status === 'available' && a.status !== 'available') return 1;
+    return `${a.make} ${a.model}`.localeCompare(`${b.make} ${b.model}`);
+  });
+
+  document.getElementById('resultCount').textContent =
+    `${vehicles.length} item${vehicles.length !== 1 ? 's' : ''}`;
+
+  const grid = document.getElementById('eqGrid');
+  if (!vehicles.length) {
+    grid.innerHTML = `<div class="glass" style="grid-column:1/-1;border-radius:13px;text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No equipment matches your filters.</div>`;
+    return;
+  }
+  grid.innerHTML = vehicles.map(v => {
+    const available = v.status === 'available';
+    const img = v.imageUrl
+      ? `<img src="${esc(v.imageUrl)}" alt=""/>`
+      : `<span class="material-symbols-outlined ms" style="font-size:32px;color:#556">local_shipping</span>`;
+    const action = available
+      ? `<a href="apply-rental?vehicleId=${escA(v.id)}" class="btnp" style="width:100%;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:15px">add_circle</span>Apply to Rent</a>`
+      : `<button class="btnp disabled" style="width:100%;justify-content:center" disabled>${v.status === 'on_rent' ? 'Currently Unavailable' : titleCase(v.status)}</button>`;
+    return `
+      <div class="eqcard glass">
+        <div class="eqcard-img">${img}</div>
+        <div class="eqcard-body">
+          <div>
+            <div class="eqcard-name">${esc(v.make)} ${esc(v.model)}</div>
+            <div class="eqcard-meta">${esc(titleCase(v.type))}${v.year ? ' · ' + v.year : ''} · ${esc(v.regPlate)}</div>
+          </div>
+          ${statusBadge(v.status)}
+          <div class="eqcard-actions">${action}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+if (!user.orgId) {
+  document.getElementById('eqGrid').innerHTML = `<div class="glass" style="grid-column:1/-1;border-radius:13px;text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No organisation on your account — contact an admin to get set up.</div>`;
+} else {
+  DC_DATA.setOrgScope(user.orgId);
+  DC_DATA.initForOrg(user.orgId).then(() => {
+    populateTypeFilter();
+    renderGrid();
+  }).catch(() => {
+    document.getElementById('eqGrid').innerHTML = `<div class="glass" style="grid-column:1/-1;border-radius:13px;text-align:center;padding:36px;color:#ff6b6b;font-family:'JetBrains Mono',monospace;font-size:12px">Unable to load equipment — please refresh.</div>`;
+  });
+}
+</script>
+</body></html>

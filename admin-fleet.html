@@ -74,7 +74,7 @@
       <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Fleet Management</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Upload vehicles, manage service schedules and fleet status</div>
     </div>
-    <a href="add-vehicle" class="btnp" style="font-size:12px;padding:7px 13px;text-decoration:none">
+    <a href="add-vehicle" class="btnp" id="addVehicleBtn" style="font-size:12px;padding:7px 13px;text-decoration:none">
       <span class="material-symbols-outlined ms" style="font-size:15px">add</span>Add Vehicle
     </a>
   </div>
@@ -269,6 +269,11 @@
 buildSidebar('admin-fleet');
 const _ecUser = EC_AUTH.require(['admin']);
 const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
+// A custom-role viewer with only 'view' on admin-fleet reaches this page
+// (see EC_AUTH.require's permissions fallback) but must not see mutating
+// controls — admins always pass.
+const _canEdit = EC_SECURITY.canEdit('admin-fleet');
+if (!_canEdit) document.getElementById('addVehicleBtn').style.display = 'none';
 DC_DATA.setOrgScope(_ecUser.orgId);
 
 // ─── Type helpers ────────────────────────────────────────────────────────────
@@ -481,12 +486,12 @@ function renderTable() {
           </div>
         </div>
 
-        <div style="display:flex;gap:6px;flex-wrap:wrap" onclick="event.stopPropagation()">
+        ${_canEdit ? `<div style="display:flex;gap:6px;flex-wrap:wrap" onclick="event.stopPropagation()">
           <button class="btng" style="font-size:11.5px;padding:7px 11px;flex:1" onclick="openEditSvc('${v.id}')">
             <span class="material-symbols-outlined ms" style="font-size:14px">build</span>Service
           </button>
           ${canToggle ? `<button class="btng" style="font-size:11.5px;padding:7px 11px;flex:1" onclick="toggleStatus('${v.id}')">${toggleLabel}</button>` : ''}
-        </div>
+        </div>` : ''}
       </div>
     </div>`;
   }).join('');

@@ -46,6 +46,39 @@
   .modal-bg.show{display:flex;}
   @keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
   .modal-bg.show .modal-card{animation:slideUp .22s ease both;}
+  .appgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;}
+  .appcard{border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:11px;min-width:0;transition:border-color .18s;}
+  .appcard:hover{border-color:rgba(0,240,255,.18);}
+  .appcard-top{display:flex;align-items:flex-start;gap:10px;}
+  .appcard-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(0,240,255,.18),rgba(125,244,255,.06));color:#00f0ff;display:flex;align-items:center;justify-content:center;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;flex-shrink:0;}
+  .appcard-name{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .appcard-ref{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:1px;}
+  .appcard-meta{display:flex;flex-direction:column;gap:4px;}
+  .appcard-link{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#b9cacb;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .appcard-link:hover{color:#00f0ff;}
+  .appcard-link .ms{font-size:14px;color:#849495;flex-shrink:0;}
+  .appcard-row{display:flex;align-items:center;gap:6px;font-size:12px;color:#b9cacb;}
+  .appcard-row .ms{font-size:15px;color:#849495;flex-shrink:0;}
+  .appcard-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:9px;border-top:1px solid rgba(255,255,255,.05);}
+  .appcard-submitted{font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;}
+  .appcard-actions{display:flex;gap:8px;}
+  .cb{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+  .cb-none{background:rgba(255,255,255,.05);color:#849495;}
+  .cb-req{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .cb-done{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .cb-decl{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  @keyframes ccspin{to{transform:rotate(360deg)}}
+  .ccspin{display:inline-block;animation:ccspin 1s linear infinite;}
+  .creditbar{height:8px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden;}
+  .creditbar-fill{height:100%;border-radius:99px;}
+  .ccacct{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+  .ccacct:last-child{border-bottom:none;}
+  .ccstat{display:flex;flex-direction:column;gap:2px;}
+  .ccstat-lbl{font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;letter-spacing:.06em;}
+  .ccstat-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:#e2e2e8;}
+  .ccpay{display:flex;gap:2px;overflow-x:auto;padding-bottom:2px;}
+  .ccpay span{width:8px;height:14px;border-radius:2px;flex-shrink:0;}
+  @media(max-width:600px){.ccstats{grid-template-columns:repeat(2,1fr)!important}}
   @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
   @media(max-width:600px){
     .body{padding:14px 12px!important}
@@ -71,7 +104,7 @@
       <a href="admin-fleet" class="btng" style="font-size:12px;padding:7px 12px">
         <span class="material-symbols-outlined ms" style="font-size:15px">garage</span>Fleet
       </a>
-      <button class="btnp" onclick="openAddRental()" style="font-size:12px;padding:7px 13px">
+      <button class="btnp" id="addRentalBtn" onclick="openAddRental()" style="font-size:12px;padding:7px 13px">
         <span class="material-symbols-outlined ms" style="font-size:15px">add</span>Add Rental
       </button>
     </div>
@@ -140,52 +173,59 @@
 
     <!-- ── Applications panel ────────────────────────────────────────────── -->
     <div id="panelApplications" style="display:none">
-      <div class="glass" style="border-radius:13px;overflow:hidden">
-        <div style="overflow-x:auto">
-          <table class="tbl" id="appTable">
-            <thead><tr>
-              <th>Applicant</th>
-              <th>Equipment</th>
-              <th>Dates</th>
-              <th>Submitted</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr></thead>
-            <tbody id="appBody"></tbody>
-          </table>
-        </div>
-      </div>
+      <div class="appgrid" id="appGrid"></div>
     </div>
   </div>
 </div>
 
 <!-- Review Application Modal -->
 <div class="modal-bg" id="reviewAppModal">
-  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:560px;border-color:rgba(0,240,255,.14);max-height:90vh;overflow-y:auto">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:580px;border-color:rgba(0,240,255,.14);max-height:90vh;overflow-y:auto">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
       <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center">
         <span class="material-symbols-outlined ms" style="font-size:18px;color:#00f0ff">description</span>
       </div>
       <div>
-        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Review Application</div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Full Application</div>
         <div style="font-size:12px;color:#849495" id="reviewAppSub">—</div>
       </div>
       <button onclick="closeReviewApp()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:22px;line-height:1">×</button>
     </div>
-    <div id="reviewAppContent" style="font-size:13px;color:#b9cacb;line-height:1.9;margin-bottom:18px"></div>
+    <div id="reviewAppContent" style="font-size:13px;color:#b9cacb;line-height:1.9;margin-bottom:14px"></div>
+
+    <!-- Credit-check status, gates Approve below -->
+    <div id="reviewCreditWrap" class="glass-lo" style="border-radius:10px;padding:13px 14px;margin-bottom:14px"></div>
+
     <div id="rejectReasonWrap" style="display:none;margin-bottom:14px">
       <label>Decline Reason <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#849495">(optional, shown to applicant)</span></label>
       <textarea id="rejectReasonInput" rows="2" placeholder="e.g. Credit check did not meet requirements"></textarea>
     </div>
     <div id="reviewAppErr" style="display:none;margin-bottom:14px;padding:9px 12px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:8px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
     <div style="display:flex;gap:10px" id="reviewAppActions">
-      <button class="btnp" style="flex:1;justify-content:center;padding:11px" onclick="submitReview('APPROVED')">
+      <button class="btnp" id="reviewApproveBtn" style="flex:1;justify-content:center;padding:11px" onclick="submitReview('APPROVED')">
         <span class="material-symbols-outlined ms" style="font-size:16px">check</span>Approve
       </button>
       <button class="btnr" style="flex:1;justify-content:center;padding:11px" onclick="beginReject()">
         <span class="material-symbols-outlined ms" style="font-size:16px">close</span>Decline
       </button>
     </div>
+  </div>
+</div>
+
+<!-- Credit Report Modal (mock provider — see functions/services/creditCheck.js) -->
+<div class="modal-bg" id="creditReportModal">
+  <div class="modal-card glass" style="border-radius:16px;padding:28px;width:100%;max-width:680px;border-color:rgba(0,240,255,.14);max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <div style="width:36px;height:36px;border-radius:9px;background:rgba(0,240,255,.1);display:flex;align-items:center;justify-content:center">
+        <span class="material-symbols-outlined ms" style="font-size:18px;color:#00f0ff">fact_check</span>
+      </div>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Credit Report</div>
+        <div style="font-size:12px;color:#849495" id="creditReportSub">—</div>
+      </div>
+      <button onclick="closeCreditReport()" style="margin-left:auto;background:none;border:none;color:#849495;cursor:pointer;font-size:22px;line-height:1">×</button>
+    </div>
+    <div id="creditReportContent"></div>
   </div>
 </div>
 
@@ -250,6 +290,8 @@ const _ecUser = EC_AUTH.require(['admin']);
 // Rental applicant/equipment data can originate from the public,
 // unauthenticated rental-application form — escape before innerHTML.
 const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
+const _canEdit = EC_SECURITY.canEdit('admin-rentals');
+if (!_canEdit) document.getElementById('addRentalBtn').style.display = 'none';
 DC_DATA.setOrgScope(_ecUser.orgId);
 
 function today() {
@@ -287,6 +329,10 @@ function statusBadge(s) {
 
 function actionCell(rental) {
   const id = rental.id;
+  // rental-detail.html is an edit/delete surface, not a pure read view (see
+  // FEATURE_PAGE_ALIASES in security.js) — a view-only custom-role holder
+  // can't open it, so don't offer a link that would just bounce them.
+  if (!_canEdit) return '<span style="color:#849495;font-size:11px">View only</span>';
   const view = `<button class="btng" style="font-size:11px;padding:4px 8px" onclick="location.href='rental-detail?id=${id}'">View</button>`;
   if (rental.status === 'pending') return `
     <div style="display:flex;gap:5px">
@@ -502,32 +548,305 @@ function appStatusBadge(s) {
   return `<span class="b">${esc(s)}</span>`;
 }
 
+function timeAgo(dateVal) {
+  if (!dateVal) return '—';
+  const mins = Math.floor((Date.now() - new Date(dateVal).getTime()) / 60000);
+  if (mins < 1)  return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24)  return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return fmtDate(dateVal);
+}
+
+function initials(name) {
+  return ((name || '').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('') || '?').toUpperCase();
+}
+
+// Full reports aren't persisted server-side (see functions/services/
+// creditCheck.js's doc comment) — cache the last-fetched one per
+// application client-side so "View Credit Check" doesn't need a round trip
+// right after Send-for-Credit-Check just resolved. Lost on page reload;
+// viewCreditCheck() below re-fetches on a cache miss (safe — the mock
+// report is deterministic per applicant, not randomised per call).
+const _creditReports = {};
+
+function riskBandColor(label) {
+  if (label === 'Minimal Risk') return '#00d4aa';
+  if (label === 'Low Risk')     return '#7de6ff';
+  if (label === 'Medium Risk')  return '#ffd93d';
+  return '#ff6b6b'; // High Risk
+}
+const PAYMENT_STATUS_COLOR = ['#00d4aa', '#ffd93d', '#ff8c42', '#ff6b6b']; // 0..3 months arrears
+const ACCOUNT_STATUS_BADGE = {
+  OPEN:    { color: '#00d4aa' },
+  CLOSED:  { color: '#849495' },
+  ADVERSE: { color: '#ff6b6b' },
+};
+
+function creditCheckBadge(a) {
+  const s = a.creditCheckStatus;
+  if (s === 'completed') return `<span class="cb cb-done">Score ${a.creditCheckScore}</span>`;
+  if (s === 'requested') return `<span class="cb cb-req"><span class="material-symbols-outlined ms ccspin" style="font-size:11px">progress_activity</span>In Progress</span>`;
+  if (s === 'declined')  return `<span class="cb cb-decl">Check Declined</span>`;
+  return `<span class="cb cb-none">No Credit Check</span>`;
+}
+
+function creditCheckActionBtn(a) {
+  if (!_canEdit) return '';
+  const s = a.creditCheckStatus;
+  if (s === 'completed') return `<button class="btng" style="flex:1;justify-content:center;color:#00d4aa;border-color:rgba(0,212,170,.22)" onclick="viewCreditCheck('${escA(a.id)}')"><span class="material-symbols-outlined ms" style="font-size:15px">fact_check</span>View Credit Check</button>`;
+  if (s === 'requested') return `<button class="btng" disabled style="flex:1;justify-content:center;opacity:.65;cursor:wait"><span class="material-symbols-outlined ms ccspin" style="font-size:15px">progress_activity</span>Credit Check In Progress</button>`;
+  if (s === 'declined')  return `<button class="btng" disabled style="flex:1;justify-content:center;opacity:.5"><span class="material-symbols-outlined ms" style="font-size:15px">block</span>Check Declined</button>`;
+  return `<button class="btnp" style="flex:1;justify-content:center" onclick="sendForCreditCheck('${escA(a.id)}')"><span class="material-symbols-outlined ms" style="font-size:15px">fact_check</span>Send for Credit Check</button>`;
+}
+
 function renderApplications() {
   const apps = DC_DATA.getRentalApplications();
   const pending = apps.filter(a => a.status === 'pending');
   document.getElementById('pendingAppBadge').textContent = pending.length;
 
-  const tbody = document.getElementById('appBody');
+  const grid = document.getElementById('appGrid');
   if (!apps.length) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No applications yet</td></tr>`;
+    grid.innerHTML = `<div class="glass" style="grid-column:1/-1;border-radius:13px;text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No applications yet</div>`;
     return;
   }
-  tbody.innerHTML = apps.map(a => `<tr>
-    <td data-label="Applicant"><div style="font-weight:600">${esc(a.applicantName)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">${esc(a.email)}</div></td>
-    <td data-label="Equipment">${esc(a.equipment)}</td>
-    <td data-label="Dates" style="font-family:'JetBrains Mono',monospace;font-size:11px">${fmtDate(a.startDate)} – ${fmtDate(a.endDate)}</td>
-    <td data-label="Submitted" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">${a.submittedAt ? fmtDate(a.submittedAt) : '—'}</td>
-    <td data-label="Status">${appStatusBadge(a.status)}</td>
-    <td><button class="btng" style="font-size:11px;padding:5px 10px" onclick="openReviewApp('${escA(a.id)}')">${a.status === 'pending' ? 'Review' : 'View'}</button></td>
-  </tr>`).join('');
+  grid.innerHTML = apps.map(a => `
+    <div class="appcard glass">
+      <div class="appcard-top">
+        <div class="appcard-avatar">${esc(initials(a.applicantName))}</div>
+        <div style="flex:1;min-width:0">
+          <div class="appcard-name">${esc(a.applicantName)}</div>
+          <div class="appcard-ref">${esc(a.ref || '')}</div>
+        </div>
+        ${appStatusBadge(a.status)}
+      </div>
+      <div class="appcard-meta">
+        <a href="mailto:${escA(a.email)}" class="appcard-link" title="${esc(a.email)}"><span class="material-symbols-outlined ms">mail</span>${esc(a.email)}</a>
+        ${a.phone ? `<a href="tel:${escA(a.phone)}" class="appcard-link"><span class="material-symbols-outlined ms">call</span>${esc(a.phone)}</a>` : ''}
+      </div>
+      <div class="appcard-row"><span class="material-symbols-outlined ms">construction</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.equipment)}${a.vehicleLabel ? ' · ' + esc(a.vehicleLabel) : ''}</span></div>
+      <div class="appcard-row"><span class="material-symbols-outlined ms">event</span>${fmtDate(a.startDate)} – ${fmtDate(a.endDate)}</div>
+      <div class="appcard-row"><span class="material-symbols-outlined ms">payments</span>${a.estimatedCost != null ? 'R ' + Math.round(a.estimatedCost).toLocaleString() + ' est.' : 'Estimate n/a'}</div>
+      <div class="appcard-foot">
+        <span class="appcard-submitted">Submitted ${esc(timeAgo(a.submittedAt))}</span>
+        ${creditCheckBadge(a)}
+      </div>
+      <div class="appcard-actions">
+        ${creditCheckActionBtn(a)}
+        <button class="btng" style="flex:1;justify-content:center" onclick="openReviewApp('${escA(a.id)}')">
+          <span class="material-symbols-outlined ms" style="font-size:15px">visibility</span>View
+        </button>
+      </div>
+    </div>`).join('');
 }
+
+// Refreshes both the card grid and (if open for this same application) the
+// review modal's credit-check section — used after every credit-check
+// mutation so neither surface goes stale.
+function refreshAfterCreditCheckChange(id) {
+  renderApplications();
+  if (_reviewingAppId === id && document.getElementById('reviewAppModal').classList.contains('show')) {
+    openReviewApp(id);
+  }
+}
+
+async function sendForCreditCheck(id) {
+  const app = DC_DATA.getRentalApplications().find(a => a.id === id);
+  if (!app) return;
+  const fee = Math.round(app.creditCheckFeeZar || 250);
+  if (!confirm(`Send this application for a credit check?\n\nA R${fee} fee applies per check.`)) return;
+  try {
+    await DC_DATA.requestCreditCheck(id);
+    refreshAfterCreditCheckChange(id);
+    // Mock provider — simulates a real bureau's turnaround before resolving.
+    setTimeout(async () => {
+      try {
+        const report = await DC_DATA.completeMockCreditCheck(id);
+        if (report) _creditReports[id] = report;
+        refreshAfterCreditCheckChange(id);
+        window.showToast?.('success', 'Credit check complete.');
+      } catch (err) {
+        window.showToast?.('error', EC_SECURITY.safeErrMsg(err, 'Credit check failed.'));
+      }
+    }, 1600);
+  } catch (err) {
+    window.showToast?.('error', EC_SECURITY.safeErrMsg(err, 'Could not start credit check.'));
+  }
+}
+
+async function declineCreditCheckFlow(id) {
+  const ok = confirm('Decline the credit check for this application?\n\nWe will NOT be liable for any loss, default, or damage resulting from proceeding without a credit check. This cannot be undone.');
+  if (!ok) return;
+  try {
+    await DC_DATA.declineCreditCheck(id);
+    refreshAfterCreditCheckChange(id);
+    window.showToast?.('success', 'Credit check declined.');
+  } catch (err) {
+    window.showToast?.('error', EC_SECURITY.safeErrMsg(err, 'Could not decline the credit check.'));
+  }
+}
+
+function moneyZar(v) { return v == null ? '—' : 'R ' + Math.round(v).toLocaleString(); }
+
+function paymentStripHtml(history) {
+  return `<div class="ccpay">${(history || []).map(code =>
+    `<span style="background:${PAYMENT_STATUS_COLOR[code] || PAYMENT_STATUS_COLOR[0]}" title="${code === 0 ? 'Up to date' : code + ' month(s) arrears'}"></span>`
+  ).join('')}</div>`;
+}
+
+function accountRowHtml(acc) {
+  const statusColor = (ACCOUNT_STATUS_BADGE[acc.status] || ACCOUNT_STATUS_BADGE.OPEN).color;
+  const revolving = acc.limitZar != null;
+  return `
+    <div class="ccacct">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:600">${esc(acc.provider)} <span style="color:#849495;font-weight:400">· ${esc(acc.typeLabel)} (${esc(acc.typeCode)})</span></div>
+        <span class="cb" style="background:${statusColor}1a;color:${statusColor}">${esc(acc.status === 'ADVERSE' ? 'Adverse' : acc.status === 'CLOSED' ? 'Closed' : 'Open')} · ${esc(acc.subStatus)}</span>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;margin-top:2px">Opened ${fmtDate(acc.openDate)} · ${esc(acc.accountNumber)}</div>
+      <div class="ccstats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0">
+        <div class="ccstat"><span class="ccstat-lbl">${revolving ? 'Limit' : 'Original'}</span><span class="ccstat-val">${moneyZar(revolving ? acc.limitZar : acc.originalAmountZar)}</span></div>
+        <div class="ccstat"><span class="ccstat-lbl">Balance</span><span class="ccstat-val">${moneyZar(acc.balanceZar)}</span></div>
+        <div class="ccstat"><span class="ccstat-lbl">Instalment</span><span class="ccstat-val">${moneyZar(acc.installmentZar)}</span></div>
+        <div class="ccstat"><span class="ccstat-lbl">${revolving ? 'Utilisation' : 'Term Left'}</span><span class="ccstat-val">${revolving ? acc.utilisationPct + '%' : acc.termRemainingMonths + ' mo'}</span></div>
+      </div>
+      ${paymentStripHtml(acc.paymentHistory)}
+    </div>`;
+}
+
+function buildCreditReportHtml(a, report) {
+  const bandColor = riskBandColor(report.riskBand);
+  const openAccts = report.accounts.filter(x => x.status === 'OPEN').length;
+  const closedAccts = report.accounts.filter(x => x.status === 'CLOSED').length;
+  const adverseAccts = report.accounts.filter(x => x.status === 'ADVERSE').length;
+  const totalOutstanding = report.accounts.reduce((s, x) => s + (x.balanceZar || 0), 0);
+  const totalFacilities = report.accounts.reduce((s, x) => s + (x.limitZar || x.originalAmountZar || 0), 0);
+  const totalInstalments = report.accounts.reduce((s, x) => s + (x.installmentZar || 0), 0);
+
+  return `
+    <div style="text-align:center;padding:6px 0 18px">
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:40px;color:${bandColor}">${report.score}<span style="font-size:16px;color:#849495;font-weight:600">/999</span></div>
+      <div class="cb" style="background:${bandColor}1a;color:${bandColor};margin-top:6px">${esc(report.riskBand)}</div>
+      <div class="creditbar" style="margin-top:12px;max-width:320px;margin-left:auto;margin-right:auto">
+        <div class="creditbar-fill" style="width:${Math.round((report.score / 999) * 100)}%;background:${bandColor}"></div>
+      </div>
+      <div style="font-size:11px;color:#849495;margin-top:8px;max-width:420px;margin-left:auto;margin-right:auto">${esc(report.scoreExplanation)}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px">
+      <div class="glass-lo" style="border-radius:10px;padding:10px 12px"><div class="ccstat-lbl">Accounts</div><div style="font-size:15px;font-weight:700">${report.accounts.length} <span style="font-size:11px;font-weight:400;color:#849495">(${openAccts} open · ${closedAccts} closed · ${adverseAccts} adverse)</span></div></div>
+      <div class="glass-lo" style="border-radius:10px;padding:10px 12px"><div class="ccstat-lbl">Total Outstanding</div><div style="font-size:15px;font-weight:700">${moneyZar(totalOutstanding)} <span style="font-size:11px;font-weight:400;color:#849495">of ${moneyZar(totalFacilities)}</span></div></div>
+      <div class="glass-lo" style="border-radius:10px;padding:10px 12px"><div class="ccstat-lbl">Monthly Instalments</div><div style="font-size:15px;font-weight:700">${moneyZar(totalInstalments)}</div></div>
+      <div class="glass-lo" style="border-radius:10px;padding:10px 12px"><div class="ccstat-lbl">Adverse Records</div><div style="font-size:15px;font-weight:700">${report.adverse.handovers.length + report.adverse.judgments} <span style="font-size:11px;font-weight:400;color:#849495">(${report.adverse.handovers.length} handovers · ${report.adverse.judgments} judgments)</span></div></div>
+    </div>
+
+    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Accounts</div>
+    <div class="glass-lo" style="border-radius:10px;padding:4px 14px;margin-bottom:16px">
+      ${report.accounts.map(accountRowHtml).join('')}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Previous Enquiries</div>
+        <div class="glass-lo" style="border-radius:10px;padding:10px 12px;font-size:12px">
+          ${report.previousEnquiries.map(e => `<div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between;gap:8px"><span style="color:#849495;font-family:'JetBrains Mono',monospace;font-size:10px">${fmtDate(e.date)}</span><span style="text-align:right">${esc(e.enquirer)}<br><span style="color:#849495">${esc(e.reason)}</span></span></div>`).join('') || '<span style="color:#849495">None on record.</span>'}
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Directorships &amp; Adverse</div>
+        <div class="glass-lo" style="border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.9">
+          <div>Company directorships: <b>${report.consumerDirectorSummary.numberOfCompanyDirectorships}</b></div>
+          ${report.adverse.handovers.length
+            ? report.adverse.handovers.map(h => `<div style="color:#ff6b6b">Handover: ${esc(h.provider)} — ${moneyZar(h.amountZar)} (${fmtDate(h.date)})</div>`).join('')
+            : '<div style="color:#00d4aa">No handovers on record.</div>'}
+          <div style="color:#849495">Judgments: ${report.adverse.judgments} · Debt review: ${report.adverse.debtReview ? 'Yes' : 'No'}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:9px 11px;background:rgba(255,255,255,.03);border-radius:8px;font-size:11px;color:#849495;font-family:'JetBrains Mono',monospace">Test data — dummy report. No live credit bureau connected yet (CREDIT_CHECK_MODE=mock).</div>`;
+}
+
+async function viewCreditCheck(id) {
+  const a = DC_DATA.getRentalApplications().find(x => x.id === id);
+  if (!a || a.creditCheckStatus !== 'completed') return;
+  document.getElementById('creditReportSub').textContent = a.applicantName;
+  document.getElementById('creditReportContent').innerHTML = '<div style="text-align:center;padding:24px;color:#849495">Loading report…</div>';
+  document.getElementById('creditReportModal').classList.add('show');
+
+  let report = _creditReports[id];
+  if (!report) {
+    try {
+      report = await DC_DATA.completeMockCreditCheck(id);
+      if (report) _creditReports[id] = report;
+    } catch (err) {
+      document.getElementById('creditReportContent').innerHTML = `<div style="color:#ff6b6b;text-align:center;padding:24px">${esc(EC_SECURITY.safeErrMsg(err, 'Could not load the credit report.'))}</div>`;
+      return;
+    }
+  }
+  if (!report) {
+    document.getElementById('creditReportContent').innerHTML = '<div style="color:#ff6b6b;text-align:center;padding:24px">Report unavailable.</div>';
+    return;
+  }
+  document.getElementById('creditReportContent').innerHTML = buildCreditReportHtml(a, report);
+}
+function closeCreditReport() {
+  document.getElementById('creditReportModal').classList.remove('show');
+}
+
+function renderReviewCreditSection(d) {
+  const wrap = document.getElementById('reviewCreditWrap');
+  const s = d.creditCheckStatus || 'NOT_REQUESTED';
+  const header = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="material-symbols-outlined ms" style="font-size:16px;color:#00f0ff">fact_check</span><span style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:12.5px">Credit Check</span></div>`;
+  if (s === 'COMPLETED') {
+    // Band/color intentionally not recomputed here — that logic lives
+    // server-side (functions/services/creditCheck.js's riskBand()); "View
+    // Full Report" shows the complete band-colored breakdown.
+    wrap.innerHTML = header + `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;color:#b9cacb">Score <b>${d.creditCheckScore}</b>/999</span>
+        <button class="btng" style="font-size:11px;padding:5px 10px" onclick="viewCreditCheck('${escA(d.id)}')">View Full Report</button>
+      </div>`;
+    return;
+  }
+  if (s === 'DECLINED') {
+    wrap.innerHTML = header + `<div style="font-size:12px;color:#ff6b6b">Credit check declined by admin. We are not liable for any resulting loss.</div>`;
+    return;
+  }
+  if (s === 'REQUESTED') {
+    wrap.innerHTML = header + `<div style="font-size:12px;color:#ffd93d;display:flex;align-items:center;gap:6px"><span class="material-symbols-outlined ms ccspin" style="font-size:14px">progress_activity</span>In progress — check back shortly.</div>`;
+    return;
+  }
+  wrap.innerHTML = header + `
+    <div style="font-size:12px;color:#849495;margin-bottom:9px">Not yet sent. Approval requires a completed or explicitly declined credit check.</div>
+    ${_canEdit ? `<div style="display:flex;gap:8px">
+      <button class="btnp" style="flex:1;justify-content:center;font-size:12px;padding:8px" onclick="sendForCreditCheck('${escA(d.id)}')">Send for Credit Check</button>
+      <button class="btng" style="flex:1;justify-content:center;font-size:12px;padding:8px" onclick="declineCreditCheckFlow('${escA(d.id)}')">Decline Check</button>
+    </div>` : ''}`;
+}
+
+// beginReject() below replaces reviewAppActions' innerHTML in place — reset
+// it back to this canonical Approve/Decline pair on every open, otherwise
+// re-opening the modal for a different application after a prior Decline
+// click would leave it stuck showing "Confirm Decline"/"Cancel".
+const REVIEW_ACTIONS_DEFAULT_HTML = `
+  <button class="btnp" id="reviewApproveBtn" style="flex:1;justify-content:center;padding:11px" onclick="submitReview('APPROVED')">
+    <span class="material-symbols-outlined ms" style="font-size:16px">check</span>Approve
+  </button>
+  <button class="btnr" style="flex:1;justify-content:center;padding:11px" onclick="beginReject()">
+    <span class="material-symbols-outlined ms" style="font-size:16px">close</span>Decline
+  </button>`;
 
 let _reviewingAppId = null;
 async function openReviewApp(id) {
   _reviewingAppId = id;
   document.getElementById('reviewAppErr').style.display = 'none';
   document.getElementById('rejectReasonWrap').style.display = 'none';
+  document.getElementById('reviewAppActions').innerHTML = REVIEW_ACTIONS_DEFAULT_HTML;
   document.getElementById('reviewAppContent').innerHTML = '<div style="text-align:center;padding:20px;color:#849495">Loading…</div>';
+  document.getElementById('reviewCreditWrap').innerHTML = '';
   document.getElementById('reviewAppModal').classList.add('show');
 
   let d;
@@ -547,7 +866,9 @@ async function openReviewApp(id) {
     ['Monthly Income', d.monthlyIncome != null ? 'R ' + Math.round(d.monthlyIncome).toLocaleString() : '—'],
     ['Bank', d.bank], ['Equipment', d.equipmentName],
     ['Period', `${fmtDate(d.startDate)} – ${fmtDate(d.endDate)}`],
+    ['Est. Cost', d.estimatedCost != null ? 'R ' + Math.round(d.estimatedCost).toLocaleString() : '—'],
     ['Delivery Address', d.deliveryAddress],
+    ['Purpose', d.purpose],
   ];
   document.getElementById('reviewAppContent').innerHTML = rows.map(([k, v]) =>
     `<div style="display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
@@ -555,8 +876,29 @@ async function openReviewApp(id) {
       <span style="text-align:right">${esc(v || '—')}</span>
     </div>`).join('');
 
+  renderReviewCreditSection(d);
+
   const actionsWrap = document.getElementById('reviewAppActions');
-  actionsWrap.style.display = d.status === 'PENDING' ? 'flex' : 'none';
+  const canReview = _canEdit && d.status === 'PENDING';
+  actionsWrap.style.display = canReview ? 'flex' : 'none';
+  if (canReview) {
+    const resolved = d.creditCheckStatus === 'COMPLETED' || d.creditCheckStatus === 'DECLINED';
+    const approveBtn = document.getElementById('reviewApproveBtn');
+    approveBtn.disabled = !resolved;
+    approveBtn.title = resolved ? '' : 'Resolve the credit check first';
+    if (resolved) {
+      approveBtn.className = 'btnp';
+      approveBtn.style.cssText = 'flex:1;justify-content:center;padding:11px';
+      approveBtn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">check</span>Approve';
+    } else {
+      // Deliberately not just a dimmed btnp — a same-color-but-faded button
+      // still reads as clickable at a glance. Swapping to the neutral
+      // disabled style makes "you can't approve yet" obvious immediately.
+      approveBtn.className = 'btng';
+      approveBtn.style.cssText = 'flex:1;justify-content:center;padding:11px;opacity:.55;cursor:not-allowed;color:#849495';
+      approveBtn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:16px">lock</span>Resolve Credit Check First';
+    }
+  }
 }
 
 function beginReject() {

@@ -1,0 +1,27 @@
+# Firebase Storage read-tokens embedded in placeholder image URLs in
+# dataconnect/seed_data.gql — leftover from the Data Connect quickstart
+# template this schema started from, pointing at a DIFFERENT project's
+# bucket (fdc-web-quickstart.appspot.com, not this project's). A Storage
+# download token only grants read access to the single file it's embedded
+# in, scoped by that project's own Storage rules — not an account-level
+# credential, and not even reachable from this project. Reviewed and
+# confirmed non-sensitive; ignored here so the gitleaks CI gate stays
+# meaningful instead of permanently red on these known findings.
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:7
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:13
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:19
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:25
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:31
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:37
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:43
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:49
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:55
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:61
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:67
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:73
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:79
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:85
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:91
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:97
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:103
+f40d78e20746b1e4ccee964852331bce4d4db7b0:dataconnect/seed_data.gql:generic-api-key:109

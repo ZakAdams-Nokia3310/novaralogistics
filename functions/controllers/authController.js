@@ -7,7 +7,7 @@ const { runQuery, runMutation } = require('../services/dataConnect');
 // RegEx whitelist for the fields accepted here — same defence-in-depth
 // style used elsewhere in this project (see security.js's isValid* functions).
 const UID_RE   = /^[a-zA-Z0-9]{1,128}$/;
-const ROLE_RE  = /^(admin|user|driver|guest)$/;
+const ROLE_RE  = /^(admin|user|driver|guest)$/; 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 // Data Connect (Postgres) doesn't know a user's Firebase UID — the app
@@ -81,6 +81,7 @@ exports.syncOwnClaims = async (req, res) => {
     const claimRole = dbUser.role ? dbUser.role.toLowerCase() : 'user';
     const claimOrg = dbUser.organisation ? dbUser.organisation.name : null;
     const claimOrgId = dbUser.organisation ? dbUser.organisation.id : null;
+    const claimCustomRoleId = dbUser.customRole ? dbUser.customRole.id : null;
 
     // Data Connect returns UUIDs without hyphens; existing custom claims
     // (set via /auth/set-role) store them hyphenated — same value, two
@@ -89,12 +90,13 @@ exports.syncOwnClaims = async (req, res) => {
     const norm = (v) => (v == null ? v : String(v).replace(/-/g, ''));
     const alreadyInSync = req.user.role === claimRole
       && req.user.org === claimOrg
-      && norm(req.user.orgId) === norm(claimOrgId);
+      && norm(req.user.orgId) === norm(claimOrgId)
+      && norm(req.user.customRoleId) === norm(claimCustomRoleId);
     if (alreadyInSync) {
       return res.status(200).json({ synced: false, reason: 'already-in-sync' });
     }
 
-    await admin.auth().setCustomUserClaims(req.user.id, { role: claimRole, org: claimOrg, orgId: claimOrgId });
+    await admin.auth().setCustomUserClaims(req.user.id, { role: claimRole, org: claimOrg, orgId: claimOrgId, customRoleId: claimCustomRoleId });
     await logEvent(req, 'CLAIMS_SYNCED', { from: req.user.role, to: claimRole });
     res.status(200).json({ synced: true, role: claimRole });
   } catch (err) {

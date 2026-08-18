@@ -12,13 +12,9 @@
   body{font-family:'Inter',sans-serif;min-height:100vh;}
   .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
   .grad{background:linear-gradient(135deg,#00f0ff,#7df4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-  .nl{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-secondary,#b9cacb);text-decoration:none;transition:all .18s;background:none;border:none;cursor:pointer;width:100%;}
-  .nl:hover{color:var(--text-primary,#e2e2e8);background:var(--surface-hover,rgba(255,255,255,.05));}
-  .nl.on{color:#00f0ff;background:rgba(0,240,255,.08);border:1px solid rgba(0,240,255,.14);}
-  .nl .ms{font-size:16px;}
   .eq-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:13px;overflow:hidden;transition:transform .28s ease,border-color .28s ease;}
   .eq-card:hover{transform:translateY(-4px);border-color:rgba(0,240,255,.2);}
-  @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
   @media(max-width:900px){#dashSplit{grid-template-columns:1fr!important}}
   @media(max-width:640px){#eGrid{grid-template-columns:repeat(2,1fr)!important}}
   @media(max-width:400px){#eGrid{grid-template-columns:1fr!important}}
@@ -26,25 +22,7 @@
 </head>
 <body>
 
-<aside class="sidebar">
-  <div class="sb-logo-row" style="padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;gap:8px">
-    <a href="/" style="display:flex;align-items:center;gap:8px;text-decoration:none;min-width:0">
-      <span style="font-size:19px;flex-shrink:0">⚡</span>
-      <span class="grad sb-label" style="font-family:'Hanken Grotesk',sans-serif;font-size:17px;font-weight:800;letter-spacing:-.03em;white-space:nowrap;overflow:hidden">EquipCore</span>
-    </a>
-    <button class="sb-toggle" aria-label="Collapse sidebar" title="Collapse sidebar" onclick="toggleSidebarCollapse()"><span class="material-symbols-outlined">chevron_left</span></button>
-  </div>
-  <div style="padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04)">
-    <div class="glass-lo sb-user-card" style="border-radius:10px;padding:9px 10px;display:flex;align-items:center;gap:9px">
-      <div id="sh-avatar" style="width:30px;height:30px;border-radius:8px;background:rgba(0,240,255,.12);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#00f0ff;flex-shrink:0">--</div>
-      <div class="sb-label" style="min-width:0;flex:1"><div id="sh-name" style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">…</div><div id="sh-id" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">—</div></div>
-    </div>
-  </div>
-  <nav id="sh-nav" style="flex:1;min-height:0;overscroll-behavior:contain;padding:8px 7px;overflow-y:auto;display:flex;flex-direction:column;gap:2px"></nav>
-  <div style="padding:9px 7px;border-top:1px solid rgba(255,255,255,0.04)">
-    <button onclick="EC_AUTH.logout()" class="nl" title="Sign Out" style="color:#849495"><span class="material-symbols-outlined ms">logout</span><span class="sb-label">Sign Out</span></button>
-  </div>
-</aside>
+<aside id="sidebar-root"></aside>
 
 <div class="main">
   <div class="topbar">
@@ -52,7 +30,7 @@
       <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">My Dashboard</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495" id="orgLabel">…</div>
     </div>
-    <a href="apply-rental" class="btnp" style="font-size:12px;padding:7px 13px"><span class="material-symbols-outlined ms" style="font-size:15px">add</span>Apply to Rent</a>
+    <a href="rent-equipment" class="btnp" style="font-size:12px;padding:7px 13px"><span class="material-symbols-outlined ms" style="font-size:15px">add</span>Apply to Rent</a>
   </div>
 
   <div class="body">
@@ -106,7 +84,6 @@
             <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Available Equipment</div>
             <div style="display:flex;gap:8px;align-items:center">
               <input id="eSearch" placeholder="Search…" style="width:130px;font-size:12px;padding:6px 10px"/>
-              <a href="catalog" class="btng" style="font-size:12px;padding:6px 10px">Full Catalog</a>
             </div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr)" id="eGrid">
@@ -120,9 +97,8 @@
         <div class="glass" style="border-radius:13px;padding:15px">
           <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px;margin-bottom:11px">Quick Actions</div>
           <div style="display:flex;flex-direction:column;gap:6px">
-            <a href="apply-rental" class="btnp" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">add</span>Apply to Rent</a>
+            <a href="rent-equipment" class="btnp" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">add</span>Apply to Rent</a>
             <a href="my-rentals"   class="btng" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">receipt_long</span>My Rentals</a>
-            <a href="catalog"      class="btng" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">inventory_2</span>Catalog</a>
             <a href="calculator"   class="btng" style="justify-content:center;font-size:13px"><span class="material-symbols-outlined ms" style="font-size:16px">calculate</span>Calculator</a>
           </div>
         </div>
@@ -163,22 +139,12 @@
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
+buildSidebar('dashboard-user');
 const user = EC_AUTH.require(['user','admin']);
 const esc = EC_SECURITY.sanitizeHtml;
 if (user) {
-  document.getElementById('sh-name').textContent  = user.name;
-  document.getElementById('sh-id').textContent    = user.id;
-  document.getElementById('sh-avatar').textContent= user.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
   document.getElementById('orgLabel').textContent  = user.org || 'Client Account';
-  document.getElementById('acctCard').innerHTML   = `<b>${esc(user.name)}</b><br><span style="color:#849495">${esc(user.email)}</span><br><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff">${esc(user.id)}</span><br>${esc(user.org)||'Independent'}`;
-  EC_SHELL.init([
-    {href:'dashboard-user', icon:'dashboard',   label:'Overview',  active:()=>true},
-    {href:'my-rentals',     icon:'receipt_long',label:'My Rentals'},
-    {href:'apply-rental',   icon:'add_circle',  label:'Apply to Rent'},
-    {href:'catalog',        icon:'inventory_2', label:'Catalog'},
-    {href:'marketplace',    icon:'storefront',  label:'Marketplace'},
-    {href:'calculator',     icon:'calculate',   label:'Calculator'},
-  ]);
+  document.getElementById('acctCard').innerHTML   = `<b>${esc(user.name)}</b><br><span style="color:#849495">${esc(user.email)}</span><br>${esc(user.org)||'Independent'}`;
 
   function vStatusBadge(s) {
     if (s === 'available')   return `<span class="b ba">Available</span>`;

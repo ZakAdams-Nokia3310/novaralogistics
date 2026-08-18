@@ -9,6 +9,7 @@
     "lint": "eslint *.js --ignore-pattern node_modules/ --ignore-pattern src/",
     "lint:fix": "eslint *.js --fix --ignore-pattern node_modules/ --ignore-pattern src/",
     "audit:security": "npm audit --audit-level=moderate",
+    "build:hosting": "node scripts/build-hosting.js",
     "test": "npx firebase-tools emulators:exec --only firestore \"node firestore.rules.test.js\"",
     "prepare": "husky install 2>/dev/null || true"
   },
@@ -29,7 +30,8 @@
     "eslint": "8.57.0",
     "eslint-plugin-security": "^1.7.1",
     "husky": "9.1.6",
-    "lint-staged": "15.2.10"
+    "lint-staged": "15.2.10",
+    "terser": "^5.50.0"
   },
   "lint-staged": {
     "*.js": [

@@ -19,10 +19,11 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{color-scheme:dark;}
   body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;display:flex;align-items:center;justify-content:center;}
   .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
   .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);}
-  input{width:100%;padding:13px 14px 13px 44px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;}
+  input{width:100%;padding:13px 14px 13px 44px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:12px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;-moz-appearance:none;appearance:none;}
   input:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,0.3);}
   input::placeholder{color:rgba(255,255,255,0.22);}
   .btn-main{width:100%;padding:14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border:none;border-radius:12px;cursor:pointer;transition:all .2s;box-shadow:0 0 30px rgba(0,240,255,0.18);}
@@ -108,7 +109,7 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
     </button>
 
     <div style="margin-top:20px;text-align:center;font-size:13px;color:#849495">
-      No account? <a href="dashboard-guest" style="color:#00dbe9;text-decoration:none">Browse as guest →</a>
+      No account? <a href="signup" style="color:#00dbe9;text-decoration:none">Create one →</a>
     </div>
   </div>
 

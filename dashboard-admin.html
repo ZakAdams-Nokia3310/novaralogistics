@@ -51,7 +51,7 @@
   if(!u) return;
   var el = document.getElementById('sidebar-root');
   if(!el) return;
-  var rc = u.role==='driver'?'#ffb4a2':'#00f0ff';
+  var rc = '#00f0ff';
   var init = (u.name||'?').split(' ').map(function(n){return n[0]||'';}).join('').slice(0,2).toUpperCase();
   var NAV=[
     {s:'Main'},
@@ -62,8 +62,6 @@
     {href:'admin-maintenance', icon:'build',         label:'Maintenance'},
     {s:'Tools'},
     {href:'calculator',        icon:'calculate',     label:'Calculator'},
-    {href:'catalog',           icon:'inventory_2',   label:'Equipment Catalog'},
-    {href:'marketplace',       icon:'storefront',    label:'Marketplace'},
     {s:'Links'},
     {href:'about',             icon:'info',          label:'About'},
     {href:'contact',           icon:'mail',          label:'Contact'},

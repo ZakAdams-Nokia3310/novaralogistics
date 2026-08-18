@@ -12,10 +12,12 @@
 // where Firebase Hosting routes it.
 
 const functions = require('firebase-functions');
+// const { onDocumentCreated } = require('firebase-functions/v2/firestore'); // TEMP: re-enable once Firestore is provisioned (see onChatMessageCreated below)
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const hpp = require('hpp');
 
 // No credential argument needed — Cloud Functions supplies the runtime
 // service account automatically.
@@ -49,6 +51,14 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '10kb' }));
+// Guards against HTTP Parameter Pollution — e.g. ?role=user&role=admin
+// parsing into an array instead of a single string, which could confuse a
+// handler that does `req.query.role === 'admin'` (arrays never strictly
+// equal a string) into behaving unpredictably. Query-string only (the
+// default) — this app's request bodies are all single-shape JSON objects
+// built by its own client code, not repeated form-style keys, so there's
+// nothing there for hpp to protect against.
+app.use(hpp());
 app.use(rateLimiter);
 
 // Mounted at /api/auth, /api/auth/totp, and /api/data to match the full
@@ -74,3 +84,19 @@ app.use((err, req, res, next) => {
 // binding it here injects it as process.env.TOTP_ENCRYPTION_KEY at
 // runtime, never checked into source.
 exports.api = functions.https.onRequest({ secrets: ['TOTP_ENCRYPTION_KEY'] }, app);
+
+// TEMP: Firestore isn't provisioned for this project yet (deploy fails
+// trying to resolve the default database) — re-enable this trigger once
+// that's done. See onChatMessageCreated's doc comment for what it does.
+// exports.onChatMessageCreated = onDocumentCreated(
+//   'conversations/{conversationId}/messages/{messageId}',
+//   async (event) => {
+//     const msg = event.data?.data();
+//     if (!msg) return;
+//     await admin.firestore().collection('conversations').doc(event.params.conversationId).update({
+//       lastMessageAt: msg.sentAt || admin.firestore.FieldValue.serverTimestamp(),
+//       lastMessagePreview: (msg.text || '').slice(0, 200),
+//       lastMessageSenderId: msg.senderId || null,
+//     });
+//   },
+// );

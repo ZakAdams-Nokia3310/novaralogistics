@@ -24,6 +24,18 @@ const money = () => z.number().finite().min(0).max(1e9);
 const dateStr = () => z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD');
 const optDateStr = () => dateStr().nullish();
 
+// Custom-role feature keys — must match the page slugs security.js's
+// PAGE_ROLES/sidebar.js's NAV use, and registry/dataOperations.js's
+// featureKey values. Kept as one list so a typo in a new page slug can't
+// silently create an ungrantable/unreachable feature.
+const FEATURE_KEYS = ['admin-fleet', 'admin-rentals', 'admin-maintenance', 'admin-orgs', 'admin-audit', 'admin-reports'];
+const permissionsJson = () => z.string().max(4000).refine((s) => {
+  let obj;
+  try { obj = JSON.parse(s); } catch { return false; }
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return false;
+  return Object.entries(obj).every(([k, v]) => FEATURE_KEYS.includes(k) && (v === 'view' || v === 'edit'));
+}, 'Invalid permissions object');
+
 const USER_ROLE = z.enum(['ADMIN', 'USER', 'DRIVER', 'GUEST']);
 const USER_STATUS = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']);
 const ORG_STATUS = z.enum(['ACTIVE', 'SUSPENDED']);
@@ -50,6 +62,19 @@ const APPLICATION_STATUS = z.enum(['PENDING', 'APPROVED', 'REJECTED', 'CANCELLED
 
 const EMPTY = z.object({}).strict();
 
+const PROVINCE = z.enum([
+  'GAUTENG', 'WESTERN_CAPE', 'KWAZULU_NATAL', 'EASTERN_CAPE', 'MPUMALANGA',
+  'LIMPOPO', 'NORTH_WEST', 'NORTHERN_CAPE', 'FREE_STATE',
+]);
+const EMPLOYMENT_STATUS = z.enum(['FULL_TIME_EMPLOYED', 'SELF_EMPLOYED', 'BUSINESS_OWNER', 'CONTRACTOR']);
+const BANK_NAME = z.enum(['ABSA', 'FNB', 'STANDARD_BANK', 'NEDBANK', 'CAPITEC', 'INVESTEC', 'AFRICAN_BANK', 'OTHER']);
+const ACCOUNT_TYPE = z.enum(['CHEQUE', 'SAVINGS', 'BUSINESS']);
+const RENTAL_PURPOSE = z.enum(['MINING_EXTRACTION', 'CONSTRUCTION', 'LOGISTICS_TRANSPORT', 'WAREHOUSE_OPERATIONS', 'ENERGY_POWER', 'OTHER']);
+const email = () => z.string().trim().email().max(200);
+const optEmail = () => z.string().trim().email().max(200).nullish();
+const phone = () => z.string().trim().max(30);
+const optPhone = () => z.string().trim().max(30).nullish();
+
 const SCHEMAS = {
   // ── Reads: id/enum/org-scoped filters only ──
   ListAllOrganisations: EMPTY,
@@ -61,6 +86,11 @@ const SCHEMAS = {
   ListAllRentalApplications: EMPTY,
   ListRentalsByOrg: z.object({ organisationId: uuid() }).strict(),
   ListVehiclesByOrg: z.object({ organisationId: uuid() }).strict(),
+  ListRentalEvents: z.object({ rentalId: uuid(), organisationId: uuid() }).strict(),
+
+  // ── Notifications ──
+  ListNotifications: z.object({ userId: uuid() }).strict(),
+  MarkNotificationRead: z.object({ id: uuid() }).strict(),
 
   // ── Organisations ──
   CreateOrganisation: z.object({
@@ -82,6 +112,12 @@ const SCHEMAS = {
   UpdateUserProfile: z.object({
     id: uuid(), name: optStr(200), bio: optStr(4000), position: optStr(200),
     department: optStr(200), phone: optStr(30), avatarUrl: optStr(2000),
+    // KYC / rental-readiness fields — see schema.gql's User doc comment.
+    idNumber: optStr(20), dateOfBirth: optDateStr(), address: optStr(400),
+    city: optStr(100), province: PROVINCE.nullish(), postalCode: optStr(10),
+    employmentStatus: EMPLOYMENT_STATUS.nullish(), employerName: optStr(200),
+    monthlyIncome: money().nullish(), yearsEmployed: z.number().int().min(0).max(80).nullish(),
+    bank: BANK_NAME.nullish(), accountType: ACCOUNT_TYPE.nullish(), outstandingCredit: money().nullish(),
   }).strict(),
   UpdateUserAvatar: z.object({ id: uuid(), avatarUrl: str(2000) }).strict(),
 
@@ -131,20 +167,35 @@ const SCHEMAS = {
   ReviewRentalApplication: z.object({
     id: uuid(), status: APPLICATION_STATUS, rejectionReason: optStr(1000),
   }).strict(),
-};
 
-const PROVINCE = z.enum([
-  'GAUTENG', 'WESTERN_CAPE', 'KWAZULU_NATAL', 'EASTERN_CAPE', 'MPUMALANGA',
-  'LIMPOPO', 'NORTH_WEST', 'NORTHERN_CAPE', 'FREE_STATE',
-]);
-const EMPLOYMENT_STATUS = z.enum(['FULL_TIME_EMPLOYED', 'SELF_EMPLOYED', 'BUSINESS_OWNER', 'CONTRACTOR']);
-const BANK_NAME = z.enum(['ABSA', 'FNB', 'STANDARD_BANK', 'NEDBANK', 'CAPITEC', 'INVESTEC', 'AFRICAN_BANK', 'OTHER']);
-const ACCOUNT_TYPE = z.enum(['CHEQUE', 'SAVINGS', 'BUSINESS']);
-const RENTAL_PURPOSE = z.enum(['MINING_EXTRACTION', 'CONSTRUCTION', 'LOGISTICS_TRANSPORT', 'WAREHOUSE_OPERATIONS', 'ENERGY_POWER', 'OTHER']);
-const email = () => z.string().trim().email().max(200);
-const optEmail = () => z.string().trim().email().max(200).nullish();
-const phone = () => z.string().trim().max(30);
-const optPhone = () => z.string().trim().max(30).nullish();
+  // Credit-check workflow. `score` on CompleteMockCreditCheck is accepted
+  // structurally (the mutation itself requires it) but dataController.js
+  // always overwrites it server-side before running the mutation — never
+  // trust the client-supplied value.
+  RequestCreditCheck: z.object({ id: uuid() }).strict(),
+  CompleteMockCreditCheck: z.object({ id: uuid(), score: z.number().int().min(0).max(999) }).strict(),
+  // acknowledged must be exactly `true` — this is the server-side
+  // enforcement of the liability warning, not just a UI gate.
+  DeclineCreditCheck: z.object({ id: uuid(), acknowledged: z.literal(true) }).strict(),
+
+  // ── Custom roles ── permissions is a JSON-encoded object
+  // { [featureKey]: 'view'|'edit' } — must match the page slugs
+  // security.js's PAGE_ROLES/sidebar.js know about. Validated by parsing
+  // and checking shape, not just "is a string", since this JSON blob is
+  // itself the actual authorization data dataController.js reads back out.
+  ListAllRoles: EMPTY,
+  GetRoleById: z.object({ id: uuid() }).strict(),
+  CreateRole: z.object({
+    name: str(100), description: optStr(2000), permissions: permissionsJson(), createdById: optUuid(),
+  }).strict(),
+  UpdateRole: z.object({
+    id: uuid(), name: str(100), description: optStr(2000), permissions: permissionsJson(),
+  }).strict(),
+  DeleteRole: z.object({ id: uuid() }).strict(),
+  AssignUserCustomRole: z.object({ id: uuid(), customRoleId: optUuid() }).strict(),
+
+  ListAuditLogs: z.object({ limit: z.number().int().min(1).max(500).nullish() }).strict(),
+};
 
 // Operations reachable WITHOUT signing in — anyone (including anonymous
 // visitors) is meant to be able to submit these forms. No role/ownership
@@ -181,6 +232,22 @@ const PUBLIC_SCHEMAS = {
   }).strict(),
 };
 
-// registerSelf / getUserByEmail have their own small bodies validated
-// inline in the controller (not routed through the generic registry).
-module.exports = { SCHEMAS, PUBLIC_SCHEMAS, str, uuid };
+// registerSelf — called authenticated, right after Firebase Auth signup
+// (see controllers/dataController.js). All the KYC fields below are
+// optional here (a caller mid-migration or using an older client build
+// might send only name) but termsAccepted is hard-required: the server
+// stamps termsAcceptedAt itself the moment this is true, never trusting a
+// client-supplied timestamp.
+const REGISTER_SELF_SCHEMA = z.object({
+  name: str(200),
+  phone: optPhone(), idNumber: optStr(20), dateOfBirth: optDateStr(),
+  address: optStr(400), city: optStr(100), province: PROVINCE.nullish(), postalCode: optStr(10),
+  employmentStatus: EMPLOYMENT_STATUS.nullish(), employerName: optStr(200),
+  monthlyIncome: money().nullish(), yearsEmployed: z.number().int().min(0).max(80).nullish(),
+  bank: BANK_NAME.nullish(), accountType: ACCOUNT_TYPE.nullish(), outstandingCredit: money().nullish(),
+  termsAccepted: z.boolean(),
+}).strict();
+
+// getUserByEmail has its own small body validated inline in the controller
+// (not routed through the generic registry).
+module.exports = { SCHEMAS, PUBLIC_SCHEMAS, REGISTER_SELF_SCHEMA, str, uuid };
