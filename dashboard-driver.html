@@ -5,8 +5,6 @@
 <title>Driver Portal — EquipCore</title>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<link href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' rel='stylesheet'/>
-<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
 <script src="https://unpkg.com/apexcharts"></script>
 <link href="theme.css" rel="stylesheet"/>
 <style>
@@ -44,18 +42,14 @@
 
         <!-- Vehicle hero -->
         <div class="glass" style="border-radius:13px;overflow:hidden;position:relative">
-          <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1Ne0PmtxBPQA3WareluALLxcssGgPRJaT-shIS-7xxzF64kC1jESZQ47EQeqVa8s2a7RrSaxcebsqRvBSS__vRfvdonzjEgVdg3LsmAhR7xiVtmMHmwmUqH5YqotNjdQWIWqKnXzT94utJkT9egtv-ylgvXkKM53yJ7AV0rTxdlZMxp1Pa4Ts1kSkb2khdVMK_50kkvzlRC494PloyDbZWGAaSgWDknHQT5Mog6tLiZ-G0do" alt="" style="width:100%;height:200px;object-fit:cover;opacity:.45"/>
+          <img id="heroImg" src="" alt="" style="width:100%;height:200px;object-fit:cover;opacity:.45;display:none"/>
+          <div id="heroImgFallback" style="width:100%;height:200px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.03)"><span class="material-symbols-outlined ms" style="font-size:44px;color:#40474a">local_shipping</span></div>
           <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(8,10,14,.92) 0%,rgba(8,10,14,.45) 60%,transparent 100%)"></div>
           <div style="position:absolute;bottom:0;left:0;right:0;padding:20px 24px">
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:#00f0ff;animation:pulse 2s ease infinite;display:inline-block"></span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff;letter-spacing:.15em;text-transform:uppercase">Live Assignment</span></div>
-            <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:24px;font-weight:800;margin-bottom:3px">Volvo FH16</h2>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;margin-bottom:14px">Plate: EC-7749-X</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-              <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;color:#00f0ff">64%</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Fuel</div></div>
-              <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700">84 km/h</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Speed</div></div>
-              <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;color:#00f0ff">4h 12m</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Remaining</div></div>
-              <div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700">142 km</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">Today</div></div>
-            </div>
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px"><span style="width:7px;height:7px;border-radius:50%;background:#00f0ff;animation:pulse 2s ease infinite;display:inline-block"></span><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff;letter-spacing:.15em;text-transform:uppercase">Current Assignment</span></div>
+            <h2 style="font-family:'Hanken Grotesk',sans-serif;font-size:24px;font-weight:800;margin-bottom:3px" id="heroVehicle">Loading…</h2>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;margin-bottom:14px" id="heroPlate"></div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="heroStats"></div>
           </div>
         </div>
 
@@ -63,9 +57,9 @@
         <div class="glass" style="border-radius:13px;overflow:hidden">
           <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
             <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:14px">Live Route</div>
-            <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f0ff"><span style="width:5px;height:5px;border-radius:50%;background:#00f0ff;animation:pulse 2s ease infinite;display:inline-block"></span>Connected</div>
+            <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495"><span style="width:5px;height:5px;border-radius:50%;background:#849495;display:inline-block"></span>Not connected</div>
           </div>
-          <div id="routeMap" style="height:240px"></div>
+          <div style="padding:32px 16px;text-align:center;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">Live GPS tracking requires a telematics integration, which isn't set up yet.</div>
         </div>
 
         <!-- Trip distance chart -->
@@ -165,21 +159,57 @@ if (user) {
   document.getElementById('orgLabel').textContent  = user.org || 'Fleet Operations';
 }
 
-// Route map
-// scrollWheelZoom:false — same fix as dashboard-admin's Mapbox map: Leaflet's
-// default scroll-wheel-zoom otherwise captures a plain page-scroll gesture
-// over the map and zooms it instead, which is exactly what reads as
-// "scrolling doesn't work here." zoomControl is already off for this
-// small route-preview map, so there's no zoom UI being taken away.
-const rm=L.map('routeMap',{zoomControl:false,attributionControl:false,scrollWheelZoom:false}).setView([-26.0,27.8],8);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20}).addTo(rm);
-L.control.zoom({position:'topright'}).addTo(rm);
-const route=[[-26.2041,28.0473],[-25.95,27.9],[-25.78,27.6],[-25.6677,27.2424]];
-L.polyline(route,{color:'#00f0ff',weight:3,opacity:.8,dashArray:'6 4'}).addTo(rm);
-const posIcon=L.divIcon({html:'<div style="width:14px;height:14px;border-radius:50%;background:#00f0ff;border:3px solid white;box-shadow:0 0 14px rgba(0,240,255,.8);"></div>',iconSize:[14,14],iconAnchor:[7,7],className:''});
-L.marker([-25.95,27.9],{icon:posIcon}).addTo(rm).bindPopup('<b>EC-7749-X</b><br>Volvo FH16 · 84 km/h');
-const destIcon=L.divIcon({html:'<div style="width:9px;height:9px;border-radius:50%;background:#e2e2e8;border:2px solid white;box-shadow:0 0 8px rgba(226,226,232,.6);"></div>',iconSize:[9,9],iconAnchor:[4.5,4.5],className:''});
-L.marker([-25.6677,27.2424],{icon:destIcon}).addTo(rm);
+// Real assignment (schema.gql's Vehicle.assignedDriver) + its current
+// active rental, if any — replaces what used to be a hardcoded "Volvo FH16"
+// demo card. Fuel/speed/route/distance have no real data source anywhere in
+// this app (no telematics integration — see the "Live Route" card's static
+// note above), so those are gone rather than kept as fake precision; the
+// hero stat tiles below show only real vehicle/rental fields instead.
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+}
+function statusLabel(s) {
+  if (s === 'on_rent') return 'On rent';
+  if (s === 'available') return 'Available';
+  if (s === 'maintenance') return 'Maintenance';
+  return s || '—';
+}
+function renderHero(vehicle, rental) {
+  const img = document.getElementById('heroImg');
+  const fallback = document.getElementById('heroImgFallback');
+  if (vehicle && vehicle.imageUrl) {
+    img.src = vehicle.imageUrl; img.style.display = 'block'; fallback.style.display = 'none';
+  } else {
+    img.style.display = 'none'; fallback.style.display = 'flex';
+  }
+  if (!vehicle) {
+    document.getElementById('heroVehicle').textContent = 'No vehicle assigned';
+    document.getElementById('heroPlate').textContent = 'Ask an admin to assign you a vehicle on the Fleet page.';
+    document.getElementById('heroStats').innerHTML = '';
+    return;
+  }
+  document.getElementById('heroVehicle').textContent = `${vehicle.make} ${vehicle.model}`;
+  document.getElementById('heroPlate').textContent = `Plate: ${vehicle.regPlate}`;
+  const tiles = [
+    { label: 'Odometer', val: `${vehicle.km.toLocaleString()} km` },
+    { label: 'Status', val: statusLabel(vehicle.status) },
+    { label: 'Next Service', val: `${vehicle.nextServiceKm.toLocaleString()} km` },
+    { label: 'Return Date', val: rental ? fmtDate(rental.returnDate) : '—' },
+  ];
+  document.getElementById('heroStats').innerHTML = tiles.map(t => `<div class="glass-lo" style="border-radius:9px;padding:10px;text-align:center"><div style="font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:700;color:#00f0ff">${esc(t.val)}</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#849495;text-transform:uppercase;margin-top:2px">${t.label}</div></div>`).join('');
+}
+if (user.orgId) {
+  DC_DATA.setOrgScope(user.orgId);
+  DC_DATA.initForOrg(user.orgId).then(() => {
+    const vehicle = DC_DATA.getVehicleAssignedToDriver(user.dbId);
+    const rental = vehicle ? DC_DATA.getRentalsForVehicle(vehicle.id).find(r => r.status === 'active') : null;
+    renderHero(vehicle, rental);
+  }).catch(() => renderHero(null, null));
+} else {
+  renderHero(null, null);
+}
 
 // Callouts
 const calloutEl=document.getElementById('callouts');
@@ -198,17 +228,15 @@ function submitCallout(){
 function autoLoc(){const i=document.getElementById('incLoc');i.value='Detecting…';navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{i.value=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`;},()=>{i.value='N1 Highway, near Midrand';}):i.value='N1 Highway, near Midrand';}
 function reportFailure(){alert('Failure report submitted.\nRef: MF-'+Math.floor(1000+Math.random()*9000)+'\nMaintenance team will contact you shortly.');}
 
-// Trip log — table and chart both render from this array
-const trips = [
-  { date:'3 Jun 2026',  route:'Joburg → Rustenburg', dist:142, fuel:68 },
-  { date:'2 Jun 2026',  route:'Pretoria → Cullinan',  dist:78,  fuel:34 },
-  { date:'31 May 2026', route:'Rustenburg → Joburg',  dist:138, fuel:65 },
-];
+// Trip log — table and chart both render from this array. Starts empty
+// (no fabricated history) — entries are only ever added via "+ Log Trip"
+// below, which is a driver self-report, not fabricated telemetry.
+const trips = [];
 let tripChart;
 function renderTrips(){
-  document.getElementById('tripBody').innerHTML = trips.map(t =>
-    `<tr><td data-label="Date" style="font-size:13px">${t.date}</td><td data-label="Route" style="font-size:13px;color:#b9cacb">${t.route}</td><td data-label="Dist" style="font-size:13px">${t.dist} km</td><td data-label="Fuel" style="font-size:13px">${t.fuel != null ? t.fuel + ' L' : '—'}</td></tr>`
-  ).join('');
+  document.getElementById('tripBody').innerHTML = trips.length
+    ? trips.map(t => `<tr><td data-label="Date" style="font-size:13px">${t.date}</td><td data-label="Route" style="font-size:13px;color:#b9cacb">${t.route}</td><td data-label="Dist" style="font-size:13px">${t.dist} km</td><td data-label="Fuel" style="font-size:13px">${t.fuel != null ? t.fuel + ' L' : '—'}</td></tr>`).join('')
+    : `<tr><td colspan="4" style="text-align:center;padding:18px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px">No trips logged yet</td></tr>`;
 
   const chronological = [...trips].reverse();
   const opts = {

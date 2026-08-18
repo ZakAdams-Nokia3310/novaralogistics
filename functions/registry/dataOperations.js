@@ -115,6 +115,7 @@ module.exports = {
   UpdateVehicleKm:       { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
   UpdateVehicleService:  { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
   UpdateVehicleDetails:  { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
+  AssignDriverToVehicle: { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
   DeleteVehicle:          { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
 
   // ── Maintenance ──

@@ -137,6 +137,7 @@ const SCHEMAS = {
     km: int32(), serviceIntervalKm: int32(), nextServiceKm: int32(),
     vin: optStr(50), trackingCompany: optStr(100), lastServiceDate: optDateStr(),
   }).strict(),
+  AssignDriverToVehicle: z.object({ id: uuid(), assignedDriverId: optUuid() }).strict(),
   DeleteVehicle: z.object({ id: uuid() }).strict(),
 
   // ── Maintenance ──

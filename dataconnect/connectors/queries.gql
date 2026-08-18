@@ -9,6 +9,10 @@ query ListAllVehicles @auth(level: NO_ACCESS) {
       id
       name
     }
+    assignedDriver {
+      id
+      name
+    }
     make
     model
     year
@@ -32,6 +36,10 @@ query GetVehicleById($id: UUID!) @auth(level: NO_ACCESS) {
   vehicle(id: $id) {
     id
     organisation {
+      id
+      name
+    }
+    assignedDriver {
       id
       name
     }
@@ -92,6 +100,10 @@ query ListVehiclesByOrg($organisationId: UUID!) @auth(level: NO_ACCESS) {
       id
       name
     }
+    assignedDriver {
+      id
+      name
+    }
     make
     model
     year
@@ -146,6 +158,25 @@ query ListAllRentals @auth(level: NO_ACCESS) {
     }
     createdAt
     updatedAt
+  }
+}
+
+# Used only by jobs/dailyRentalCheck.js's scheduled sweep — see
+# functions/gql/queries.gql's copy of this same operation for why it's
+# exempt from the registry/validation layer every client-reachable
+# operation goes through.
+query ListActiveRentals @auth(level: NO_ACCESS) {
+  rentals(where: { status: { eq: ACTIVE } }) {
+    id
+    equipmentName
+    returnDate
+    application {
+      ref
+      applicantUser {
+        id
+        email
+      }
+    }
   }
 }
 

@@ -208,6 +208,8 @@ const DC_DATA = (() => {
       id:               v.id,
       orgId:            v.organisation?.id || v.orgId || null,
       orgName:          v.organisation?.name || null,
+      assignedDriverId:   v.assignedDriver?.id || null,
+      assignedDriverName: v.assignedDriver?.name || null,
       make:             v.make,
       model:            v.model,
       year:             v.year,
@@ -494,6 +496,10 @@ const DC_DATA = (() => {
     getVehicles()           { return _orgScope ? _vehicles.filter(v => v.orgId === _orgScope) : _vehicles; },
     getAllVehicles()         { return _vehicles; },
     getVehicleById(id)      { return _vehicles.find(v => v.id === id) || null; },
+    // Used by dashboard-driver.html/driver-vehicles.html to find "my
+    // vehicle" — real assignment (see schema.gql's Vehicle.assignedDriver)
+    // instead of the old "first on_rent vehicle in the org" guess.
+    getVehicleAssignedToDriver(driverId) { return _vehicles.find(v => v.assignedDriverId === driverId) || null; },
     getRentalsForVehicle(vehicleId) { return _rentals.filter(r => r.vehicleId === vehicleId); },
     getMaintenanceQueries() {
       if (!_orgScope) return _maintenance;
@@ -861,6 +867,12 @@ const DC_DATA = (() => {
 
     async deleteVehicle(id) {
       await mutate('DeleteVehicle', { id });
+      await _loadVehicles(); saveCache();
+    },
+
+    // driverId may be null/empty to unassign.
+    async assignDriverToVehicle(id, driverId) {
+      await mutate('AssignDriverToVehicle', { id, assignedDriverId: driverId || null });
       await _loadVehicles(); saveCache();
     },
 

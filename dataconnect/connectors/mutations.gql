@@ -272,6 +272,10 @@ mutation UpdateVehicleOrg($id: UUID!, $organisationId: UUID) @auth(level: NO_ACC
   vehicle_update(id: $id, data: { organisationId: $organisationId, updatedAt_expr: "request.time" })
 }
 
+mutation AssignDriverToVehicle($id: UUID!, $assignedDriverId: UUID) @auth(level: NO_ACCESS) {
+  vehicle_update(id: $id, data: { assignedDriverId: $assignedDriverId, updatedAt_expr: "request.time" })
+}
+
 # Consolidated update for the vehicle-detail page's edit form — covers every
 # field editable there in one save, rather than chaining the per-field
 # mutations above (which stay in place for the smaller inline edits already

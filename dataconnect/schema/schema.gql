@@ -280,6 +280,11 @@ type Role @table(name: "roles") {
 type Vehicle @table(name: "vehicles") {
   id: UUID! @default(expr: "uuidV4()")
   organisation: Organisation
+  # Nullable — most vehicles have no driver assigned. Set via
+  # AssignDriverToVehicle (admin-fleet.html's vehicle-detail edit page);
+  # driver-facing pages (dashboard-driver.html, driver-vehicles.html) use
+  # this to find "my vehicle" instead of guessing from rental status.
+  assignedDriver: User
   make: String! @col(dataType: "varchar(100)")
   model: String! @col(dataType: "varchar(200)")
   year: Int!

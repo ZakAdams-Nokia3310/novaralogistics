@@ -79,6 +79,10 @@ query ListAllVehicles {
       id
       name
     }
+    assignedDriver {
+      id
+      name
+    }
     make
     model
     year
@@ -181,6 +185,27 @@ query ListAllRentals {
   }
 }
 
+# Used only by jobs/dailyRentalCheck.js's scheduled sweep (functions/index.js's
+# exports.dailyRentalCheck) — not reachable through the client-facing proxy,
+# so it isn't in registry/dataOperations.js/validation/dataSchemas.js like
+# every other operation here; the scheduled function calls runQuery directly
+# with the same full server-side trust as dataController.js's internal
+# helpers (createNotification etc.).
+query ListActiveRentals {
+  rentals(where: { status: { eq: ACTIVE } }) {
+    id
+    equipmentName
+    returnDate
+    application {
+      ref
+      applicantUser {
+        id
+        email
+      }
+    }
+  }
+}
+
 query ListRentalsByOrg($organisationId: UUID!) {
   rentals(
     where: { organisationId: { eq: $organisationId } }
@@ -248,6 +273,10 @@ query ListVehiclesByOrg($organisationId: UUID!) {
   vehicles(where: { organisationId: { eq: $organisationId } }, orderBy: { make: ASC }) {
     id
     organisation {
+      id
+      name
+    }
+    assignedDriver {
       id
       name
     }

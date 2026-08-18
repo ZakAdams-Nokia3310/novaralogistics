@@ -118,6 +118,17 @@
         </div>
         <div class="fg"><label>Description</label><textarea id="fDesc" rows="2" style="resize:vertical"></textarea></div>
 
+        <!-- ── Driver Assignment ── -->
+        <div class="sec"><span class="material-symbols-outlined ms">badge</span> Driver Assignment</div>
+        <div class="fg" style="max-width:380px">
+          <label>Assigned Driver</label>
+          <div style="display:flex;gap:10px">
+            <select id="fDriver" style="flex:1"></select>
+            <button type="button" class="btng" id="assignDriverBtn" onclick="saveDriverAssignment()">Save</button>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:6px">Only drivers in this vehicle's organisation are listed.</div>
+        </div>
+
         <!-- ── Service ── -->
         <div class="sec"><span class="material-symbols-outlined ms">build</span> Odometer &amp; Service</div>
         <div class="grid3">
@@ -269,6 +280,11 @@ function render(v) {
   document.getElementById('fNextSvc').value  = v.nextServiceKm;
   document.getElementById('fLastSvc').value  = v.lastServiceDate ? String(v.lastServiceDate).slice(0, 10) : '';
 
+  const drivers = DC_DATA.getAllUsers().filter(u => u.role === 'driver' && (!v.orgId || u.orgId === v.orgId));
+  document.getElementById('fDriver').innerHTML = ['<option value="">— Unassigned —</option>']
+    .concat(drivers.map(d => `<option value="${d.id}"${d.id === v.assignedDriverId ? ' selected' : ''}>${esc(d.name)}</option>`))
+    .join('');
+
   const histBody = document.getElementById('rentalHistBody');
   if (!rentals.length) {
     histBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px">No rental history for this vehicle yet</td></tr>`;
@@ -322,6 +338,21 @@ document.getElementById('detailForm').addEventListener('submit', async (e) => {
     btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:17px">save</span> Save Changes';
   }
 });
+
+async function saveDriverAssignment() {
+  const btn = document.getElementById('assignDriverBtn');
+  const driverId = document.getElementById('fDriver').value || null;
+  btn.disabled = true;
+  try {
+    await DC_DATA.assignDriverToVehicle(vehicleId, driverId);
+    showToast('ok', 'Driver assignment updated.');
+    render(DC_DATA.getVehicleById(vehicleId));
+  } catch (err) {
+    showToast('err', 'Failed to update driver: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
 
 async function deleteVehicle() {
   if (!confirm(`Delete ${_vehicle.make} ${_vehicle.model} (${_vehicle.regPlate})? This cannot be undone.`)) return;

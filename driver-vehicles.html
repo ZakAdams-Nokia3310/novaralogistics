@@ -198,8 +198,9 @@ let _assignedVehicle = null;
 if (_user.orgId) {
   DC_DATA.setOrgScope(_user.orgId);
   DC_DATA.initForOrg(_user.orgId).then(() => {
-    const vehicles = DC_DATA.getVehicles();
-    _assignedVehicle = vehicles.find(v => v.status === 'on_rent') || vehicles[0] || null;
+    // Real assignment (schema.gql's Vehicle.assignedDriver), not a guess —
+    // an admin sets this from vehicle-detail.html.
+    _assignedVehicle = DC_DATA.getVehicleAssignedToDriver(_user.dbId);
     if (_assignedVehicle) {
       document.getElementById('heroVehicle').childNodes[0].textContent = `${_assignedVehicle.make} ${_assignedVehicle.model} `;
       document.getElementById('heroPlate').textContent = `Plate: ${_assignedVehicle.regPlate}`;

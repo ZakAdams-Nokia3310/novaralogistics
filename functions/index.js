@@ -13,6 +13,7 @@
 
 const functions = require('firebase-functions');
 // const { onDocumentCreated } = require('firebase-functions/v2/firestore'); // TEMP: re-enable once Firestore is provisioned (see onChatMessageCreated below)
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
@@ -27,6 +28,7 @@ const authRoutes = require('./routes/authRoutes');
 const dataRoutes = require('./routes/dataRoutes');
 const totpRoutes = require('./routes/totpRoutes');
 const { rateLimiter } = require('./middlewares/rateLimiter');
+const { runDailyRentalCheck } = require('./jobs/dailyRentalCheck');
 
 const ALLOWED_ORIGINS = new Set([
   'https://novara-f985b.web.app',
@@ -84,6 +86,13 @@ app.use((err, req, res, next) => {
 // binding it here injects it as process.env.TOTP_ENCRYPTION_KEY at
 // runtime, never checked into source.
 exports.api = functions.https.onRequest({ secrets: ['TOTP_ENCRYPTION_KEY'] }, app);
+
+// Only time-triggered function in this codebase — see jobs/dailyRentalCheck.js
+// for what it does and why it needs no "already notified" dedup state.
+exports.dailyRentalCheck = onSchedule(
+  { schedule: 'every day 06:00', timeZone: 'Africa/Johannesburg' },
+  async () => { await runDailyRentalCheck(); },
+);
 
 // TEMP: Firestore isn't provisioned for this project yet (deploy fails
 // trying to resolve the default database) — re-enable this trigger once

@@ -332,6 +332,10 @@ mutation UpdateVehicleService($id: UUID!, $nextServiceKm: Int!, $serviceInterval
   })
 }
 
+mutation AssignDriverToVehicle($id: UUID!, $assignedDriverId: UUID) {
+  vehicle_update(id: $id, data: { assignedDriverId: $assignedDriverId, updatedAt_expr: "request.time" })
+}
+
 mutation UpdateVehicleDetails(
   $id: UUID!
   $make: String!
