@@ -6,7 +6,7 @@
 # on the live production site regardless of whether it's in the repo. Real
 # security here is Firebase Security Rules / Data Connect auth levels, not
 # secrecy of this key.
-6ca1521b75edc8edb61557c7ebcec151de6fb675:firebase-config.js:gcp-api-key:9
+00ada6712246bb6d0f89cec21eab0a0a098c4c7b:firebase-config.js:gcp-api-key:9
 
 # Firebase Storage read-tokens embedded in placeholder image URLs in
 # dataconnect/seed_data.gql — leftover from the Data Connect quickstart
