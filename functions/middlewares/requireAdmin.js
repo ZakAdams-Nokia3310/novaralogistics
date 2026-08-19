@@ -6,4 +6,8 @@
 
 const requireRole = require('./requireRole');
 
-module.exports = requireRole('admin');
+// super_admin is a strict superset of admin (see registry/dataOperations.js's
+// ADMIN constant doc comment) — every admin-only endpoint stays reachable to
+// it too. The handful of super-admin-exclusive operations are gated
+// separately, at the Data Connect registry level, not here.
+module.exports = requireRole('admin', 'super_admin');

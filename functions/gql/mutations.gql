@@ -226,6 +226,35 @@ mutation UpdateUserStatus($id: UUID!, $status: UserStatus!) {
   user_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
 }
 
+// Self-service deletion — controllers/dataController.js's deleteOwnAccount
+// resolves $id from the caller's own verified token (never client-supplied)
+// and generates $anonymizedEmail server-side, so this can never be aimed at
+// another user's row or collide with a real address. Anonymizing (rather
+// than a hard delete) frees the real email to sign up again immediately
+// while keeping the row's rental/audit history intact — see
+// dataconnect/schema/schema.gql's User.deletionReason doc comment.
+mutation DeleteOwnAccount($id: UUID!, $reason: String!, $anonymizedEmail: String!) {
+  user_update(id: $id, data: {
+    status: DELETED
+    deletionReason: $reason
+    deletedAt_expr: "request.time"
+    email: $anonymizedEmail
+    name: "Deleted User"
+    phone: null
+    idNumber: null
+    dateOfBirth: null
+    address: null
+    city: null
+    postalCode: null
+    avatarUrl: null
+    bio: null
+    position: null
+    department: null
+    employerName: null
+    updatedAt_expr: "request.time"
+  })
+}
+
 mutation UpdateUserRole($id: UUID!, $role: UserRole!) {
   user_update(id: $id, data: { role: $role, updatedAt_expr: "request.time" })
 }

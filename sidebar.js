@@ -47,9 +47,14 @@
       { href:'profile',          icon:'person',        label:'My Profile' },
     ],
   };
+  // super_admin is a strict superset of admin (same relationship as
+  // security.js's isSuperAdmin/canEdit and the server-side registry) — same
+  // nav, since the extra org create/approve/suspend controls it unlocks
+  // live inside admin-orgs.html itself, gated there by EC_SECURITY.isSuperAdmin().
+  NAV.super_admin = NAV.admin;
 
   const ROLE_COLOUR = {
-    admin: 'var(--accent, #00f0ff)', user: 'var(--accent, #00f0ff)',
+    admin: 'var(--accent, #00f0ff)', super_admin: '#ffb100', user: 'var(--accent, #00f0ff)',
     driver: 'var(--driver, #ffb4a2)',
   };
 

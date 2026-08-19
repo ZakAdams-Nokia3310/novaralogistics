@@ -153,7 +153,7 @@ function initials(name) {
 // The "other party" — from the org side, that's the customer; from the
 // customer side, that's the organisation.
 function otherPartyLabel(convo) {
-  if (user.role === 'admin') return { name: convo.customerName || 'Customer', sub: convo.customerEmail || '' };
+  if (user.role === 'admin' || user.role === 'super_admin') return { name: convo.customerName || 'Customer', sub: convo.customerEmail || '' };
   return { name: convo.organisationName || 'Organisation', sub: 'Rental support' };
 }
 

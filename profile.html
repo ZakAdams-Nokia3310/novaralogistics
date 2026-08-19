@@ -222,6 +222,30 @@
         <a href="javascript:history.back()" class="btn-cancel">Cancel</a>
       </div>
     </form>
+
+    <!-- Danger Zone — own profile only, never shown when an admin is
+         editing someone else's (see admin-orgs.html for that flow). -->
+    <div id="dangerZone" style="display:none;margin-top:32px">
+      <div class="sec" style="color:#ff6b6b;border-bottom-color:rgba(255,107,107,0.15)"><span class="material-symbols-outlined ms" style="color:#ff6b6b">warning</span> Danger Zone</div>
+      <div style="padding:16px;background:rgba(255,100,100,0.05);border:1px solid rgba(255,100,100,0.15);border-radius:10px">
+        <div style="font-size:13px;color:#e2e2e8;font-weight:600;margin-bottom:4px">Delete Account</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495;margin-bottom:14px;line-height:1.5">This signs you out immediately and blocks that login for good. Your rental history stays on record for our books, but your personal details are removed and your email is freed up if you ever want to sign up again.</div>
+        <button type="button" class="btn-cancel" id="deleteAcctBtn" style="border-color:rgba(255,107,107,0.3);color:#ff6b6b" onclick="openDeleteAccount()">
+          <span class="material-symbols-outlined ms" style="font-size:16px">delete_forever</span> Delete My Account
+        </button>
+        <div id="deleteAcctForm" style="display:none;margin-top:14px">
+          <div class="fg">
+            <label class="fl">Why are you leaving? *</label>
+            <textarea class="fi" id="deleteReason" placeholder="Tell us why — this helps us improve." rows="3"></textarea>
+          </div>
+          <div id="deleteAcctErr" style="display:none;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#ff6b6b"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button type="button" class="btn-cancel" style="border-color:rgba(255,107,107,0.4);color:#ff6b6b;background:rgba(255,107,107,0.08)" id="confirmDeleteBtn" onclick="confirmDeleteAccount()">Yes, permanently delete my account</button>
+            <button type="button" class="btn-cancel" onclick="closeDeleteAccount()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -265,7 +289,7 @@ var ACCOUNT_TYPE_REVERSE = reverseMap(ACCOUNT_TYPE_MAP);
 // Determine if admin is viewing another user's profile
 var urlParams = new URLSearchParams(window.location.search);
 var viewingId = urlParams.get('id');
-var isAdminEditingOther = currentUser.role === 'admin' && viewingId;
+var isAdminEditingOther = (currentUser.role === 'admin' || currentUser.role === 'super_admin') && viewingId;
 var _targetUser = null;
 
 if (isAdminEditingOther) {
@@ -283,6 +307,38 @@ if (isAdminEditingOther) {
       roles.map(function(r) { return '<option value="' + EC_SECURITY.sanitizeHtml(r.id) + '">' + EC_SECURITY.sanitizeHtml(r.name) + '</option>'; }).join('');
     if (_targetUser) sel.value = _targetUser.customRoleId || '';
   }).catch(function() {});
+} else {
+  document.getElementById('dangerZone').style.display = 'block';
+}
+
+function openDeleteAccount() {
+  document.getElementById('deleteAcctBtn').style.display = 'none';
+  document.getElementById('deleteAcctForm').style.display = 'block';
+}
+function closeDeleteAccount() {
+  document.getElementById('deleteAcctBtn').style.display = '';
+  document.getElementById('deleteAcctForm').style.display = 'none';
+  document.getElementById('deleteAcctErr').style.display = 'none';
+}
+async function confirmDeleteAccount() {
+  var reason = document.getElementById('deleteReason').value.trim();
+  var errBox = document.getElementById('deleteAcctErr');
+  if (!reason) {
+    errBox.textContent = 'Please tell us why — this is required.';
+    errBox.style.display = 'block';
+    return;
+  }
+  if (!confirm('This is permanent — your login will stop working right away. Are you sure you want to delete your account?')) return;
+  var btn = document.getElementById('confirmDeleteBtn');
+  btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    await DC_DATA.deleteOwnAccount(reason);
+    await EC_AUTH.logout();
+  } catch (err) {
+    errBox.textContent = EC_SECURITY.safeErrMsg(err, 'Unable to delete account. Please try again.');
+    errBox.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Yes, permanently delete my account';
+  }
 }
 
 function showToast(type, msg) {

@@ -11,7 +11,7 @@ const { runQuery, runMutation } = require('../services/dataConnect');
 const { logEvent } = require('../services/auditLog');
 
 function isOrgMemberOrAdmin(user) {
-  return user.role === 'admin' || !!user.orgId;
+  return user.role === 'admin' || user.role === 'super_admin' || !!user.orgId;
 }
 
 async function getOwnTotpRow(email) {

@@ -735,6 +735,24 @@ const DC_DATA = (() => {
       return json.user || (await this.getUserByEmailLive(email));
     },
 
+    // Self-service account deletion — goes through /api/data/delete-own-account
+    // rather than the generic mutation proxy for the same reason
+    // createUserLive above bypasses it: the target row and the anonymized
+    // replacement email are both resolved/generated server-side from the
+    // caller's own verified token, never trusted from here.
+    async deleteOwnAccount(reason) {
+      if (typeof EC_API === 'undefined') throw new Error('Not signed in.');
+      const res = await EC_API.authFetch('/data/delete-own-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Unable to delete account. Please try again.');
+      }
+    },
+
     // ── Org Request mutations ───────────────────────────────────────────────
     async addOrgRequest(data) {
       await mutate('CreateOrgRequest', {
@@ -817,6 +835,17 @@ const DC_DATA = (() => {
       if (!u) return;
       const newStatus = u.status === 'active' ? 'INACTIVE' : 'ACTIVE';
       await mutate('UpdateUserStatus', { id, status: newStatus });
+      await _loadUsers(); saveCache();
+    },
+
+    // Admin-initiated delete — unlike deleteOwnAccount (self-service, see
+    // auth.js), this doesn't anonymize the row: an admin removing someone
+    // else's account is a deliberate, rarer action, not the "let me leave
+    // and maybe come back" case that made freeing the email necessary for
+    // self-delete. The email stays as-is; re-signup under it would need an
+    // admin to free it explicitly if that's ever actually wanted.
+    async deleteUserByAdmin(id) {
+      await mutate('UpdateUserStatus', { id, status: 'DELETED' });
       await _loadUsers(); saveCache();
     },
 

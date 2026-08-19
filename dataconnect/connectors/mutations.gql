@@ -144,6 +144,28 @@ mutation UpdateUserStatus($id: UUID!, $status: UserStatus!) @auth(level: NO_ACCE
   user_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
 }
 
+mutation DeleteOwnAccount($id: UUID!, $reason: String!, $anonymizedEmail: String!) @auth(level: NO_ACCESS) {
+  user_update(id: $id, data: {
+    status: DELETED
+    deletionReason: $reason
+    deletedAt_expr: "request.time"
+    email: $anonymizedEmail
+    name: "Deleted User"
+    phone: null
+    idNumber: null
+    dateOfBirth: null
+    address: null
+    city: null
+    postalCode: null
+    avatarUrl: null
+    bio: null
+    position: null
+    department: null
+    employerName: null
+    updatedAt_expr: "request.time"
+  })
+}
+
 mutation UpdateUserRole($id: UUID!, $role: UserRole!) @auth(level: NO_ACCESS) {
   user_update(id: $id, data: { role: $role, updatedAt_expr: "request.time" })
 }

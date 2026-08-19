@@ -379,8 +379,23 @@ const EC_SECURITY = (() => {
     let user = null;
     try { user = JSON.parse(sessionStorage.getItem('ec_session') || 'null'); } catch {}
     if (!user) return false;
-    if (user.role === 'admin') return true;
+    // super_admin is a strict superset of admin everywhere — it never loses
+    // a page-level capability admin has, it only gains the handful of
+    // super-admin-exclusive actions (gated separately, see isSuperAdmin).
+    if (user.role === 'admin' || user.role === 'super_admin') return true;
     return !!(user.permissions && user.permissions[pageKey] === 'edit');
+  }
+
+  // Gate for the small set of actions restricted to the platform owner even
+  // from other admins — creating organisations, approving org requests, and
+  // suspending/reinstating orgs. Unlike canEdit, there is no custom-role
+  // escape hatch here: a custom role can never grant this, matching the
+  // server-side registry (functions/registry/dataOperations.js's
+  // SUPER_ADMIN-only operations).
+  function isSuperAdmin() {
+    let user = null;
+    try { user = JSON.parse(sessionStorage.getItem('ec_session') || 'null'); } catch {}
+    return !!user && user.role === 'super_admin';
   }
 
   // Some pages aren't a feature page in their own right but a satellite of
@@ -436,10 +451,14 @@ const EC_SECURITY = (() => {
     // mutating controls are shown is a separate check (see canEdit below).
     // UI convenience only — the real gate is server-side, same as the base
     // role check above.
-    if (!allowed.includes(user.role) && !hasPageAccess(user, page)) {
+    // super_admin can open anything admin can, plus its own exclusive pages
+    // — same superset relationship as canEdit above.
+    const roleSatisfied = allowed.includes(user.role)
+      || (user.role === 'super_admin' && allowed.includes('admin'));
+    if (!roleSatisfied && !hasPageAccess(user, page)) {
       _audit('UNAUTHORIZED_ACCESS_ATTEMPT', { page, userRole: user.role, required: allowed });
       const dashMap = {
-        admin: 'dashboard-admin', user: 'dashboard-user',
+        admin: 'dashboard-admin', super_admin: 'dashboard-admin', user: 'dashboard-user',
         driver: 'dashboard-driver',
       };
       location.href = dashMap[user.role] || 'login';
@@ -619,6 +638,7 @@ const EC_SECURITY = (() => {
     // Guard
     guardPage,
     canEdit,
+    isSuperAdmin,
     hasPageAccess,
     PAGE_ROLES,
     PUBLIC_PAGES,

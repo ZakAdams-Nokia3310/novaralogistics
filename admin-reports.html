@@ -614,7 +614,7 @@ function renderUsersTab() {
   const { from } = getRange();
   let cumulative = from ? users.filter(u => u.createdAt && new Date(u.createdAt) < from).length : 0;
   const growth = buckets.map(b => { cumulative += users.filter(u => b.matches(u.createdAt)).length; return cumulative; });
-  const totpEligible = users.filter(u => u.role === 'admin' || u.orgId);
+  const totpEligible = users.filter(u => u.role === 'admin' || u.role === 'super_admin' || u.orgId);
   const totpCompliant = totpEligible.filter(u => u.totpEnabled).length;
   const totpRate = totpEligible.length ? Math.round(totpCompliant/totpEligible.length*100) : 100;
   const customRoleUsers = users.filter(u => u.customRoleId).length;

@@ -9,7 +9,8 @@
 const { logEvent } = require('../services/auditLog');
 
 module.exports = function requireAdminOrOrgMember(req, res, next) {
-  if (!req.user || (req.user.role !== 'admin' && !req.user.orgId)) {
+  const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'super_admin');
+  if (!req.user || (!isAdmin && !req.user.orgId)) {
     logEvent(req, 'ACCESS_DENIED_ROLE', { required: 'admin-or-org-member' });
     return res.status(403).json({ error: 'Forbidden' });
   }

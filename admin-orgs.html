@@ -240,6 +240,12 @@ const _ecUser = EC_AUTH.require(['admin']);
 // for values embedded inside onclick="fn('...')" JS-string arguments.
 const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
 const _canEdit = EC_SECURITY.canEdit('admin-orgs');
+// Creating orgs (approval creates one), and suspending/reinstating them, are
+// restricted to the platform owner even from other edit-capable admins —
+// see functions/registry/dataOperations.js's SUPER_ADMIN-only operations.
+// Declining a request creates nothing, so it stays under the regular
+// _canEdit gate.
+const _isSuperAdmin = EC_SECURITY.isSuperAdmin();
 if (!_canEdit) document.getElementById('addUserStandaloneBtn').style.display = 'none';
 DC_DATA.setOrgScope(_ecUser.orgId);
 
@@ -304,9 +310,9 @@ function renderRequests() {
     const statusMap = { pending: '<span class="b bp">Pending Review</span>', approved: '<span class="b ba">Approved</span>', rejected: '<span class="b bo">Declined</span>' };
     const actions = r.status === 'pending'
       ? (_canEdit ? `<div style="display:flex;gap:6px">
-          <button class="btnp" style="font-size:11px;padding:5px 10px" onclick="approveRequest('${r.id}')">
+          ${_isSuperAdmin ? `<button class="btnp" style="font-size:11px;padding:5px 10px" onclick="approveRequest('${r.id}')">
             <span class="material-symbols-outlined ms" style="font-size:13px">check</span>Approve
-          </button>
+          </button>` : `<span style="color:#849495;font-size:11px;display:flex;align-items:center;gap:4px" title="Only the platform owner can approve new organisations"><span class="material-symbols-outlined ms" style="font-size:13px">lock</span>Approve (owner only)</span>`}
           <button class="btnr" style="font-size:11px;padding:5px 10px" onclick="openReject('${r.id}')">
             <span class="material-symbols-outlined ms" style="font-size:13px">close</span>Decline
           </button>
@@ -362,7 +368,7 @@ function renderOrgs() {
             <span class="material-symbols-outlined ms" style="font-size:13px">${isExpanded ? 'expand_less' : 'group'}</span>
             ${isExpanded ? 'Hide' : 'Users'}
           </button>
-          ${_canEdit ? (o.status === 'active'
+          ${_isSuperAdmin ? (o.status === 'active'
             ? `<button class="btnr" style="font-size:11px;padding:5px 10px" onclick="suspendOrg('${o.id}')"><span class="material-symbols-outlined ms" style="font-size:13px">block</span>Suspend</button>`
             : `<button class="btng" style="font-size:11px;padding:5px 10px;color:#00d4aa;border-color:rgba(0,212,170,.2)" onclick="reinstateOrg('${o.id}')"><span class="material-symbols-outlined ms" style="font-size:13px">check_circle</span>Reinstate</button>`) : ''}
         </div>
@@ -402,6 +408,9 @@ function buildUsersPanel(org, users) {
               </button>
               <button class="btng" style="font-size:11px;padding:4px 9px" onclick="sendPasswordReset('${escA(u.email)}','${escA(u.name)}')">
                 <span class="material-symbols-outlined ms" style="font-size:12px">lock_reset</span>Reset Password
+              </button>
+              <button class="btnr" style="font-size:11px;padding:4px 9px" onclick="deleteUser('${escA(u.id)}','${escA(u.name)}')">
+                <span class="material-symbols-outlined ms" style="font-size:12px">delete</span>Delete
               </button>
             </div>` : ''}
           </td>
@@ -466,6 +475,9 @@ function renderUsers() {
           </button>
           ${_canEdit ? `<button class="btng" style="font-size:11px;padding:5px 10px" onclick="DC_DATA.toggleUserStatus('${escA(u.id)}').then(renderAll)">
             ${u.status === 'active' ? 'Deactivate' : 'Reactivate'}
+          </button>
+          <button class="btnr" style="font-size:11px;padding:5px 10px" onclick="deleteUser('${escA(u.id)}','${escA(u.name)}')">
+            <span class="material-symbols-outlined ms" style="font-size:13px">delete</span>Delete
           </button>` : ''}
         </div>
       </td>
@@ -596,6 +608,12 @@ async function suspendOrg(id) {
 
 async function reinstateOrg(id) {
   await DC_DATA.reinstateOrg(id);
+  renderAll();
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`Delete ${name}'s account? They will lose access immediately. This can't be undone from here.`)) return;
+  await DC_DATA.deleteUserByAdmin(id);
   renderAll();
 }
 

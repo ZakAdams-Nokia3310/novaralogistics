@@ -12,6 +12,7 @@ const EC_AUTH = (() => {
   // "cleanUrls" setting (and server.js's local-dev equivalent).
   const DASH = {
     admin:  'dashboard-admin',
+    super_admin: 'dashboard-admin',
     user:   'dashboard-user',
     driver: 'dashboard-driver',
   };
@@ -76,7 +77,8 @@ const EC_AUTH = (() => {
   // becomes active, the actual enrollment/challenge verification happens
   // entirely on the server.
   async function checkTotpRequired(session) {
-    if ((session.role !== 'admin' && !session.orgId) || typeof EC_API === 'undefined') return false;
+    const isAdmin = session.role === 'admin' || session.role === 'super_admin';
+    if ((!isAdmin && !session.orgId) || typeof EC_API === 'undefined') return false;
     try {
       const res = await EC_API.authFetch('/auth/totp/status');
       if (!res.ok) return false;
@@ -541,7 +543,12 @@ const EC_AUTH = (() => {
       // doesn't bounce a custom-role holder guardPage() would otherwise
       // have let through.
       const hasCustomAccess = user && typeof EC_SECURITY !== 'undefined' && EC_SECURITY.hasPageAccess(user, page);
-      if (!user || (!roles.includes(user.role) && !hasCustomAccess)) {
+      // super_admin is a strict superset of admin (see security.js's
+      // guardPage/canEdit, functions/registry/dataOperations.js's ADMIN
+      // constant) — every page an admin-only require(['admin']) call
+      // guards must stay reachable to it too.
+      const roleSatisfied = roles.includes(user && user.role) || (user && user.role === 'super_admin' && roles.includes('admin'));
+      if (!user || (!roleSatisfied && !hasCustomAccess)) {
         if (typeof EC_SECURITY !== 'undefined') {
           EC_SECURITY.audit('UNAUTHORIZED_ACCESS_ATTEMPT', {
             page,

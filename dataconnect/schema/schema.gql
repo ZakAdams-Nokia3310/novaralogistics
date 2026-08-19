@@ -9,12 +9,25 @@ enum UserRole {
   USER
   DRIVER
   GUEST
+  # Appended, not inserted — Postgres ALTER TYPE ADD VALUE stays a cheap,
+  # instant metadata-only change only when existing values keep their exact
+  # relative order (see VehicleType below for the full story; confirmed the
+  # hard way this session). One tier above ADMIN: the platform owner only,
+  # never granted through normal admin/role UI — see
+  # functions/registry/dataOperations.js's SUPER_ADMIN-only operations.
+  SUPER_ADMIN
 }
 
 enum UserStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
+  # Appended for the same ADD-VALUE-stays-cheap reason as UserRole/
+  # VehicleType above/below. Self-service account deletion (a customer
+  # deleting their own account) lands here rather than a hard delete — see
+  # User.deletionReason/deletedAt below. Blocks login the same way
+  # SUSPENDED already does; the difference is purely who caused it and why.
+  DELETED
 }
 
 enum OrgStatus {
@@ -307,6 +320,13 @@ type User @table(name: "users") {
   lastLoginAt: Timestamp
   failedAttempts: Int! @default(value: 0)
   lockedUntil: Timestamp
+  # Self-service account deletion (status: DELETED) anonymizes name/phone/
+  # idNumber/address/etc. and rewrites email to a synthetic, always-unique
+  # placeholder — freeing the real address to sign up again immediately —
+  # while keeping the row itself (and the customer's reason for leaving)
+  # for rental/audit history that references it. Both null until then.
+  deletionReason: String @col(dataType: "text")
+  deletedAt: Timestamp
   createdAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
   # TOTP two-factor auth (required for admin accounts, "occasional" beyond

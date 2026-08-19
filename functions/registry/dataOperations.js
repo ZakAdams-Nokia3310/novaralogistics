@@ -39,7 +39,14 @@
 //              Never set on the Role CRUD operations themselves — a custom
 //              role can never grant itself more roles.
 
-const ADMIN = ['admin'];
+// super_admin is a strict superset of admin — every ADMIN-gated operation
+// below is reachable by both, so this list (not each individual entry) is
+// the one place that relationship is expressed. SUPER_ADMIN_ONLY is for the
+// handful of operations even a regular admin may not call (organisation
+// creation/approval/status) — see security.js's isSuperAdmin doc comment
+// for the client-side mirror of this same split.
+const ADMIN = ['admin', 'super_admin'];
+const SUPER_ADMIN_ONLY = ['super_admin'];
 const ALL_ROLES = ['admin', 'user', 'driver'];
 
 module.exports = {
@@ -90,9 +97,18 @@ module.exports = {
   MarkNotificationRead: { kind: 'mutation', roles: ALL_ROLES },
 
   // ── Organisation management (admin) ──
-  CreateOrganisation:  { kind: 'mutation', roles: ADMIN, featureKey: 'admin-orgs' },
-  UpdateOrgStatus:     { kind: 'mutation', roles: ADMIN, featureKey: 'admin-orgs' },
-  ApproveOrgRequest:   { kind: 'mutation', roles: ADMIN, featureKey: 'admin-orgs' },
+  // Creating an org (ApproveOrgRequest creates one; CreateOrganisation is
+  // the mutation it calls under the hood — see dc.js's approveOrgRequest)
+  // and suspending/reinstating one are platform-owner-only. No featureKey
+  // on these three, deliberately — same rule the doc comment above already
+  // states for Role CRUD: a custom role must never be able to grant a
+  // capability even a regular admin doesn't have, and the featureKey
+  // fallback would otherwise do exactly that for anyone with edit on
+  // 'admin-orgs'. Declining a request creates nothing, so it keeps the
+  // regular ADMIN roles + featureKey gate, same as it always had.
+  CreateOrganisation:  { kind: 'mutation', roles: SUPER_ADMIN_ONLY },
+  UpdateOrgStatus:     { kind: 'mutation', roles: SUPER_ADMIN_ONLY },
+  ApproveOrgRequest:   { kind: 'mutation', roles: SUPER_ADMIN_ONLY },
   RejectOrgRequest:    { kind: 'mutation', roles: ADMIN, featureKey: 'admin-orgs' },
 
   // ── User management (admin) ──

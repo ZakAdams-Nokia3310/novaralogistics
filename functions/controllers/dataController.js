@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('crypto');
 const admin = require('firebase-admin');
 const REGISTRY = require('../registry/dataOperations');
 const { runQuery, runMutation } = require('../services/dataConnect');
@@ -468,6 +469,40 @@ exports.registerSelf = async (req, res) => {
   }
 };
 
+// Self-service account deletion — deliberately NOT in the generic registry,
+// same reasoning as registerSelf above: the target id is resolved from the
+// caller's own verified token (a client could never pass someone else's id
+// here even if it tried), and the anonymized replacement email is generated
+// here, never accepted from the client, so it can't be aimed at a chosen
+// address or collide with a real one.
+exports.deleteOwnAccount = async (req, res) => {
+  const reason = String((req.body && req.body.reason) || '').trim().slice(0, 1000);
+  if (!reason) {
+    return res.status(400).json({ error: 'Please tell us why you’re deleting your account.' });
+  }
+  try {
+    const ownId = await resolveOwnUserId(req.user.email);
+    if (!ownId) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+    const anonymizedEmail = `deleted-${crypto.randomUUID()}@deleted.local`;
+    await runMutation('DeleteOwnAccount', { id: ownId, reason, anonymizedEmail });
+    await logEvent(req, 'ACCOUNT_SELF_DELETED', { reason });
+    // Best-effort — the DB row is already correctly anonymized/marked
+    // DELETED regardless of whether this succeeds. Without it, the old
+    // Firebase Auth account (real email) would otherwise still exist and
+    // block that address from ever signing up fresh again, even though the
+    // DB side has already freed it. Login stays blocked either way (the DB
+    // lookup by the real email no longer finds a row), so a failure here is
+    // degraded, not unsafe.
+    try { await admin.auth().deleteUser(req.user.id); } catch (err) { console.error('[dataController] deleteOwnAccount: Firebase Auth cleanup failed:', err.message); }
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('[dataController] deleteOwnAccount', err.message);
+    res.status(500).json({ error: 'Unable to delete account' });
+  }
+};
+
 // Anonymous-submission forms (org registration, rental application,
 // waitlist join, contact inquiry) — deliberately reachable without signing
 // in, so there is no req.user and no role/ownership check here at all.
@@ -520,7 +555,8 @@ exports.submitPublic = async (req, res) => {
 exports.getUserByEmail = async (req, res) => {
   const email = (req.query && req.query.email) || '';
   if (!email) return res.status(400).json({ error: 'email is required' });
-  if (req.user.role !== 'admin' && email.toLowerCase() !== (req.user.email || '').toLowerCase()) {
+  const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+  if (!isAdmin && email.toLowerCase() !== (req.user.email || '').toLowerCase()) {
     await logEvent(req, 'DATA_ACCESS_DENIED', { operationName: 'GetUserByEmail' });
     return res.status(403).json({ error: 'Forbidden' });
   }
