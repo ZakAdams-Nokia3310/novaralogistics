@@ -29,11 +29,24 @@ const optDateStr = () => dateStr().nullish();
 // featureKey values. Kept as one list so a typo in a new page slug can't
 // silently create an ungrantable/unreachable feature.
 const FEATURE_KEYS = ['admin-fleet', 'admin-rentals', 'admin-maintenance', 'admin-orgs', 'admin-audit', 'admin-reports'];
+// Per-feature grant shape: { view, create, edit } booleans — delete isn't
+// its own flag (folded into edit), see admin-roles.html's normalizeGrant
+// doc comment for the full reasoning. Only the new object shape validates
+// here; the *old* bare "view"/"edit" string a role saved before this
+// existed still has is never re-submitted by the UI (admin-roles.html
+// normalizes every role to the object shape before it POSTs), so nothing
+// legacy needs to pass this specific gate — only the READ-side interpreters
+// (security.js, dataController.js) need to understand both shapes.
 const permissionsJson = () => z.string().max(4000).refine((s) => {
   let obj;
   try { obj = JSON.parse(s); } catch { return false; }
   if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return false;
-  return Object.entries(obj).every(([k, v]) => FEATURE_KEYS.includes(k) && (v === 'view' || v === 'edit'));
+  return Object.entries(obj).every(([k, v]) => {
+    if (!FEATURE_KEYS.includes(k)) return false;
+    if (typeof v !== 'object' || v === null || Array.isArray(v)) return false;
+    const allowedKeys = ['view', 'create', 'edit'];
+    return Object.entries(v).every(([gk, gv]) => allowedKeys.includes(gk) && typeof gv === 'boolean');
+  });
 }, 'Invalid permissions object');
 
 const USER_ROLE = z.enum(['ADMIN', 'USER', 'DRIVER', 'GUEST']);

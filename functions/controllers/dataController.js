@@ -17,6 +17,32 @@ async function resolveOwnUserId(email) {
   return row ? row.id : null;
 }
 
+// Mirrors security.js's normalizeGrant exactly (client-side has no build
+// step to share this from) — { view, create, edit } booleans per feature
+// key, with backward-compatible reads of the old bare "view"/"edit" string
+// a role saved before this rewrite still has. This is the side that
+// actually matters: dataController.execute()'s use of it below is the real
+// security boundary, not the client-side copy, which is UI convenience only.
+function normalizeGrant(raw) {
+  if (typeof raw === 'string') {
+    return raw === 'edit' ? { view: true, create: true, edit: true }
+         : raw === 'view' ? { view: true, create: false, edit: false }
+         : { view: false, create: false, edit: false };
+  }
+  return { view: !!(raw && raw.view), create: !!(raw && raw.create), edit: !!(raw && raw.edit) };
+}
+
+// Delete isn't its own flag (folded into edit — see normalizeGrant's doc
+// comment); every operation name in the registry consistently starts with
+// its verb (Create/Update/Delete/Review/Approve/... , List/Get for reads),
+// so the action a custom role needs is derived from that instead of
+// annotating every single registry entry by hand.
+function actionForOperation(name, kind) {
+  if (kind === 'query') return 'view';
+  if (name.startsWith('Create')) return 'create';
+  return 'edit';
+}
+
 // Fire-and-forget, same reasoning as every other side effect in this file —
 // a notification-write hiccup must never surface as a failure of the action
 // that triggered it. Silently no-ops with no userId (e.g. a guest applicant
@@ -297,8 +323,8 @@ exports.execute = async (req, res) => {
     try {
       const roleData = await runQuery('GetRoleById', { id: req.user.customRoleId });
       const permissions = roleData.role ? JSON.parse(roleData.role.permissions || '{}') : {};
-      const access = permissions[op.featureKey];
-      authorized = op.kind === 'mutation' ? access === 'edit' : (access === 'view' || access === 'edit');
+      const grant = normalizeGrant(permissions[op.featureKey]);
+      authorized = !!grant[actionForOperation(operationName, op.kind)];
     } catch {
       authorized = false;
     }

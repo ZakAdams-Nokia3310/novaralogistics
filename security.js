@@ -375,6 +375,31 @@ const EC_SECURITY = (() => {
   // a page's mutating controls. UI convenience only, matching guardPage's
   // note above: the actual write is still rejected server-side regardless
   // of what this returns.
+  // A custom role's per-feature grant is { view, create, edit } booleans as
+  // of the modular-permissions rewrite — delete rides along with edit, not
+  // its own flag (an admin explicitly asked for exactly that split: create
+  // is independent, delete isn't). Roles saved before this UI existed still
+  // have the old bare "view"/"edit" string instead of an object; normalized
+  // here so both keep working without needing every existing role
+  // re-saved. The actual enforcement of which specific action a grant
+  // permits is server-side (dataController.js's matching normalizeGrant) —
+  // this is read here purely to decide what the UI shows.
+  function normalizeGrant(raw) {
+    if (typeof raw === 'string') {
+      return raw === 'edit' ? { view: true, create: true, edit: true }
+           : raw === 'view' ? { view: true, create: false, edit: false }
+           : { view: false, create: false, edit: false };
+    }
+    return { view: !!(raw && raw.view), create: !!(raw && raw.create), edit: !!(raw && raw.edit) };
+  }
+
+  // Blanket "show this page's mutating controls at all" gate — true if
+  // create OR edit is granted. Pages with buttons that map to different
+  // specific actions (e.g. an "Add Vehicle" button vs. a row's Edit/Delete)
+  // don't yet individually distinguish create-only from edit-only here;
+  // the server-side check is exact regardless, so a create-only role
+  // clicking an edit-only control gets a clean rejection, not a security
+  // gap — just a rougher edge than per-button gating would be.
   function canEdit(pageKey) {
     let user = null;
     try { user = JSON.parse(sessionStorage.getItem('ec_session') || 'null'); } catch {}
@@ -383,7 +408,8 @@ const EC_SECURITY = (() => {
     // a page-level capability admin has, it only gains the handful of
     // super-admin-exclusive actions (gated separately, see isSuperAdmin).
     if (user.role === 'admin' || user.role === 'super_admin') return true;
-    return !!(user.permissions && user.permissions[pageKey] === 'edit');
+    const grant = normalizeGrant(user.permissions && user.permissions[pageKey]);
+    return grant.create || grant.edit;
   }
 
   // Gate for the small set of actions restricted to the platform owner even
@@ -416,9 +442,11 @@ const EC_SECURITY = (() => {
   // drift out of sync.
   function hasPageAccess(user, page) {
     if (!user || !user.permissions) return false;
-    if (user.permissions[page]) return true;
+    const own = normalizeGrant(user.permissions[page]);
+    if (own.view || own.create || own.edit) return true;
     const alias = FEATURE_PAGE_ALIASES[page];
-    return !!(alias && user.permissions[alias] === 'edit');
+    if (!alias) return false;
+    return normalizeGrant(user.permissions[alias]).edit;
   }
 
   // ── Page access guard ──────────────────────────────────────────────────────

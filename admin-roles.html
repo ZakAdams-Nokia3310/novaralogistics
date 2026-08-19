@@ -34,12 +34,12 @@
   .roleCard{border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;}
   .permRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);}
   .permRow:last-child{border-bottom:none;}
-  .seg{display:inline-flex;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.08);}
-  .seg button{background:rgba(255,255,255,.03);color:#849495;border:none;padding:6px 11px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:all .15s;}
-  .seg button+button{border-left:1px solid rgba(255,255,255,.08);}
-  .seg button.active[data-v="none"]{background:rgba(255,255,255,.08);color:#e2e2e8;}
-  .seg button.active[data-v="view"]{background:rgba(255,217,61,.14);color:#ffd93d;}
-  .seg button.active[data-v="edit"]{background:rgba(0,240,255,.14);color:#00f0ff;}
+  .permChecks{display:inline-flex;gap:6px;flex-wrap:wrap;}
+  .permCheck{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#849495;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;user-select:none;transition:all .15s;}
+  .permCheck input{display:none;}
+  .permCheck.on-view{background:rgba(255,217,61,.14);color:#ffd93d;border-color:rgba(255,217,61,.25);}
+  .permCheck.on-create{background:rgba(125,244,255,.14);color:#7df4ff;border-color:rgba(125,244,255,.25);}
+  .permCheck.on-edit{background:rgba(0,240,255,.14);color:#00f0ff;border-color:rgba(0,240,255,.25);}
   .pbadge{font-family:'JetBrains Mono',monospace;font-size:9.5px;padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;}
   @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
   @media(max-width:600px){
@@ -128,7 +128,24 @@ const FEATURES = [
   { key: 'admin-reports',     label: 'Reporting',          icon: 'monitoring' },
 ];
 
+// Shape stored in Role.permissions (JSON string) per feature key, as of
+// this modular rewrite: { view: bool, create: bool, edit: bool } — delete
+// deliberately isn't its own flag (the admin who asked for this treats
+// deleting a record as part of editing it, not a separate capability).
+// Older roles saved before this UI existed still have a bare "view"/"edit"
+// string per key instead of this object — normalizeGrant below reads both
+// shapes; every save from this UI writes the new one, which is how an old
+// role naturally migrates the next time someone edits it.
 let editingPermissions = {};
+
+function normalizeGrant(raw) {
+  if (typeof raw === 'string') {
+    return raw === 'edit' ? { view: true, create: true, edit: true }
+         : raw === 'view' ? { view: true, create: false, edit: false }
+         : { view: false, create: false, edit: false };
+  }
+  return { view: !!(raw && raw.view), create: !!(raw && raw.create), edit: !!(raw && raw.edit) };
+}
 
 function buildPermGrid() {
   document.getElementById('permGrid').innerHTML = FEATURES.map(f => `
@@ -136,39 +153,57 @@ function buildPermGrid() {
       <div style="display:flex;align-items:center;gap:8px;font-size:13px">
         <span class="material-symbols-outlined ms" style="font-size:16px;color:#849495">${f.icon}</span>${esc(f.label)}
       </div>
-      <div class="seg" data-feature="${f.key}">
-        <button type="button" data-v="none">No Access</button>
-        <button type="button" data-v="view">View</button>
-        <button type="button" data-v="edit">Edit</button>
+      <div class="permChecks" data-feature="${f.key}">
+        <label class="permCheck" data-a="view"><input type="checkbox" data-a="view"/>View</label>
+        <label class="permCheck" data-a="create"><input type="checkbox" data-a="create"/>Create</label>
+        <label class="permCheck" data-a="edit"><input type="checkbox" data-a="edit"/>Edit</label>
       </div>
     </div>`).join('');
 
-  document.querySelectorAll('.seg').forEach(seg => {
-    seg.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        editingPermissions[seg.dataset.feature] = btn.dataset.v;
+  document.querySelectorAll('.permChecks').forEach(row => {
+    row.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const key = row.dataset.feature;
+        const action = cb.dataset.a;
+        const grant = editingPermissions[key] || { view: false, create: false, edit: false };
+        grant[action] = cb.checked;
+        // Create/Edit imply View — can't sensibly grant either without
+        // being able to see the page's data in the first place. Turning
+        // View off clears both, so a saved grant can never end up in an
+        // inconsistent "can edit but can't view" state.
+        if ((action === 'create' || action === 'edit') && cb.checked) grant.view = true;
+        if (action === 'view' && !cb.checked) { grant.create = false; grant.edit = false; }
+        editingPermissions[key] = grant;
+        renderPermCheckStates(row, grant);
       });
     });
   });
   setPermGridValues({});
 }
 
+function renderPermCheckStates(row, grant) {
+  row.querySelectorAll('label.permCheck').forEach(lbl => {
+    const a = lbl.dataset.a;
+    const on = !!(grant && grant[a]);
+    lbl.classList.toggle('on-' + a, on);
+    lbl.querySelector('input').checked = on;
+  });
+}
+
 function setPermGridValues(permissions) {
   editingPermissions = {};
-  document.querySelectorAll('.seg').forEach(seg => {
-    const key = seg.dataset.feature;
-    const v = permissions[key] || 'none';
-    editingPermissions[key] = v;
-    seg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  document.querySelectorAll('.permChecks').forEach(row => {
+    const key = row.dataset.feature;
+    const grant = normalizeGrant(permissions[key]);
+    editingPermissions[key] = grant;
+    renderPermCheckStates(row, grant);
   });
 }
 
 function permissionsPayload() {
   const out = {};
-  for (const [key, v] of Object.entries(editingPermissions)) {
-    if (v === 'view' || v === 'edit') out[key] = v;
+  for (const [key, grant] of Object.entries(editingPermissions)) {
+    if (grant.view || grant.create || grant.edit) out[key] = grant;
   }
   return out;
 }
@@ -176,11 +211,13 @@ function permissionsPayload() {
 function permBadges(permissions) {
   const entries = Object.entries(permissions);
   if (!entries.length) return `<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495">No feature access granted</span>`;
-  return entries.map(([key, v]) => {
+  return entries.map(([key, raw]) => {
     const f = FEATURES.find(x => x.key === key);
     const label = f ? f.label : key;
-    const editMode = v === 'edit';
-    return `<span class="pbadge" style="background:${editMode ? 'rgba(0,240,255,.12)' : 'rgba(255,217,61,.12)'};color:${editMode ? '#00f0ff' : '#ffd93d'}">${esc(label)} · ${v}</span>`;
+    const grant = normalizeGrant(raw);
+    const actions = ['view', 'create', 'edit'].filter(a => grant[a]);
+    const summary = actions.join('+') || 'none';
+    return `<span class="pbadge" style="background:${grant.edit ? 'rgba(0,240,255,.12)' : 'rgba(255,217,61,.12)'};color:${grant.edit ? '#00f0ff' : '#ffd93d'}">${esc(label)} · ${summary}</span>`;
   }).join(' ');
 }
 

@@ -353,11 +353,17 @@ type Role @table(name: "roles") {
   id: UUID! @default(expr: "uuidV4()")
   name: String! @col(dataType: "varchar(100)") @unique
   description: String @col(dataType: "text")
-  # JSON object: { "admin-fleet": "view", "admin-rentals": "edit", ... } —
-  # keys are the same page slugs used in security.js's PAGE_ROLES; a key
-  # absent from this object means no access at all. One column, not a join
-  # table — this data is small and bounded, and a single save avoids N
-  # separate mutation calls per role edit.
+  # JSON object: { "admin-fleet": { "view": true, "create": true, "edit":
+  # false }, ... } — keys are the same page slugs used in security.js's
+  # PAGE_ROLES; a key absent from this object means no access at all.
+  # Delete isn't its own flag, it rides along with edit. Roles saved before
+  # this modular-permissions rewrite still have a bare "view"/"edit" string
+  # per key instead of this object — every reader (security.js,
+  # dataController.js, admin-roles.html) normalizes both shapes, and any
+  # save from admin-roles.html always writes the new one, which is how an
+  # old role naturally migrates the next time someone edits it. One column,
+  # not a join table — this data is small and bounded, and a single save
+  # avoids N separate mutation calls per role edit.
   permissions: String! @col(dataType: "text")
   createdBy: User
   createdAt: Timestamp! @default(expr: "request.time")

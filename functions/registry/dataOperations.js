@@ -30,14 +30,17 @@
 //   featureKey — optional. Lets a caller with no matching `roles`/`orgRoles`/
 //              `ownField` still be authorized via a CUSTOM role (User.customRole,
 //              see dataconnect/schema/schema.gql's Role type): if their role's
-//              `permissions` JSON grants "edit" (mutations) or "view"/"edit"
-//              (queries) for this featureKey, they're let through. The
+//              `permissions` JSON grants the right action for this featureKey,
+//              they're let through — 'view' for queries; 'create' for a
+//              mutation whose name starts with "Create"; 'edit' for every
+//              other mutation (delete included — it isn't its own flag).
+//              See dataController.js's actionForOperation/normalizeGrant for
+//              exactly how that's derived, and its execute() for where this
+//              is actually checked (always a fresh DB read of the role's
+//              current permissions, never cached/trusted from a claim). The
 //              featureKey matches the page slug in security.js's PAGE_ROLES
-//              (e.g. 'admin-fleet') — see dataController.js's execute() for
-//              where this is actually checked (always a fresh DB read of the
-//              role's current permissions, never cached/trusted from a claim).
-//              Never set on the Role CRUD operations themselves — a custom
-//              role can never grant itself more roles.
+//              (e.g. 'admin-fleet'). Never set on the Role CRUD operations
+//              themselves — a custom role can never grant itself more roles.
 
 // super_admin is a strict superset of admin — every ADMIN-gated operation
 // below is reachable by both, so this list (not each individual entry) is
