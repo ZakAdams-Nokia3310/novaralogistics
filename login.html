@@ -73,8 +73,6 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
     <p class="d2 anim" style="color:#b9cacb;font-size:13px;margin-bottom:28px">Sign in to your EquipCore account.</p>
 
     <form id="loginForm" novalidate>
-      <!-- Honeypot — must remain empty -->
-      <input type="text" name="hp_field_a1" id="hp_login" data-honeypot tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"/>
       <!-- Email -->
       <div style="margin-bottom:14px">
         <label style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:7px">Email Address</label>
@@ -102,6 +100,15 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
       <!-- Error -->
       <div id="errBox" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
 
+      <!-- Honeypot — must remain empty. Deliberately placed AFTER the
+           password field, not before it: password managers and browser
+           autofill target more than just field name/id — a text input
+           immediately preceding a password field is the single strongest
+           structural signal they use for "this is the username field",
+           regardless of what it's named (renaming alone, see the earlier
+           fix, wasn't sufficient by itself). Placing it after breaks that
+           heuristic outright instead of trying to out-name it. -->
+      <input type="text" name="hp_field_a1" id="hp_login" data-honeypot tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"/>
       <button class="btn-main d3 anim" id="submitBtn" type="submit">Sign In</button>
     </form>
 

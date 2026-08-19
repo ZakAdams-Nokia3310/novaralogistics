@@ -104,8 +104,6 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
     </div>
 
     <form id="signupForm" novalidate>
-      <input type="text" name="hp_field_b2" id="hp_signup" data-honeypot tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"/>
-
       <!-- STEP 1: Account -->
       <div id="step1">
         <div class="field">
@@ -189,6 +187,15 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
           <span>I have read and agree to the EquipCore <a href="terms" target="_blank" style="color:#00dbe9">Terms &amp; Conditions</a> and <a href="privacy" target="_blank" style="color:#00dbe9">Privacy Policy</a>.</span>
         </label>
         <div id="errBox3" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+        <!-- Honeypot — must remain empty. Placed as the LAST field in the
+             whole form (not the first, as it originally was, before name/
+             email/password) — a text input positioned before a password
+             field is the strongest structural signal password managers and
+             browser autofill use for "this is the username field",
+             independent of what the field is actually named. Renaming it
+             (see the earlier fix) wasn't sufficient on its own; this breaks
+             the heuristic outright instead. -->
+        <input type="text" name="hp_field_b2" id="hp_signup" data-honeypot tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none"/>
         <div class="btn-row">
           <button type="button" class="btn-ghost" onclick="goStep(2)"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Back</button>
           <button class="btn-main" id="submitBtn" type="submit">Create Account <span class="material-symbols-outlined" style="font-size:18px">check</span></button>
