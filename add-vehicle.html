@@ -36,6 +36,15 @@
   .readonly-field{padding:11px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:10px;font-size:14px;color:#00f0ff;font-family:'JetBrains Mono',monospace;}
   .err{display:none;padding:10px 14px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:9px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
   .success-banner{display:none;padding:14px 18px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#00d4aa;margin-bottom:16px;align-items:center;gap:8px;}
+  .type-dd{display:none;position:fixed;z-index:9999;background:#0d1014;border:1px solid rgba(0,240,255,.15);border-radius:11px;max-height:min(420px,60vh);overflow-y:scroll;box-shadow:0 16px 40px rgba(0,0,0,.8),0 0 0 1px rgba(0,240,255,.06);}
+  .type-dd::-webkit-scrollbar{width:5px;}
+  .type-dd::-webkit-scrollbar-track{background:transparent;}
+  .type-dd::-webkit-scrollbar-thumb{background:rgba(0,240,255,.25);border-radius:3px;}
+  .type-dd::-webkit-scrollbar-thumb:hover{background:rgba(0,240,255,.45);}
+  .type-dd-group{padding:8px 12px 3px;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:#00f0ff;opacity:0.4;border-top:1px solid rgba(255,255,255,.05);margin-top:4px;}
+  .type-dd-group:first-child{border-top:none;margin-top:0;padding-top:6px;}
+  .type-dd-item{padding:7px 14px;font-size:13px;cursor:pointer;color:#e2e2e8;transition:background .1s;}
+  .type-dd-item:hover,.type-dd-item.sel{background:rgba(0,240,255,.1);color:#00f0ff;}
   @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
   @media(max-width:600px){.grid2{grid-template-columns:1fr !important}.body{padding:14px 14px !important}}
 </style>
@@ -80,99 +89,23 @@
       <div class="sec"><span class="material-symbols-outlined ms">category</span> Vehicle Type</div>
       <div class="fg">
         <label>Vehicle Type *</label>
-        <select id="avType" required>
-          <optgroup label="Trucks &amp; Haulage — Rigid &amp; Tippers">
-            <option value="Heavy Truck">Heavy Truck</option>
-            <option value="Rigid Truck">Rigid Truck</option>
-            <option value="Tipper Truck">Tipper Truck</option>
-            <option value="Side Tipper">Side Tipper</option>
-            <option value="Rigid Dump Truck">Rigid Dump Truck</option>
-            <option value="Concrete Mixer">Concrete Mixer</option>
-            <option value="Crane Truck">Crane Truck</option>
-            <option value="Road Sweeper">Road Sweeper</option>
-            <option value="Water Bowser">Water Bowser</option>
-          </optgroup>
-          <optgroup label="Trucks &amp; Haulage — Specialised Bodies">
-            <option value="Flatbed Truck">Flatbed Truck</option>
-            <option value="Curtainsider Truck">Curtainsider Truck</option>
-            <option value="Refrigerated Truck">Refrigerated Truck</option>
-            <option value="Tanker Truck">Tanker Truck</option>
-            <option value="Car Transporter">Car Transporter</option>
-            <option value="Asphalt Paver">Asphalt Paver</option>
-            <option value="Cold Planer">Cold Planer</option>
-            <option value="Concrete Pump">Concrete Pump</option>
-          </optgroup>
-          <optgroup label="Trucks &amp; Haulage — Trailers">
-            <option value="Superlink">Superlink</option>
-            <option value="Horse &amp; Trailer">Horse &amp; Trailer</option>
-            <option value="Flatbed Trailer">Flatbed Trailer</option>
-            <option value="Curtainsider Trailer">Curtainsider Trailer</option>
-            <option value="Refrigerated Trailer">Refrigerated Trailer</option>
-            <option value="Tanker Trailer">Tanker Trailer</option>
-            <option value="Tipper Trailer">Tipper Trailer</option>
-            <option value="Lowboy Trailer">Lowboy Trailer</option>
-            <option value="Skeletal Trailer">Skeletal Trailer</option>
-            <option value="Car Transporter Trailer">Car Transporter Trailer</option>
-          </optgroup>
-          <optgroup label="Yellow Machinery — Earth Moving">
-            <option value="Excavator">Excavator</option>
-            <option value="Mini Excavator">Mini Excavator</option>
-            <option value="Backhoe Loader (TLB)">Backhoe Loader (TLB)</option>
-            <option value="Wheel Loader">Wheel Loader</option>
-            <option value="Compact Track Loader">Compact Track Loader</option>
-            <option value="Skid Steer Loader">Skid Steer Loader</option>
-            <option value="Bulldozer">Bulldozer</option>
-            <option value="Motor Grader">Motor Grader</option>
-            <option value="Compactor">Compactor</option>
-          </optgroup>
-          <optgroup label="Yellow Machinery — Haulage">
-            <option value="Articulated Hauler (ADT)">Articulated Hauler (ADT)</option>
-          </optgroup>
-          <optgroup label="Plant &amp; Processing — Mining &amp; Drilling">
-            <option value="Drill Rig">Drill Rig</option>
-            <option value="Crusher">Crusher</option>
-            <option value="Screening Plant">Screening Plant</option>
-          </optgroup>
-          <optgroup label="Cranes &amp; Lifting">
-            <option value="Crane">Crane</option>
-            <option value="Mobile Crane">Mobile Crane</option>
-            <option value="Tower Crane">Tower Crane</option>
-            <option value="Crawler Crane">Crawler Crane</option>
-            <option value="Overhead Crane">Overhead Crane</option>
-            <option value="Boom Truck">Boom Truck</option>
-          </optgroup>
-          <optgroup label="Forklifts &amp; Warehouse">
-            <option value="Forklift">Forklift</option>
-            <option value="Rough Terrain Forklift">Rough Terrain Forklift</option>
-            <option value="Order Picker">Order Picker</option>
-            <option value="Pallet Jack">Pallet Jack</option>
-            <option value="Telehandler">Telehandler</option>
-            <option value="Scissor Lift">Scissor Lift</option>
-            <option value="Boom Lift">Boom Lift</option>
-            <option value="Straddle Carrier">Straddle Carrier</option>
-            <option value="Container Reachstacker">Container Reachstacker</option>
-            <option value="High Reach Truck">High Reach Truck</option>
-          </optgroup>
-          <optgroup label="Plant &amp; Processing — Power &amp; Utilities">
-            <option value="Generator">Generator</option>
-            <option value="Compressor">Compressor</option>
-            <option value="Light Tower">Light Tower</option>
-            <option value="Water Pump">Water Pump</option>
-          </optgroup>
-          <optgroup label="Agricultural">
-            <option value="Tractor">Tractor</option>
-            <option value="Agricultural Implement">Agricultural Implement</option>
-            <option value="Irrigation Equipment">Irrigation Equipment</option>
-          </optgroup>
-          <optgroup label="Light Vehicles">
-            <option value="Van">Van</option>
-            <option value="Pickup Truck">Pickup Truck</option>
-            <option value="Minibus">Minibus</option>
-          </optgroup>
-          <optgroup label="Other">
-            <option value="Other">Other</option>
-          </optgroup>
-        </select>
+        <!-- Searchable type dropdown — same pattern as admin-fleet.html's
+             Add Vehicle modal (VEH_TYPE_GROUPS/filterVTypes/selectVType),
+             ported here since this standalone page had a plain <select>
+             that made searching 60+ types impractical. -->
+        <div style="position:relative" id="avTypeWrap">
+          <div style="position:relative">
+            <input type="text" id="avTypeSearch"
+                   placeholder="Search vehicle type…"
+                   autocomplete="off"
+                   style="padding-right:32px"
+                   oninput="filterVTypes()"
+                   onfocus="openVTypeDD()"
+                   onblur="setTimeout(closeVTypeDD,180)"/>
+            <span class="material-symbols-outlined ms" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">expand_more</span>
+          </div>
+          <input type="hidden" id="avType" value="Excavator"/>
+        </div>
         <div id="otherTypeWrap" style="display:none;margin-top:10px">
           <label>Specify Vehicle Type *</label>
           <input id="avTypeOther" type="text" placeholder="Describe the vehicle type…" style="border-color:rgba(0,240,255,.3)"/>
@@ -250,20 +183,107 @@ document.getElementById('orgLabel').textContent = user.org || 'EquipCore';
 
 var _photoData = null;
 
-// Show/hide "Other" text field
-document.getElementById('avType').addEventListener('change', function() {
+// Show/hide "Other" text field — called from selectVType() below rather
+// than a native <select> change event, since avType is now a hidden input
+// (setting .value via JS doesn't fire 'change').
+function toggleOtherType(value) {
   var wrap = document.getElementById('otherTypeWrap');
   var inp  = document.getElementById('avTypeOther');
-  if (this.value === 'Other') {
+  if (value === 'Other') {
     wrap.style.display = 'block';
     inp.required = true;
-    inp.focus();
   } else {
     wrap.style.display = 'none';
     inp.required = false;
     inp.value = '';
   }
-});
+}
+
+// ── Searchable type dropdown — same VEH_TYPE_GROUPS/behaviour as
+// admin-fleet.html's Add Vehicle modal. Must match
+// dataconnect/schema/schema.gql's VehicleType enum exactly — any value not
+// listed there makes CreateVehicle fail server-side with a 500.
+var VEH_TYPE_GROUPS = [
+  { g: 'Trucks & Haulage — Rigid & Tippers', t: ['Heavy Truck','Rigid Truck','Tipper Truck','Side Tipper','Rigid Dump Truck','Concrete Mixer','Crane Truck','Road Sweeper','Water Bowser'] },
+  { g: 'Trucks & Haulage — Specialised Bodies', t: ['Flatbed Truck','Curtainsider Truck','Refrigerated Truck','Tanker Truck','Car Transporter','Asphalt Paver','Cold Planer','Concrete Pump'] },
+  { g: 'Trucks & Haulage — Trailers', t: ['Superlink','Horse & Trailer','Flatbed Trailer','Curtainsider Trailer','Refrigerated Trailer','Tanker Trailer','Tipper Trailer','Lowboy Trailer','Skeletal Trailer','Car Transporter Trailer'] },
+  { g: 'Yellow Machinery — Earth Moving', t: ['Excavator','Mini Excavator','Backhoe Loader (TLB)','Wheel Loader','Compact Track Loader','Skid Steer Loader','Bulldozer','Motor Grader','Compactor'] },
+  { g: 'Yellow Machinery — Haulage', t: ['Articulated Hauler (ADT)'] },
+  { g: 'Plant & Processing — Mining & Drilling', t: ['Drill Rig','Crusher','Screening Plant'] },
+  { g: 'Cranes & Lifting', t: ['Crane','Mobile Crane','Tower Crane','Crawler Crane','Overhead Crane','Boom Truck'] },
+  { g: 'Forklifts & Warehouse', t: ['Forklift','Rough Terrain Forklift','Order Picker','Pallet Jack','Telehandler','Scissor Lift','Boom Lift','Straddle Carrier','Container Reachstacker','High Reach Truck'] },
+  { g: 'Plant & Processing — Power & Utilities', t: ['Generator','Compressor','Light Tower','Water Pump'] },
+  { g: 'Agricultural', t: ['Tractor','Agricultural Implement','Irrigation Equipment'] },
+  { g: 'Light Vehicles', t: ['Van','Pickup Truck','Minibus'] },
+  { g: 'Other', t: ['Other'] },
+];
+
+var _vtDD = null;
+function _getVtDD() {
+  if (!_vtDD || !document.body.contains(_vtDD)) {
+    _vtDD = document.createElement('div');
+    _vtDD.id = 'avTypeDD';
+    _vtDD.className = 'type-dd';
+    document.body.appendChild(_vtDD);
+  }
+  return _vtDD;
+}
+function renderVTypeDD(q) {
+  var dd  = _getVtDD();
+  var cur = document.getElementById('avType').value;
+  q = (q || '').toLowerCase();
+  var html = '';
+  VEH_TYPE_GROUPS.forEach(function(grp) {
+    var matches = q ? grp.t.filter(function(t) { return t.toLowerCase().includes(q); }) : grp.t;
+    if (!matches.length) return;
+    html += '<div class="type-dd-group">' + grp.g + '</div>';
+    matches.forEach(function(t) {
+      var sel = cur === t;
+      html += '<div class="type-dd-item' + (sel ? ' sel' : '') + '" onmousedown="selectVType(event,\'' + t.replace(/'/g, "\\'") + '\')">' + t + '</div>';
+    });
+  });
+  if (!html) html = '<div style="padding:12px 14px;color:#849495;font-family:\'JetBrains Mono\',monospace;font-size:11px">No types found</div>';
+  dd.innerHTML = html;
+}
+function openVTypeDD() {
+  var inp = document.getElementById('avTypeSearch');
+  var r   = inp.getBoundingClientRect();
+  var dd  = _getVtDD();
+  renderVTypeDD(inp.value);
+  var spaceBelow = window.innerHeight - r.bottom;
+  var spaceAbove = r.top;
+  var maxH = Math.min(420, spaceBelow > 340 ? spaceBelow - 12 : spaceAbove - 12);
+  dd.style.cssText = 'display:block;width:' + r.width + 'px;left:' + r.left + 'px;max-height:' + maxH + 'px;';
+  if (spaceBelow >= 340 || spaceBelow >= spaceAbove) {
+    dd.style.top = (r.bottom + 4) + 'px';
+  } else {
+    dd.style.top = (r.top - Math.min(maxH, 420) - 4) + 'px';
+  }
+  requestAnimationFrame(function() {
+    var sel = dd.querySelector('.type-dd-item.sel');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+  });
+}
+function closeVTypeDD() {
+  _getVtDD().style.display = 'none';
+  document.getElementById('avTypeSearch').value = document.getElementById('avType').value || 'Excavator';
+}
+function filterVTypes() {
+  var inp = document.getElementById('avTypeSearch');
+  var r   = inp.getBoundingClientRect();
+  var dd  = _getVtDD();
+  renderVTypeDD(inp.value);
+  dd.style.cssText = 'display:block;width:' + r.width + 'px;left:' + r.left + 'px;top:' + (r.bottom + 4) + 'px;';
+}
+function selectVType(e, type) {
+  e.preventDefault();
+  document.getElementById('avType').value = type;
+  document.getElementById('avTypeSearch').value = type;
+  _getVtDD().style.display = 'none';
+  toggleOtherType(type);
+  if (type === 'Other') document.getElementById('avTypeOther').focus();
+}
+document.getElementById('avTypeSearch').value = 'Excavator';
 
 function handlePhoto(input) {
   var file = input.files[0];

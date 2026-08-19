@@ -64,7 +64,8 @@
         <span class="material-symbols-outlined ms" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:#849495;pointer-events:none">search</span>
         <input id="qSearch" placeholder="Search make, model, or supplier…" style="padding-left:36px;width:100%" oninput="renderGrid()"/>
       </div>
-      <select id="qCategory" onchange="renderGrid()" style="min-width:200px"></select>
+      <select id="qCategory" onchange="onCategoryChange()" style="min-width:200px"></select>
+      <select id="qType" onchange="renderGrid()" style="min-width:190px"></select>
       <select id="qProvince" onchange="renderGrid()" style="min-width:160px">
         <option value="all">All Provinces</option>
         <option value="GAUTENG">Gauteng</option>
@@ -155,14 +156,34 @@ function populateCategoryFilter() {
     Object.keys(CATEGORY_GROUPS).filter(g => present.has(g)).map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
 }
 
+// Type filter is a finer-grained cut than category — narrowed to whichever
+// category is currently selected (or every type present, if "All
+// Categories"), same cascading precedent as admin-fleet.html's type/status
+// filters. Dynamic, unlike admin-fleet.html's data-entry dropdown — only
+// types actually present in current listings are offered.
+function populateTypeFilter() {
+  const categoryFilter = document.getElementById('qCategory').value;
+  const inCategory = categoryFilter === 'all' ? _listings : _listings.filter(v => categoryOf(v.type) === categoryFilter);
+  const types = [...new Set(inCategory.map(v => v.type).filter(Boolean))].sort();
+  const sel = document.getElementById('qType');
+  sel.innerHTML = '<option value="all">All Types</option>' +
+    types.map(t => `<option value="${esc(t)}">${esc(titleCase(t))}</option>`).join('');
+}
+function onCategoryChange() {
+  populateTypeFilter();
+  renderGrid();
+}
+
 function renderGrid() {
   const q = document.getElementById('qSearch').value.trim().toLowerCase();
   const categoryFilter = document.getElementById('qCategory').value;
+  const typeFilter = document.getElementById('qType').value;
   const provinceFilter = document.getElementById('qProvince').value;
   const hireModeFilter = document.getElementById('qHireMode').value;
 
   let vehicles = _listings.slice();
   if (categoryFilter !== 'all') vehicles = vehicles.filter(v => categoryOf(v.type) === categoryFilter);
+  if (typeFilter !== 'all') vehicles = vehicles.filter(v => v.type === typeFilter);
   if (provinceFilter !== 'all') vehicles = vehicles.filter(v => (v.province || '').toUpperCase() === provinceFilter);
   if (hireModeFilter !== 'all') vehicles = vehicles.filter(v => (v.hireMode || '').toUpperCase() === hireModeFilter);
   if (q) {
@@ -207,6 +228,7 @@ function renderGrid() {
 DC_DATA.getMarketplaceVehicles().then(listings => {
   _listings = listings;
   populateCategoryFilter();
+  populateTypeFilter();
   renderGrid();
 }).catch(() => {
   document.getElementById('eqGrid').innerHTML = `<div class="glass" style="grid-column:1/-1;border-radius:13px;text-align:center;padding:36px;color:#ff6b6b;font-family:'JetBrains Mono',monospace;font-size:12px">Unable to load the marketplace — please refresh.</div>`;

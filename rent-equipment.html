@@ -27,6 +27,7 @@
   .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
   .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
   .bblue{background:rgba(125,211,252,.1);color:#7dd3fc;}
+  .bpurp{background:rgba(209,188,255,.1);color:#d1bcff;}
   input,select{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;outline:none;transition:border-color .18s;}
   input:focus,select:focus{border-color:#00f0ff;}
   select option{background:#111317;}
@@ -39,6 +40,7 @@
   .eqcard-body{padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1;}
   .eqcard-name{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;}
   .eqcard-meta{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495;}
+  .eqcard-rate{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;color:#00f0ff;}
   .eqcard-actions{margin-top:auto;padding-top:6px;}
   @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
   @media(max-width:600px){.body{padding:14px 12px!important}.filterbar{flex-direction:column;align-items:stretch!important}}
@@ -102,6 +104,23 @@ function statusBadge(s) {
   if (s === 'retired')     return `<span class="b bo">Retired</span>`;
   return `<span class="b">${esc(s)}</span>`;
 }
+// Hire terms — same display as marketplace.html, but shown only when a
+// vehicle actually has listing fields set (most of this org's existing
+// fleet won't, since these are new optional fields — see vehicle-detail.html's
+// "Marketplace Listing" section).
+function hireModeBadge(m) {
+  if (m === 'wet_hire') return `<span class="b bp">Wet Hire</span>`;
+  if (m === 'dry_hire') return `<span class="b bblue">Dry Hire</span>`;
+  if (m === 'either')   return `<span class="b ba">Wet or Dry</span>`;
+  return '';
+}
+function rateLabel(v) {
+  if (v.dailyRate)   return 'R' + v.dailyRate.toLocaleString('en-ZA') + ' / day';
+  if (v.hourlyRate)  return 'R' + v.hourlyRate.toLocaleString('en-ZA') + ' / hour';
+  if (v.weeklyRate)  return 'R' + v.weeklyRate.toLocaleString('en-ZA') + ' / week';
+  if (v.monthlyRate) return 'R' + v.monthlyRate.toLocaleString('en-ZA') + ' / month';
+  return null;
+}
 
 function populateTypeFilter() {
   const types = [...new Set(DC_DATA.getVehicles().map(v => v.type).filter(Boolean))].sort();
@@ -144,6 +163,12 @@ function renderGrid() {
     const action = available
       ? `<a href="apply-rental?vehicleId=${escA(v.id)}" class="btnp" style="width:100%;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:15px">add_circle</span>Apply to Rent</a>`
       : `<button class="btnp disabled" style="width:100%;justify-content:center" disabled>${v.status === 'on_rent' ? 'Currently Unavailable' : titleCase(v.status)}</button>`;
+    const rate = rateLabel(v);
+    const included = [
+      v.operatorIncluded ? 'Operator' : null,
+      v.fuelIncluded ? 'Fuel' : null,
+      v.transportIncluded ? 'Transport' : null,
+    ].filter(Boolean).join(' · ');
     return `
       <div class="eqcard glass">
         <div class="eqcard-img">${img}</div>
@@ -152,7 +177,8 @@ function renderGrid() {
             <div class="eqcard-name">${esc(v.make)} ${esc(v.model)}</div>
             <div class="eqcard-meta">${esc(titleCase(v.type))}${v.year ? ' · ' + v.year : ''} · ${esc(v.regPlate)}</div>
           </div>
-          ${statusBadge(v.status)}
+          ${rate ? `<div class="eqcard-rate">${esc(rate)}</div>` : ''}
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${statusBadge(v.status)}${hireModeBadge(v.hireMode)}${included ? `<span class="b bpurp">${esc(included)}</span>` : ''}</div>
           <div class="eqcard-actions">${action}</div>
         </div>
       </div>`;
