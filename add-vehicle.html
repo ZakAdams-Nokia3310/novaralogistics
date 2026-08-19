@@ -249,7 +249,12 @@ function openVTypeDD() {
   var inp = document.getElementById('avTypeSearch');
   var r   = inp.getBoundingClientRect();
   var dd  = _getVtDD();
-  renderVTypeDD(inp.value);
+  // Show every option on open, not filtered by whatever's already in the
+  // box (the box holds the current selection's label, e.g. "Excavator" by
+  // default) — otherwise the very first click into this field shows only
+  // the 1-2 options matching that pre-filled text instead of all 67.
+  // Typing afterward still filters normally via filterVTypes()/oninput.
+  renderVTypeDD('');
   var spaceBelow = window.innerHeight - r.bottom;
   var spaceAbove = r.top;
   var maxH = Math.min(420, spaceBelow > 340 ? spaceBelow - 12 : spaceAbove - 12);
