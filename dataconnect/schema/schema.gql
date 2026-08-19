@@ -566,6 +566,12 @@ enum NotificationType {
   RENTAL_STATUS
   CREDIT_CHECK
   MAINTENANCE
+  # Appended, not inserted — same cheap ALTER TYPE ADD VALUE reasoning as
+  # every other enum in this file (see VehicleType's doc comment for the
+  # full story). For the RFQ marketplace below: QUOTE_RECEIVED notifies a
+  # request's author, QUOTE_ACCEPTED notifies the winning quote's submitter.
+  QUOTE_RECEIVED
+  QUOTE_ACCEPTED
 }
 
 type Notification @table(name: "notifications") {
@@ -577,6 +583,63 @@ type Notification @table(name: "notifications") {
   linkPath: String @col(dataType: "varchar(200)")
   read: Boolean! @default(value: false)
   createdAt: Timestamp! @default(expr: "request.time")
+}
+
+# ─── EquipmentRequest / Quote ──────────────────────────────────────────────────
+# Self-service RFQ marketplace: any signed-in user posts what equipment they
+# need, any organisation can browse open requests and submit a quote as
+# themselves (server-forced to the caller's own org — see
+# functions/registry/dataOperations.js's SubmitQuote entry — never a client-
+# chosen org), the requester accepts one. Deliberately separate from
+# RentalApplication above, which stays exactly as-is: that flow is
+# "apply to rent a specific already-listed vehicle from one org," this one
+# is "ask the whole platform who can supply X."
+
+enum RequestStatus {
+  OPEN
+  AWARDED
+  CLOSED
+}
+
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+type EquipmentRequest @table(name: "equipment_requests") {
+  id: UUID! @default(expr: "uuidV4()")
+  requestedBy: User!
+  vehicleType: VehicleType!
+  province: SaProvince
+  hireMode: HireMode
+  neededFrom: Date
+  neededTo: Date
+  description: String @col(dataType: "text")
+  status: RequestStatus! @default(value: OPEN)
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
+}
+
+type Quote @table(name: "quotes") {
+  id: UUID! @default(expr: "uuidV4()")
+  request: EquipmentRequest!
+  # Who's offering — always the submitting user's own org, enforced
+  # server-side, never trusted from the client (same principle as every
+  # other orgField-scoped mutation in this codebase).
+  supplierOrganisation: Organisation!
+  submittedBy: User!
+  # Optional — a specific listed vehicle from the supplier's own fleet, or
+  # null for a freeform offer ("we don't have that exact model listed yet,
+  # but we can supply something similar — contact us").
+  vehicle: Vehicle
+  dailyRate: Float
+  weeklyRate: Float
+  monthlyRate: Float
+  message: String @col(dataType: "text")
+  status: QuoteStatus! @default(value: PENDING)
+  createdAt: Timestamp! @default(expr: "request.time")
+  updatedAt: Timestamp! @default(expr: "request.time")
 }
 
 # ─── CatalogItem ──────────────────────────────────────────────────────────────

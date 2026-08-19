@@ -13,6 +13,9 @@
       { href:'admin-fleet',      icon:'garage',        label:'Fleet' },
       { href:'add-vehicle',      icon:'add_box',       label:'Add Vehicle' },
       { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
+      { href:'request-equipment',icon:'campaign',      label:'I Need Equipment' },
+      { href:'my-requests',      icon:'request_quote', label:'My Requests' },
+      { href:'open-requests',    icon:'inventory_2',   label:'Open Requests' },
       { href:'admin-maintenance',icon:'build',         label:'Maintenance' },
       { href:'admin-reports',    icon:'monitoring',    label:'Reporting' },
       { section: 'Tools' },
@@ -32,6 +35,9 @@
       { href:'rent-equipment',   icon:'add_circle',    label:'Apply to Rent' },
       { section: 'Browse' },
       { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
+      { href:'request-equipment',icon:'campaign',      label:'I Need Equipment' },
+      { href:'my-requests',      icon:'request_quote', label:'My Requests' },
+      { href:'open-requests',    icon:'inventory_2',   label:'Open Requests' },
       { href:'calculator',       icon:'calculate',     label:'Calculator' },
       { section: 'Account' },
       { href:'profile',          icon:'person',        label:'My Profile' },
@@ -42,6 +48,9 @@
       { href:'my-rentals',       icon:'receipt_long',  label:'My Rentals' },
       { href:'messages',         icon:'chat',          label:'Messages' },
       { href:'marketplace',      icon:'storefront',    label:'Marketplace' },
+      { href:'request-equipment',icon:'campaign',      label:'I Need Equipment' },
+      { href:'my-requests',      icon:'request_quote', label:'My Requests' },
+      { href:'open-requests',    icon:'inventory_2',   label:'Open Requests' },
       { href:'calculator',       icon:'calculate',     label:'Calculator' },
       { section: 'Account' },
       { href:'profile',          icon:'person',        label:'My Profile' },
@@ -310,7 +319,7 @@
     return `${Math.floor(hrs / 24)}d ago`;
   }
 
-  const NOTIF_ICON = { application_status: 'description', rental_status: 'local_shipping', credit_check: 'fact_check', maintenance: 'build' };
+  const NOTIF_ICON = { application_status: 'description', rental_status: 'local_shipping', credit_check: 'fact_check', maintenance: 'build', quote_received: 'request_quote', quote_accepted: 'handshake' };
 
   function renderNotifPanel(panel) {
     const esc = (typeof EC_SECURITY !== 'undefined') ? EC_SECURITY.sanitizeHtml : (s => s);

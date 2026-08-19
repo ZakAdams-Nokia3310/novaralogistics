@@ -161,4 +161,37 @@ module.exports = {
   UpdateRentalStatus:  { kind: 'mutation', roles: ADMIN, featureKey: 'admin-rentals' },
   UpdateRental:         { kind: 'mutation', roles: ADMIN, featureKey: 'admin-rentals' },
   DeleteRental:         { kind: 'mutation', roles: ADMIN, featureKey: 'admin-rentals' },
+
+  // ── Equipment Requests / Quotes (self-service RFQ marketplace) — any
+  //    signed-in role. Posting a request and submitting a quote are both
+  //    self-attributed (injectOwnIdAs/orgField server-force the caller's own
+  //    id/org, exactly like every other self-scoped write above), so none
+  //    of this needs admin gating — a user can't act as anyone but
+  //    themselves or their own org no matter what the client sends. ──
+  CreateEquipmentRequest: { kind: 'mutation', roles: ALL_ROLES, injectOwnIdAs: 'requestedById' },
+  // Cross-org by design (any org should see what's needed platform-wide) —
+  // same shape as ListMarketplaceVehicles, no orgField override.
+  ListOpenEquipmentRequests: { kind: 'query', roles: ALL_ROLES },
+  ListMyEquipmentRequests:   { kind: 'query', roles: ALL_ROLES, ownField: 'requestedById' },
+  // roles: [] deliberately — op.roles is checked FIRST and short-circuits
+  // the orgRoles override entirely if it matches (see execute()'s
+  // `!authorized && op.orgRoles` guard), so anyone in `roles` would bypass
+  // the org-force and could submit as an arbitrary org. Leaving it empty
+  // means orgRoles/orgField is the ONLY path to authorization here —
+  // supplierOrganisationId is always forced to the caller's own org, with
+  // no admin bypass (unlike ListVehiclesByOrg, there's no legitimate case
+  // for anyone acting as a different org's supplier).
+  SubmitQuote: { kind: 'mutation', roles: [], orgRoles: ALL_ROLES, orgField: 'supplierOrganisationId', injectOwnIdAs: 'submittedById' },
+  // Same roles: [] reasoning as SubmitQuote — supplierOrganisationId here
+  // scopes which quotes are visible, and must always be forced to the
+  // caller's own org so a supplier can never see a competitor's pricing.
+  ListMyQuotes: { kind: 'query', roles: [], orgRoles: ALL_ROLES, orgField: 'supplierOrganisationId' },
+  // Neither of these has an ownField/orgField that fits (a quote/request's
+  // own id isn't the owning user's id) — real authorization is a
+  // fetch-then-verify ownership check in dataController.js's execute(),
+  // same shape as MarkNotificationRead's. roles: ALL_ROLES here is just the
+  // base "must be signed in" gate; the ownership check is what actually
+  // restricts these to the request's own requestedBy.
+  ListQuotesForRequest: { kind: 'query', roles: ALL_ROLES },
+  AcceptQuote:          { kind: 'mutation', roles: ALL_ROLES },
 };

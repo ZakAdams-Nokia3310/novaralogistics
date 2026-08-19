@@ -768,14 +768,18 @@ query GetRentalApplicationById($id: UUID!) @auth(level: NO_ACCESS) {
       make
       model
       regPlate
+      dailyRate
     }
     equipmentName
+    dailyRate
     startDate
     endDate
+    estimatedCost
     deliveryAddress
     purpose
     rentalNotes
     status
+    rejectionReason
     creditCheckStatus
     creditCheckScore
     creditCheckFeeZar
@@ -1070,5 +1074,81 @@ query GetNotificationById($id: UUID!) @auth(level: NO_ACCESS) {
   notification(id: $id) {
     id
     user { id }
+  }
+}
+
+# ── Equipment Requests / Quotes (self-service RFQ marketplace) ──
+query ListOpenEquipmentRequests @auth(level: NO_ACCESS) {
+  equipmentRequests(where: { status: { eq: OPEN } }, orderBy: { createdAt: DESC }) {
+    id
+    requestedBy { id name }
+    vehicleType
+    province
+    hireMode
+    neededFrom
+    neededTo
+    description
+    status
+    createdAt
+  }
+}
+
+query ListMyEquipmentRequests($requestedById: UUID!) @auth(level: NO_ACCESS) {
+  equipmentRequests(where: { requestedById: { eq: $requestedById } }, orderBy: { createdAt: DESC }) {
+    id
+    vehicleType
+    province
+    hireMode
+    neededFrom
+    neededTo
+    description
+    status
+    createdAt
+  }
+}
+
+query ListQuotesForRequest($requestId: UUID!) @auth(level: NO_ACCESS) {
+  quotes(where: { requestId: { eq: $requestId } }, orderBy: { createdAt: DESC }) {
+    id
+    supplierOrganisation { id name }
+    submittedBy { id name email }
+    vehicle { id make model }
+    dailyRate
+    weeklyRate
+    monthlyRate
+    message
+    status
+    createdAt
+  }
+}
+
+query ListMyQuotes($supplierOrganisationId: UUID!) @auth(level: NO_ACCESS) {
+  quotes(where: { supplierOrganisationId: { eq: $supplierOrganisationId } }, orderBy: { createdAt: DESC }) {
+    id
+    request { id vehicleType province status }
+    dailyRate
+    weeklyRate
+    monthlyRate
+    message
+    status
+    createdAt
+  }
+}
+
+query GetEquipmentRequestById($id: UUID!) @auth(level: NO_ACCESS) {
+  equipmentRequest(id: $id) {
+    id
+    requestedBy { id email name }
+    status
+  }
+}
+
+query GetQuoteById($id: UUID!) @auth(level: NO_ACCESS) {
+  quote(id: $id) {
+    id
+    status
+    request { id requestedBy { id } status }
+    submittedBy { id email name }
+    supplierOrganisation { id name }
   }
 }

@@ -244,6 +244,45 @@ const DC_DATA = (() => {
     };
   }
 
+  function normEquipmentRequest(r) {
+    return {
+      id:            r.id,
+      requestedById:   r.requestedBy?.id || null,
+      requestedByName: r.requestedBy?.name || null,
+      vehicleType:   r.vehicleType,
+      province:      r.province || null,
+      hireMode:      r.hireMode ? lo(r.hireMode) : null,
+      neededFrom:    r.neededFrom || null,
+      neededTo:      r.neededTo || null,
+      description:   r.description || null,
+      status:        lo(r.status),
+      createdAt:      toDate(r.createdAt),
+    };
+  }
+
+  function normQuote(q) {
+    return {
+      id:               q.id,
+      supplierOrgId:    q.supplierOrganisation?.id || null,
+      supplierOrgName:  q.supplierOrganisation?.name || null,
+      submittedById:    q.submittedBy?.id || null,
+      submittedByName:  q.submittedBy?.name || null,
+      submittedByEmail: q.submittedBy?.email || null,
+      vehicleId:        q.vehicle?.id || null,
+      vehicleLabel:     q.vehicle ? `${q.vehicle.make} ${q.vehicle.model}` : null,
+      requestId:        q.request?.id || null,
+      requestVehicleType: q.request?.vehicleType || null,
+      requestProvince:  q.request?.province || null,
+      requestStatus:    q.request?.status ? lo(q.request.status) : null,
+      dailyRate:        q.dailyRate ?? null,
+      weeklyRate:       q.weeklyRate ?? null,
+      monthlyRate:      q.monthlyRate ?? null,
+      message:          q.message || null,
+      status:           lo(q.status),
+      createdAt:         toDate(q.createdAt),
+    };
+  }
+
   function normMaintenance(q) {
     return {
       id:           q.id,
@@ -581,6 +620,56 @@ const DC_DATA = (() => {
     async getMarketplaceVehicles() {
       const d = await query('ListMarketplaceVehicles');
       return (d.vehicles || []).map(normVehicle);
+    },
+
+    // ── Equipment Requests / Quotes (self-service RFQ marketplace) ──
+    // Fetched fresh on demand, same precedent as getMarketplaceVehicles
+    // above — not part of init()'s cache. requestedById/
+    // supplierOrganisationId are pass-it-yourself (EC_AUTH.current().dbId/
+    // .orgId), same convention as getNotifications(userId) — the server
+    // independently re-derives or overrides these itself, so a spoofed
+    // value here is just rejected or ignored, never trusted.
+    async createEquipmentRequest(data) {
+      await mutate('CreateEquipmentRequest', {
+        vehicleType: VEHICLE_TYPE[data.vehicleType] || 'OTHER',
+        province:    data.province || null,
+        hireMode:    data.hireMode ? data.hireMode.toUpperCase() : null,
+        neededFrom:  data.neededFrom || null,
+        neededTo:    data.neededTo || null,
+        description: data.description || null,
+      });
+    },
+    async getOpenEquipmentRequests() {
+      const d = await query('ListOpenEquipmentRequests');
+      return (d.equipmentRequests || []).map(normEquipmentRequest);
+    },
+    async getMyEquipmentRequests(requestedById) {
+      if (!requestedById) return [];
+      const d = await query('ListMyEquipmentRequests', { requestedById });
+      return (d.equipmentRequests || []).map(normEquipmentRequest);
+    },
+    async getQuotesForRequest(requestId) {
+      const d = await query('ListQuotesForRequest', { requestId });
+      return (d.quotes || []).map(normQuote);
+    },
+    async getMyQuotes(supplierOrganisationId) {
+      if (!supplierOrganisationId) return [];
+      const d = await query('ListMyQuotes', { supplierOrganisationId });
+      return (d.quotes || []).map(normQuote);
+    },
+    async submitQuote(data) {
+      await mutate('SubmitQuote', {
+        requestId:               data.requestId,
+        supplierOrganisationId:  data.supplierOrganisationId,
+        vehicleId:               data.vehicleId || null,
+        dailyRate:   data.dailyRate === '' || data.dailyRate == null ? null : +data.dailyRate,
+        weeklyRate:  data.weeklyRate === '' || data.weeklyRate == null ? null : +data.weeklyRate,
+        monthlyRate: data.monthlyRate === '' || data.monthlyRate == null ? null : +data.monthlyRate,
+        message:     data.message || null,
+      });
+    },
+    async acceptQuote(id) {
+      await mutate('AcceptQuote', { id });
     },
     getRentalsForVehicle(vehicleId) { return _rentals.filter(r => r.vehicleId === vehicleId); },
     getMaintenanceQueries() {

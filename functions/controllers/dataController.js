@@ -117,6 +117,24 @@ async function createConversationForApprovedApplication(applicationId, reviewerU
 // reasoning as the Firestore side effect above: a failure here must never
 // fail the approval itself, which has already succeeded by the time this
 // runs.
+// app.dailyRate/estimatedCost are set by an admin during review in
+// principle, but nothing in this codebase ever actually provides that UI —
+// apply-rental.html deliberately submits both as null (see its own comment:
+// "an admin confirms pricing when reviewing the application"), and
+// ReviewRentalApplication only ever touches status/reviewedBy/rejectionReason,
+// never rate fields. Falling back to the linked Vehicle's own listed
+// dailyRate (set via vehicle-detail.html's marketplace listing panel) means
+// a real total is available today without needing that missing admin step
+// built first. Prefers an explicit app.estimatedCost if one is ever
+// actually set, for forward compatibility.
+function computeRentalValue(app) {
+  if (app.estimatedCost) return app.estimatedCost;
+  const rate = (app.vehicle && app.vehicle.dailyRate) || app.dailyRate;
+  if (!rate || !app.startDate || !app.endDate) return 0;
+  const days = Math.max(1, Math.round((new Date(app.endDate) - new Date(app.startDate)) / 86400000));
+  return rate * days;
+}
+
 async function createRentalForApprovedApplication(applicationId, reviewedById) {
   try {
     const data = await runQuery('GetRentalApplicationById', { id: applicationId });
@@ -130,7 +148,7 @@ async function createRentalForApprovedApplication(applicationId, reviewedById) {
       organisationId: app.organisation?.id || null,
       startDate: app.startDate,
       returnDate: app.endDate,
-      valueZar: app.estimatedCost || 0,
+      valueZar: computeRentalValue(app),
       status: 'PENDING',
       notes: null,
       applicationId,
@@ -163,32 +181,55 @@ async function createRentalForApprovedApplication(applicationId, reviewedById) {
   }
 }
 
-// Emails a PDF invoice to the applicant on approval — a no-op (skipped,
-// logged) until SMTP is actually configured (see services/email.js), same
-// fire-and-forget reasoning as everything else here. vehicleLabel is
-// best-effort (a walk-in application with no matched Vehicle just omits it).
+// Emails a confirmation + quote PDF to the applicant on approval — a no-op
+// (skipped, logged) until SMTP is actually configured (see
+// services/email.js), same fire-and-forget reasoning as everything else
+// here. vehicleLabel is best-effort (a walk-in application with no matched
+// Vehicle just omits it).
 async function emailInvoiceForApprovedApplication(app) {
   try {
     if (!app.email) return;
+    const dailyRate = (app.vehicle && app.vehicle.dailyRate) || app.dailyRate || null;
+    const days = (app.startDate && app.endDate)
+      ? Math.max(1, Math.round((new Date(app.endDate) - new Date(app.startDate)) / 86400000))
+      : null;
+    const clientName = `${app.firstName} ${app.lastName}`.trim();
     const pdfBuffer = await buildInvoicePdf({
       ref: app.ref,
-      clientName: `${app.firstName} ${app.lastName}`.trim(),
+      clientName,
       orgName: app.organisation?.name,
       equipmentName: app.equipmentName,
       vehicleLabel: app.vehicle ? `${app.vehicle.make} ${app.vehicle.model}` : null,
       startDate: app.startDate,
       returnDate: app.endDate,
-      valueZar: app.estimatedCost || 0,
+      valueZar: computeRentalValue(app),
+      dailyRate,
+      days,
     });
+    const html = `
+      <p>Hi ${clientName || 'there'},</p>
+      <p>Great news — your rental application <strong>${app.ref}</strong> for
+      <strong>${app.equipmentName || 'your requested equipment'}</strong> has been <strong>approved</strong>.</p>
+      <p>Your rental quote and confirmation is attached as a PDF, covering
+      ${fmtEmailDate(app.startDate)} through ${fmtEmailDate(app.endDate)}.</p>
+      <p>If anything looks wrong, reply to this email or contact your account administrator.</p>
+      <p>— EquipCore, Novara Terra Industrials</p>
+    `;
     await sendMail({
       to: app.email,
-      subject: `Your EquipCore rental invoice — ${app.ref}`,
-      text: `Your application ${app.ref} for ${app.equipmentName} has been approved. Your invoice is attached.`,
-      attachments: [{ filename: `invoice-${app.ref}.pdf`, content: pdfBuffer }],
+      subject: `Your rental has been approved — quote for ${app.ref}`,
+      text: `Hi ${clientName || 'there'}, your rental application ${app.ref} for ${app.equipmentName || 'your requested equipment'} has been approved. Your rental quote and confirmation is attached.`,
+      html,
+      attachments: [{ filename: `quote-${app.ref}.pdf`, content: pdfBuffer }],
     });
   } catch (err) {
     console.error('[dataController] emailInvoiceForApprovedApplication', err.message);
   }
+}
+
+function fmtEmailDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 // Logs a STATUS_CHANGED RentalEvent when UpdateRentalStatus/UpdateRental
@@ -269,6 +310,64 @@ async function notifyCreditCheckEvent(applicationId, kind) {
     );
   } catch (err) {
     console.error('[dataController] notifyCreditCheckEvent', err.message);
+  }
+}
+
+// Notifies + emails the request's author that a new quote has come in.
+async function notifyQuoteReceived(requestId) {
+  try {
+    const data = await runQuery('GetEquipmentRequestById', { id: requestId });
+    const request = data.equipmentRequest;
+    if (!request || !request.requestedBy) return;
+    await createNotification(
+      request.requestedBy.id, 'QUOTE_RECEIVED',
+      'New quote received',
+      'You received a new quote for your equipment request.',
+      'my-requests',
+    );
+    if (request.requestedBy.email) {
+      await sendMail({
+        to: request.requestedBy.email,
+        subject: 'You received a new quote for your equipment request',
+        text: `Hi ${request.requestedBy.name || 'there'}, you received a new quote for your equipment request. Sign in to review it.`,
+        html: `<p>Hi ${request.requestedBy.name || 'there'},</p><p>You received a new quote for your equipment request. Sign in to review it and accept if it works for you.</p><p>— EquipCore, Novara Terra Industrials</p>`,
+      });
+    }
+  } catch (err) {
+    console.error('[dataController] notifyQuoteReceived', err.message);
+  }
+}
+
+// Awards the request and notifies + emails the winning supplier — the
+// EquipmentRequest status flip lives here (server-internal
+// UpdateEquipmentRequestStatus, never client-reachable) rather than being a
+// second client-orchestrated call, since both must happen together or not
+// at all and there's no legitimate reason for a client to award a request
+// without accepting a specific quote.
+async function acceptQuoteSideEffects(quoteId) {
+  try {
+    const data = await runQuery('GetQuoteById', { id: quoteId });
+    const quote = data.quote;
+    if (!quote) return;
+    await runMutation('UpdateEquipmentRequestStatus', { id: quote.request.id, status: 'AWARDED' });
+    if (quote.submittedBy) {
+      await createNotification(
+        quote.submittedBy.id, 'QUOTE_ACCEPTED',
+        'Your quote was accepted',
+        'Your quote has been accepted — coordinate the rental details with the requester.',
+        'open-requests#my-quotes',
+      );
+      if (quote.submittedBy.email) {
+        await sendMail({
+          to: quote.submittedBy.email,
+          subject: 'Your quote was accepted',
+          text: `Hi ${quote.submittedBy.name || 'there'}, your quote has been accepted. Please coordinate the rental details with the requester.`,
+          html: `<p>Hi ${quote.submittedBy.name || 'there'},</p><p>Your quote has been accepted. Please coordinate the rental details with the requester.</p><p>— EquipCore, Novara Terra Industrials</p>`,
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[dataController] acceptQuoteSideEffects', err.message);
   }
 }
 
@@ -420,6 +519,41 @@ exports.execute = async (req, res) => {
     }
   }
 
+  // ListQuotesForRequest/AcceptQuote: neither operation's id is the owning
+  // user's id (a request's id isn't a user id, and a quote's id belongs to
+  // the SUPPLIER who submitted it, not the requester deciding whether to
+  // accept it) — same fetch-then-verify shape as MarkNotificationRead above.
+  // Only the underlying EquipmentRequest's own requestedBy may do either.
+  if (operationName === 'ListQuotesForRequest') {
+    try {
+      const ownId = await resolveOwnUserId(req.user.email);
+      const current = await runQuery('GetEquipmentRequestById', { id: effectiveVariables.requestId });
+      if (!current.equipmentRequest || !ownId || current.equipmentRequest.requestedBy.id !== ownId) {
+        await logEvent(req, 'DATA_ACCESS_DENIED', { operationName, reason: 'not-own-request' });
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    } catch (err) {
+      console.error('[dataController] ListQuotesForRequest ownership check', err.message);
+      return res.status(500).json({ error: 'Unable to complete request' });
+    }
+  }
+  if (operationName === 'AcceptQuote') {
+    try {
+      const ownId = await resolveOwnUserId(req.user.email);
+      const current = await runQuery('GetQuoteById', { id: effectiveVariables.id });
+      if (!current.quote || !ownId || current.quote.request.requestedBy.id !== ownId) {
+        await logEvent(req, 'DATA_ACCESS_DENIED', { operationName, reason: 'not-own-request' });
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+      if (current.quote.status !== 'PENDING' || current.quote.request.status !== 'OPEN') {
+        return res.status(400).json({ error: 'This request has already been awarded or is no longer open.' });
+      }
+    } catch (err) {
+      console.error('[dataController] AcceptQuote ownership check', err.message);
+      return res.status(500).json({ error: 'Unable to complete request' });
+    }
+  }
+
   try {
     const data = op.kind === 'query'
       ? await runQuery(operationName, effectiveVariables)
@@ -444,6 +578,17 @@ exports.execute = async (req, res) => {
     }
     if (operationName === 'DeclineCreditCheck') {
       notifyCreditCheckEvent(effectiveVariables.id, 'DECLINED');
+    }
+    if (operationName === 'SubmitQuote') {
+      notifyQuoteReceived(effectiveVariables.requestId);
+    }
+    if (operationName === 'AcceptQuote') {
+      // Ownership + status were already verified above the try block —
+      // this just fans the acceptance out: award the request and notify
+      // the winning supplier. Fire-and-forget, same guarantee as every
+      // other side effect here — a notify/email hiccup must never surface
+      // as a failure of the accept action itself, which already succeeded.
+      acceptQuoteSideEffects(effectiveVariables.id);
     }
     if (operationName === 'UpdateRentalStatus' || operationName === 'UpdateRental') {
       logRentalStatusChangeIfNeeded(effectiveVariables.id, effectiveVariables.status, req.user.email, priorRentalStatus);

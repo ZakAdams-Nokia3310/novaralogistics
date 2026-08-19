@@ -698,3 +698,69 @@ mutation DeleteRole($id: UUID!) {
 mutation AssignUserCustomRole($id: UUID!, $customRoleId: UUID) {
   user_update(id: $id, data: { customRoleId: $customRoleId, updatedAt_expr: "request.time" })
 }
+
+# ── Equipment Requests / Quotes (self-service RFQ marketplace) ──
+# requestedById/supplierOrganisationId/submittedById are always resolved
+# server-side from the caller's own verified token — see
+# registry/dataOperations.js's CreateEquipmentRequest/SubmitQuote entries
+# (injectOwnIdAs / orgField) — never trusted from the client.
+mutation CreateEquipmentRequest(
+  $requestedById: UUID!
+  $vehicleType: VehicleType!
+  $province: SaProvince
+  $hireMode: HireMode
+  $neededFrom: Date
+  $neededTo: Date
+  $description: String
+) {
+  equipmentRequest_insert(data: {
+    requestedById: $requestedById
+    vehicleType: $vehicleType
+    province: $province
+    hireMode: $hireMode
+    neededFrom: $neededFrom
+    neededTo: $neededTo
+    description: $description
+    status: OPEN
+  })
+}
+
+mutation SubmitQuote(
+  $requestId: UUID!
+  $supplierOrganisationId: UUID!
+  $submittedById: UUID!
+  $vehicleId: UUID
+  $dailyRate: Float
+  $weeklyRate: Float
+  $monthlyRate: Float
+  $message: String
+) {
+  quote_insert(data: {
+    requestId: $requestId
+    supplierOrganisationId: $supplierOrganisationId
+    submittedById: $submittedById
+    vehicleId: $vehicleId
+    dailyRate: $dailyRate
+    weeklyRate: $weeklyRate
+    monthlyRate: $monthlyRate
+    message: $message
+    status: PENDING
+  })
+}
+
+# Reachable via the registry (roles: ALL_ROLES) but real authorization is a
+# fetch-then-verify ownership check in dataController.js's execute() (only
+# the underlying EquipmentRequest's own requestedBy may call this) — same
+# shape as MarkNotificationRead's check above, since a quote's id isn't the
+# owning user's id either. status is hardcoded ACCEPTED here, never a
+# client-supplied value.
+mutation AcceptQuote($id: UUID!) {
+  quote_update(id: $id, data: { status: ACCEPTED, updatedAt_expr: "request.time" })
+}
+
+# Server-internal only (never in the registry) — called from AcceptQuote's
+# side-effect handler once the quote itself is accepted, same precedent as
+# CreateNotification above.
+mutation UpdateEquipmentRequestStatus($id: UUID!, $status: RequestStatus!) {
+  equipmentRequest_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}

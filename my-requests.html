@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>My Requests — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="theme.css" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,0.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.09);}
+  .sidebar{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,0.94);border-right:1px solid rgba(255,255,255,0.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,0.82);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btnp:disabled{opacity:.5;cursor:default;}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:12px;border-radius:8px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+  .card{border-radius:14px;padding:16px 18px;margin-bottom:12px;}
+  .b{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bo{background:rgba(255,107,107,.1);color:#ff6b6b;}
+  .quotes-panel{overflow:hidden;transition:max-height .28s ease,opacity .28s ease;max-height:0;opacity:0;}
+  .quotes-panel.open{max-height:800px;opacity:1;}
+  @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){.body{padding:14px 12px!important}}
+</style>
+</head>
+<body>
+<div id="sidebar-root" class="sidebar"></div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">My Requests</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Equipment you've asked for, and the quotes you've received</div>
+    </div>
+    <a href="request-equipment" class="btnp"><span class="material-symbols-outlined ms" style="font-size:15px">add</span>New Request</a>
+  </div>
+
+  <div class="body">
+    <div id="reqList"></div>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js"></script>
+<script src="sidebar.js"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('my-requests');
+const esc = EC_SECURITY.sanitizeHtml;
+const user = EC_AUTH.require(['admin', 'user', 'driver']);
+
+function titleCase(snake) {
+  return (snake || '').toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+function statusBadge(s) {
+  if (s === 'open')     return `<span class="b bp">Open</span>`;
+  if (s === 'awarded')  return `<span class="b ba">Awarded</span>`;
+  if (s === 'closed')   return `<span class="b bo">Closed</span>`;
+  if (s === 'pending')  return `<span class="b bp">Pending</span>`;
+  if (s === 'accepted') return `<span class="b ba">Accepted</span>`;
+  if (s === 'declined') return `<span class="b bo">Declined</span>`;
+  return '';
+}
+
+let _requests = [];
+let _expandedId = null;
+let _quotesCache = {};
+
+function renderRequests() {
+  const el = document.getElementById('reqList');
+  if (!_requests.length) {
+    el.innerHTML = `<div class="glass card" style="text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">You haven't posted any equipment requests yet. <a href="request-equipment" style="color:#00f0ff">Post one →</a></div>`;
+    return;
+  }
+  el.innerHTML = _requests.map(r => {
+    const isOpen = _expandedId === r.id;
+    const quotes = _quotesCache[r.id] || [];
+    return `
+    <div class="glass card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;cursor:pointer" onclick="toggleRequest('${r.id}')">
+        <div style="min-width:0">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">${esc(titleCase(r.vehicleType))}${r.province ? ' · ' + esc(titleCase(r.province)) : ''}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495">Posted ${esc(new Date(r.createdAt).toLocaleDateString('en-ZA'))}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          ${statusBadge(r.status)}
+          <span class="material-symbols-outlined ms" style="font-size:20px;color:#849495">${isOpen ? 'expand_less' : 'expand_more'}</span>
+        </div>
+      </div>
+      <div class="quotes-panel ${isOpen ? 'open' : ''}" style="margin-top:${isOpen ? '14px' : '0'}">
+        ${r.description ? `<div style="font-size:13px;color:#b9cacb;margin-bottom:12px">${esc(r.description)}</div>` : ''}
+        ${quotes.length ? quotes.map(q => `
+          <div style="padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:10px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px">
+              <div style="font-weight:600;font-size:13px">${esc(q.supplierOrgName || 'Unknown organisation')}</div>
+              ${statusBadge(q.status)}
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;margin-bottom:6px">
+              ${q.dailyRate ? 'R' + q.dailyRate.toLocaleString('en-ZA') + '/day  ' : ''}${q.weeklyRate ? 'R' + q.weeklyRate.toLocaleString('en-ZA') + '/week  ' : ''}${q.monthlyRate ? 'R' + q.monthlyRate.toLocaleString('en-ZA') + '/month' : ''}
+            </div>
+            ${q.message ? `<div style="font-size:13px;color:#b9cacb;margin-bottom:8px">${esc(q.message)}</div>` : ''}
+            ${r.status === 'open' && q.status === 'pending' ? `<button class="btnp" style="font-size:12px;padding:7px 12px" onclick="event.stopPropagation();acceptQuote('${q.id}','${r.id}')">Accept This Quote</button>` : ''}
+          </div>
+        `).join('') : `<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;padding:8px 0">No quotes yet.</div>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleRequest(id) {
+  if (_expandedId === id) {
+    _expandedId = null;
+    renderRequests();
+    return;
+  }
+  _expandedId = id;
+  if (!_quotesCache[id]) {
+    _quotesCache[id] = await DC_DATA.getQuotesForRequest(id);
+  }
+  renderRequests();
+}
+
+async function acceptQuote(quoteId, requestId) {
+  if (!confirm('Accept this quote? Other quotes on this request will no longer be actionable.')) return;
+  try {
+    await DC_DATA.acceptQuote(quoteId);
+    window.showToast?.('success', 'Quote accepted.');
+    delete _quotesCache[requestId];
+    _requests = await DC_DATA.getMyEquipmentRequests(user.dbId);
+    await toggleRequest(requestId);
+  } catch (ex) {
+    window.showToast?.('error', ex.message || 'Unable to accept quote.');
+  }
+}
+
+async function loadAll() {
+  _requests = await DC_DATA.getMyEquipmentRequests(user.dbId);
+  renderRequests();
+}
+
+DC_DATA.init().then(loadAll);
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>

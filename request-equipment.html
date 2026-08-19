@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>I Need Equipment — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="theme.css" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .sidebar{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,0.94);border-right:1px solid rgba(255,255,255,0.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,0.82);border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:28px 32px;max-width:640px;}
+  label{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;}
+  input[type=text],input[type=date],select,textarea{width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+  input:focus,select:focus,textarea:focus{border-color:#00f0ff;box-shadow:0 0 0 1px rgba(0,240,255,.2);}
+  textarea{resize:vertical;min-height:90px;}
+  .fg{margin-bottom:20px;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .sec{font-family:'Hanken Grotesk',sans-serif;font-size:15px;font-weight:700;color:#e2e2e8;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:8px;margin-top:28px;}
+  .sec:first-of-type{margin-top:0;}
+  .sec .ms{font-size:18px;color:#00f0ff;}
+  .btn-submit{display:inline-flex;align-items:center;gap:7px;padding:13px 28px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:15px;border-radius:11px;border:none;cursor:pointer;transition:all .2s;box-shadow:0 0 24px rgba(0,240,255,.18);}
+  .btn-submit:hover{filter:brightness(1.08);transform:translateY(-1px);}
+  .btn-submit:disabled{opacity:.55;cursor:default;transform:none;}
+  .btn-back{display:inline-flex;align-items:center;gap:5px;padding:11px 18px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:14px;border-radius:10px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btn-back:hover{background:rgba(255,255,255,.08);}
+  .err{display:none;padding:10px 14px;background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);border-radius:9px;font-size:12px;color:#ff6b6b;font-family:'JetBrains Mono',monospace;margin-bottom:16px;}
+  .success-banner{display:none;padding:14px 18px;background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.25);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#00d4aa;margin-bottom:16px;align-items:center;gap:8px;}
+  .type-dd{display:none;position:fixed;z-index:9999;background:#0d1014;border:1px solid rgba(0,240,255,.15);border-radius:11px;max-height:min(420px,60vh);overflow-y:scroll;box-shadow:0 16px 40px rgba(0,0,0,.8),0 0 0 1px rgba(0,240,255,.06);}
+  .type-dd::-webkit-scrollbar{width:5px;}
+  .type-dd::-webkit-scrollbar-track{background:transparent;}
+  .type-dd::-webkit-scrollbar-thumb{background:rgba(0,240,255,.25);border-radius:3px;}
+  .type-dd-group{padding:8px 12px 3px;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:#00f0ff;opacity:0.4;border-top:1px solid rgba(255,255,255,.05);margin-top:4px;}
+  .type-dd-group:first-child{border-top:none;margin-top:0;padding-top:6px;}
+  .type-dd-item{padding:7px 14px;font-size:13px;cursor:pointer;color:#e2e2e8;transition:background .1s;}
+  .type-dd-item:hover,.type-dd-item.sel{background:rgba(0,240,255,.1);color:#00f0ff;}
+  @media(max-width:768px){.sidebar{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr !important}.body{padding:14px 14px !important}}
+</style>
+</head>
+<body>
+<div id="sidebar-root" class="sidebar"></div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <a href="marketplace" class="btn-back" style="padding:7px 12px">
+        <span class="material-symbols-outlined ms" style="font-size:18px">arrow_back</span>
+      </a>
+      <div>
+        <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">I Need Equipment</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Post what you need — any organisation on the platform can send you a quote</div>
+      </div>
+    </div>
+    <span id="orgLabel" style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;letter-spacing:.12em;text-transform:uppercase"></span>
+  </div>
+
+  <div class="body">
+    <div class="success-banner" id="successBanner">
+      <span class="material-symbols-outlined ms" style="font-size:16px">check_circle</span>
+      Request posted! We'll notify you as quotes come in. <a href="my-requests" style="color:#00d4aa;margin-left:8px">View My Requests →</a>
+    </div>
+    <div class="err" id="errBox"></div>
+
+    <form id="reqForm">
+      <div class="sec"><span class="material-symbols-outlined ms">category</span> What do you need?</div>
+      <div class="fg">
+        <label>Vehicle / Equipment Type *</label>
+        <div style="position:relative" id="rqTypeWrap">
+          <div style="position:relative">
+            <input type="text" id="rqTypeSearch"
+                   placeholder="Search equipment type…"
+                   autocomplete="off"
+                   style="padding-right:32px"
+                   oninput="filterVTypes()"
+                   onfocus="openVTypeDD()"
+                   onblur="setTimeout(closeVTypeDD,180)"/>
+            <span class="material-symbols-outlined ms" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:18px;color:#849495;pointer-events:none">expand_more</span>
+          </div>
+          <input type="hidden" id="rqType" value=""/>
+        </div>
+      </div>
+
+      <div class="sec"><span class="material-symbols-outlined ms">tune</span> Details</div>
+      <div class="grid2">
+        <div class="fg">
+          <label>Province</label>
+          <select id="rqProvince">
+            <option value="">Any province</option>
+            <option value="GAUTENG">Gauteng</option>
+            <option value="WESTERN_CAPE">Western Cape</option>
+            <option value="KWAZULU_NATAL">KwaZulu-Natal</option>
+            <option value="EASTERN_CAPE">Eastern Cape</option>
+            <option value="MPUMALANGA">Mpumalanga</option>
+            <option value="LIMPOPO">Limpopo</option>
+            <option value="NORTH_WEST">North West</option>
+            <option value="NORTHERN_CAPE">Northern Cape</option>
+            <option value="FREE_STATE">Free State</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Hire Mode</label>
+          <select id="rqHireMode">
+            <option value="">No preference</option>
+            <option value="WET_HIRE">Wet Hire (with operator)</option>
+            <option value="DRY_HIRE">Dry Hire (self-operated)</option>
+            <option value="EITHER">Either</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="fg"><label>Needed From</label><input id="rqFrom" type="date"/></div>
+        <div class="fg"><label>Needed Until</label><input id="rqTo" type="date"/></div>
+      </div>
+      <div class="fg">
+        <label>Description</label>
+        <textarea id="rqDescription" placeholder="Anything suppliers should know — site location, duration, specific requirements…"></textarea>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span class="material-symbols-outlined ms" style="font-size:18px">campaign</span>
+          Post Request
+        </button>
+        <a href="marketplace" class="btn-back">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js"></script>
+<script src="sidebar.js"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('request-equipment');
+var user = EC_AUTH.require(['admin', 'user', 'driver']);
+document.getElementById('orgLabel').textContent = user.org || 'EquipCore';
+
+// Same searchable-dropdown pattern as add-vehicle.html/admin-fleet.html —
+// see VEH_TYPE_GROUPS there for why it's duplicated rather than shared.
+var VEH_TYPE_GROUPS = [
+  { g: 'Trucks & Haulage — Rigid & Tippers', t: ['Heavy Truck','Rigid Truck','Tipper Truck','Side Tipper','Rigid Dump Truck','Concrete Mixer','Crane Truck','Road Sweeper','Water Bowser'] },
+  { g: 'Trucks & Haulage — Specialised Bodies', t: ['Flatbed Truck','Curtainsider Truck','Refrigerated Truck','Tanker Truck','Car Transporter','Asphalt Paver','Cold Planer','Concrete Pump'] },
+  { g: 'Trucks & Haulage — Trailers', t: ['Superlink','Horse & Trailer','Flatbed Trailer','Curtainsider Trailer','Refrigerated Trailer','Tanker Trailer','Tipper Trailer','Lowboy Trailer','Skeletal Trailer','Car Transporter Trailer'] },
+  { g: 'Yellow Machinery — Earth Moving', t: ['Excavator','Mini Excavator','Backhoe Loader (TLB)','Wheel Loader','Compact Track Loader','Skid Steer Loader','Bulldozer','Motor Grader','Compactor'] },
+  { g: 'Yellow Machinery — Haulage', t: ['Articulated Hauler (ADT)'] },
+  { g: 'Plant & Processing — Mining & Drilling', t: ['Drill Rig','Crusher','Screening Plant'] },
+  { g: 'Cranes & Lifting', t: ['Crane','Mobile Crane','Tower Crane','Crawler Crane','Overhead Crane','Boom Truck'] },
+  { g: 'Forklifts & Warehouse', t: ['Forklift','Rough Terrain Forklift','Order Picker','Pallet Jack','Telehandler','Scissor Lift','Boom Lift','Straddle Carrier','Container Reachstacker','High Reach Truck'] },
+  { g: 'Plant & Processing — Power & Utilities', t: ['Generator','Compressor','Light Tower','Water Pump'] },
+  { g: 'Agricultural', t: ['Tractor','Agricultural Implement','Irrigation Equipment'] },
+  { g: 'Light Vehicles', t: ['Van','Pickup Truck','Minibus'] },
+  { g: 'Other', t: ['Other'] },
+];
+
+var _vtDD = null;
+function _getVtDD() {
+  if (!_vtDD || !document.body.contains(_vtDD)) {
+    _vtDD = document.createElement('div');
+    _vtDD.id = 'rqTypeDD';
+    _vtDD.className = 'type-dd';
+    document.body.appendChild(_vtDD);
+  }
+  return _vtDD;
+}
+function renderVTypeDD(q) {
+  var dd  = _getVtDD();
+  var cur = document.getElementById('rqType').value;
+  q = (q || '').toLowerCase();
+  var html = '';
+  VEH_TYPE_GROUPS.forEach(function(grp) {
+    var matches = q ? grp.t.filter(function(t) { return t.toLowerCase().includes(q); }) : grp.t;
+    if (!matches.length) return;
+    html += '<div class="type-dd-group">' + grp.g + '</div>';
+    matches.forEach(function(t) {
+      var sel = cur === t;
+      html += '<div class="type-dd-item' + (sel ? ' sel' : '') + '" onmousedown="selectVType(event,\'' + t.replace(/'/g, "\\'") + '\')">' + t + '</div>';
+    });
+  });
+  if (!html) html = '<div style="padding:12px 14px;color:#849495;font-family:\'JetBrains Mono\',monospace;font-size:11px">No types found</div>';
+  dd.innerHTML = html;
+}
+function openVTypeDD() {
+  var inp = document.getElementById('rqTypeSearch');
+  var r   = inp.getBoundingClientRect();
+  var dd  = _getVtDD();
+  renderVTypeDD('');
+  var spaceBelow = window.innerHeight - r.bottom;
+  var spaceAbove = r.top;
+  var maxH = Math.min(420, spaceBelow > 340 ? spaceBelow - 12 : spaceAbove - 12);
+  dd.style.cssText = 'display:block;width:' + r.width + 'px;left:' + r.left + 'px;max-height:' + maxH + 'px;';
+  if (spaceBelow >= 340 || spaceBelow >= spaceAbove) {
+    dd.style.top = (r.bottom + 4) + 'px';
+  } else {
+    dd.style.top = (r.top - Math.min(maxH, 420) - 4) + 'px';
+  }
+  requestAnimationFrame(function() {
+    var sel = dd.querySelector('.type-dd-item.sel');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+  });
+}
+function closeVTypeDD() {
+  _getVtDD().style.display = 'none';
+  document.getElementById('rqTypeSearch').value = document.getElementById('rqType').value || '';
+}
+function filterVTypes() {
+  var inp = document.getElementById('rqTypeSearch');
+  var r   = inp.getBoundingClientRect();
+  var dd  = _getVtDD();
+  renderVTypeDD(inp.value);
+  dd.style.cssText = 'display:block;width:' + r.width + 'px;left:' + r.left + 'px;top:' + (r.bottom + 4) + 'px;';
+}
+function selectVType(e, type) {
+  e.preventDefault();
+  document.getElementById('rqType').value = type;
+  document.getElementById('rqTypeSearch').value = type;
+  _getVtDD().style.display = 'none';
+}
+
+document.getElementById('reqForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var err = document.getElementById('errBox');
+  var btn = document.getElementById('submitBtn');
+  err.style.display = 'none';
+
+  var vehicleType = document.getElementById('rqType').value;
+  if (!vehicleType) { err.textContent = 'Please select an equipment type.'; err.style.display = 'block'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Posting…';
+
+  try {
+    await DC_DATA.init();
+    await DC_DATA.createEquipmentRequest({
+      vehicleType: vehicleType,
+      province:    document.getElementById('rqProvince').value || null,
+      hireMode:    document.getElementById('rqHireMode').value || null,
+      neededFrom:  document.getElementById('rqFrom').value || null,
+      neededTo:    document.getElementById('rqTo').value || null,
+      description: document.getElementById('rqDescription').value.trim() || null,
+    });
+    document.getElementById('successBanner').style.display = 'flex';
+    document.getElementById('reqForm').reset();
+    document.getElementById('rqType').value = '';
+    document.getElementById('rqTypeSearch').value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (ex) {
+    err.textContent = ex.message || 'Failed to post request. Please try again.';
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined ms" style="font-size:18px">campaign</span> Post Request';
+  }
+});
+</script>
+<script src="cookie-consent.js"></script>
+</body></html>

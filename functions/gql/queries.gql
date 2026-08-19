@@ -427,6 +427,7 @@ query GetRentalApplicationById($id: UUID!) {
       make
       model
       regPlate
+      dailyRate
     }
     equipmentName
     dailyRate
@@ -570,5 +571,84 @@ query GetNotificationById($id: UUID!) {
   notification(id: $id) {
     id
     user { id }
+  }
+}
+
+# ── Equipment Requests / Quotes (self-service RFQ marketplace) ──
+query ListOpenEquipmentRequests {
+  equipmentRequests(where: { status: { eq: OPEN } }, orderBy: { createdAt: DESC }) {
+    id
+    requestedBy { id name }
+    vehicleType
+    province
+    hireMode
+    neededFrom
+    neededTo
+    description
+    status
+    createdAt
+  }
+}
+
+query ListMyEquipmentRequests($requestedById: UUID!) {
+  equipmentRequests(where: { requestedById: { eq: $requestedById } }, orderBy: { createdAt: DESC }) {
+    id
+    vehicleType
+    province
+    hireMode
+    neededFrom
+    neededTo
+    description
+    status
+    createdAt
+  }
+}
+
+query ListQuotesForRequest($requestId: UUID!) {
+  quotes(where: { requestId: { eq: $requestId } }, orderBy: { createdAt: DESC }) {
+    id
+    supplierOrganisation { id name }
+    submittedBy { id name email }
+    vehicle { id make model }
+    dailyRate
+    weeklyRate
+    monthlyRate
+    message
+    status
+    createdAt
+  }
+}
+
+query ListMyQuotes($supplierOrganisationId: UUID!) {
+  quotes(where: { supplierOrganisationId: { eq: $supplierOrganisationId } }, orderBy: { createdAt: DESC }) {
+    id
+    request { id vehicleType province status }
+    dailyRate
+    weeklyRate
+    monthlyRate
+    message
+    status
+    createdAt
+  }
+}
+
+# Server-internal only — ownership-check helper for ListQuotesForRequest
+# (dataController.js's execute()) and AcceptQuote, same pattern as
+# GetNotificationById above.
+query GetEquipmentRequestById($id: UUID!) {
+  equipmentRequest(id: $id) {
+    id
+    requestedBy { id email name }
+    status
+  }
+}
+
+query GetQuoteById($id: UUID!) {
+  quote(id: $id) {
+    id
+    status
+    request { id requestedBy { id } status }
+    submittedBy { id email name }
+    supplierOrganisation { id name }
   }
 }

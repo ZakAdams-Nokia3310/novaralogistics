@@ -234,6 +234,29 @@ const SCHEMAS = {
 
   ListAuditLogs: z.object({ limit: z.number().int().min(1).max(500).nullish() }).strict(),
   ListAllNotifications: z.object({ limit: z.number().int().min(1).max(500).nullish() }).strict(),
+
+  // ── Equipment Requests / Quotes (self-service RFQ marketplace) ──
+  // requestedById/submittedById are never listed here — they're bolted onto
+  // effectiveVariables purely server-side via injectOwnIdAs, after this
+  // schema already ran (see dataController.js's execute()), so a client
+  // sending either would fail this .strict() parse. supplierOrganisationId
+  // IS listed even though orgField overrides it too — that override only
+  // runs after a successful parse, so the client must still send *some*
+  // syntactically valid uuid for it to get that far.
+  CreateEquipmentRequest: z.object({
+    vehicleType: VEHICLE_TYPE, province: PROVINCE.nullish(), hireMode: HIRE_MODE.nullish(),
+    neededFrom: optDateStr(), neededTo: optDateStr(), description: optStr(2000),
+  }).strict(),
+  ListOpenEquipmentRequests: EMPTY,
+  ListMyEquipmentRequests: z.object({ requestedById: uuid() }).strict(),
+  ListQuotesForRequest: z.object({ requestId: uuid() }).strict(),
+  ListMyQuotes: z.object({ supplierOrganisationId: uuid() }).strict(),
+  SubmitQuote: z.object({
+    requestId: uuid(), supplierOrganisationId: uuid(), vehicleId: optUuid(),
+    dailyRate: money().nullish(), weeklyRate: money().nullish(), monthlyRate: money().nullish(),
+    message: optStr(2000),
+  }).strict(),
+  AcceptQuote: z.object({ id: uuid() }).strict(),
 };
 
 // Operations reachable WITHOUT signing in — anyone (including anonymous

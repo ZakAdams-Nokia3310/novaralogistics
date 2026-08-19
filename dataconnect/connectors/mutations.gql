@@ -905,3 +905,56 @@ mutation DisableUserTotp($id: UUID!) @auth(level: NO_ACCESS) {
     updatedAt_expr: "request.time"
   })
 }
+
+# ── Equipment Requests / Quotes (self-service RFQ marketplace) ──
+mutation CreateEquipmentRequest(
+  $requestedById: UUID!
+  $vehicleType: VehicleType!
+  $province: SaProvince
+  $hireMode: HireMode
+  $neededFrom: Date
+  $neededTo: Date
+  $description: String
+) @auth(level: NO_ACCESS) {
+  equipmentRequest_insert(data: {
+    requestedById: $requestedById
+    vehicleType: $vehicleType
+    province: $province
+    hireMode: $hireMode
+    neededFrom: $neededFrom
+    neededTo: $neededTo
+    description: $description
+    status: OPEN
+  })
+}
+
+mutation SubmitQuote(
+  $requestId: UUID!
+  $supplierOrganisationId: UUID!
+  $submittedById: UUID!
+  $vehicleId: UUID
+  $dailyRate: Float
+  $weeklyRate: Float
+  $monthlyRate: Float
+  $message: String
+) @auth(level: NO_ACCESS) {
+  quote_insert(data: {
+    requestId: $requestId
+    supplierOrganisationId: $supplierOrganisationId
+    submittedById: $submittedById
+    vehicleId: $vehicleId
+    dailyRate: $dailyRate
+    weeklyRate: $weeklyRate
+    monthlyRate: $monthlyRate
+    message: $message
+    status: PENDING
+  })
+}
+
+mutation AcceptQuote($id: UUID!) @auth(level: NO_ACCESS) {
+  quote_update(id: $id, data: { status: ACCEPTED, updatedAt_expr: "request.time" })
+}
+
+mutation UpdateEquipmentRequestStatus($id: UUID!, $status: RequestStatus!) @auth(level: NO_ACCESS) {
+  equipmentRequest_update(id: $id, data: { status: $status, updatedAt_expr: "request.time" })
+}
