@@ -1,3 +1,13 @@
+# Firebase Web API key in firebase-config.js — deliberately committed (see
+# that file's own header comment and .gitignore's comment above it): the
+# Firebase web API key is explicitly documented by Firebase itself as not a
+# secret (https://firebase.google.com/docs/projects/api-keys), and this
+# exact value is already downloaded to every visitor's browser as plain JS
+# on the live production site regardless of whether it's in the repo. Real
+# security here is Firebase Security Rules / Data Connect auth levels, not
+# secrecy of this key.
+6ca1521b75edc8edb61557c7ebcec151de6fb675:firebase-config.js:gcp-api-key:9
+
 # Firebase Storage read-tokens embedded in placeholder image URLs in
 # dataconnect/seed_data.gql — leftover from the Data Connect quickstart
 # template this schema started from, pointing at a DIFFERENT project's
