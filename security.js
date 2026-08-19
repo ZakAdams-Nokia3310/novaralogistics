@@ -361,7 +361,7 @@ const EC_SECURITY = (() => {
   function validateSessionObject(user) {
     if (!user || typeof user !== 'object') return false;
     if (!user.id || !user.name || !user.email || !user.role) return false;
-    if (!['admin', 'user', 'driver', 'guest'].includes(user.role)) return false;
+    if (!['admin', 'super_admin', 'user', 'driver', 'guest'].includes(user.role)) return false;
     if (typeof user.email !== 'string' || !isValidEmail(user.email)) return false;
     if (isSessionExpired()) return false;
     return true;
