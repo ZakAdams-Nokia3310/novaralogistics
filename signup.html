@@ -13,6 +13,14 @@
 if (sessionStorage.getItem('ec_google_redirect_pending')) {
   sessionStorage.removeItem('ec_google_redirect_pending');
   document.documentElement.classList.add('ec-gsi-returning');
+  // Safety net: this class hides the entire page behind a loader until
+  // checkGoogleRedirectResult() resolves further down. If that call ever
+  // hangs (a stalled network request to Google, rather than a clean
+  // resolve/reject) the page would otherwise stay hidden forever with no
+  // way to interact with it. Forcing it off after a few seconds means a
+  // hung request degrades to "show the normal form" instead of "the whole
+  // page appears broken."
+  setTimeout(() => document.documentElement.classList.remove('ec-gsi-returning'), 6000);
 }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
@@ -212,26 +220,44 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
+// DOM refs come first, unconditionally — everything below this point that
+// touches EC_AUTH/EC_SECURITY is wrapped in its own try/catch so a failure
+// there (blocked script, CDN hiccup, extension interference) can't prevent
+// form/btn from existing or the submit listener further down from being
+// attached. A dead script must never mean a silently dead button.
+var form = document.getElementById('signupForm');
+var btn  = document.getElementById('submitBtn');
+var pwdBar = document.getElementById('pwdStrength');
+
+function showFatalErr(msg) {
+  var box = document.getElementById('errBox1');
+  if (box) { box.textContent = msg; box.style.display = 'block'; }
+  if (btn) { btn.disabled = false; }
+}
+
 // Redirect if already logged in
-var _u = EC_AUTH.current();
-if (_u) location.href = EC_AUTH.dashFor(_u.role);
+try {
+  var _u = EC_AUTH.current();
+  if (_u) location.href = EC_AUTH.dashFor(_u.role);
+} catch (err) { console.error('EC_AUTH.current() failed:', err); }
 
 // Landed back here after beginGoogleLogin's redirect to Google — pick up
 // the result. No-ops (resolves null) on an ordinary page load. Google
 // sign-up skips the KYC steps below entirely (Google's own consent screen
 // doesn't carry that data) — the account starts with just name/email, same
 // as before this change; apply-rental.html fills the gap on first use.
-EC_AUTH.checkGoogleRedirectResult().then(function (user) {
-  if (!user) { document.documentElement.classList.remove('ec-gsi-returning'); return; }
-  location.href = user._totpPending ? 'verify-2fa' : (EC_AUTH.dashFor(user.role) + '?intro=1');
-}).catch(function (err) {
+try {
+  EC_AUTH.checkGoogleRedirectResult().then(function (user) {
+    if (!user) { document.documentElement.classList.remove('ec-gsi-returning'); return; }
+    location.href = user._totpPending ? 'verify-2fa' : (EC_AUTH.dashFor(user.role) + '?intro=1');
+  }).catch(function (err) {
+    document.documentElement.classList.remove('ec-gsi-returning');
+    showErr(1, (typeof EC_SECURITY !== 'undefined') ? EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.') : 'Google sign-in failed.');
+  });
+} catch (err) {
   document.documentElement.classList.remove('ec-gsi-returning');
-  showErr(1, EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
-});
-
-var form = document.getElementById('signupForm');
-var btn  = document.getElementById('submitBtn');
-var pwdBar = document.getElementById('pwdStrength');
+  console.error('checkGoogleRedirectResult failed to start:', err);
+}
 
 function showErr(step, msg) {
   var box = document.getElementById('errBox' + step);
@@ -342,50 +368,65 @@ function buildProfilePayload() {
 
 form.addEventListener('submit', function(e){
   e.preventDefault();
-
-  if (typeof EC_SECURITY !== 'undefined' && EC_SECURITY.isHoneypotTripped(form)) return;
-  if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.checkRateLimit('signup_submit')) {
-    showErr(3, 'Too many requests. Please slow down.'); return;
-  }
-  clearErr(3);
-  if (!document.getElementById('consentTerms').checked) {
-    showErr(3, 'You must accept the Terms & Conditions and Privacy Policy to continue.'); return;
-  }
-
-  var pwd = document.getElementById('pwdInput').value;
-  var profile = buildProfilePayload();
-
-  btn.textContent = 'Creating account…'; btn.disabled = true;
-
-  setTimeout(async function(){
-    try {
-      var user = await EC_AUTH.signup(profile, pwd);
-      if (user && user._verificationPending) {
-        form.style.display = 'none';
-        document.getElementById('progressSteps').style.display = 'none';
-        document.getElementById('verifyMsg').textContent =
-          'We sent a verification link to ' + user.email + '. Click it, then sign in below.';
-        document.getElementById('verifyBox').style.display = 'block';
-        return;
-      }
-      location.href = EC_AUTH.dashFor(user.role) + '?intro=1';
-    } catch (err) {
-      showErr(3, EC_SECURITY.safeErrMsg(err, 'Sign-up failed.'));
-      btn.innerHTML = 'Create Account <span class="material-symbols-outlined" style="font-size:18px">check</span>'; btn.disabled = false;
+  try {
+    if (typeof EC_SECURITY === 'undefined') { showFatalErr('This page failed to fully load. Please refresh and try again.'); return; }
+    if (EC_SECURITY.isHoneypotTripped(form)) return;
+    if (!EC_SECURITY.checkRateLimit('signup_submit')) {
+      showErr(3, 'Too many requests. Please slow down.'); return;
     }
-  }, 400);
+    clearErr(3);
+    if (!document.getElementById('consentTerms').checked) {
+      showErr(3, 'You must accept the Terms & Conditions and Privacy Policy to continue.'); return;
+    }
+
+    var pwd = document.getElementById('pwdInput').value;
+    var profile = buildProfilePayload();
+
+    btn.textContent = 'Creating account…'; btn.disabled = true;
+
+    setTimeout(async function(){
+      try {
+        if (typeof EC_AUTH === 'undefined') throw new Error('Sign-up is unavailable right now. Please refresh the page and try again.');
+        var user = await EC_AUTH.signup(profile, pwd);
+        if (user && user._verificationPending) {
+          form.style.display = 'none';
+          document.getElementById('progressSteps').style.display = 'none';
+          document.getElementById('verifyMsg').textContent =
+            'We sent a verification link to ' + user.email + '. Click it, then sign in below.';
+          document.getElementById('verifyBox').style.display = 'block';
+          return;
+        }
+        location.href = EC_AUTH.dashFor(user.role) + '?intro=1';
+      } catch (err) {
+        showErr(3, EC_SECURITY.safeErrMsg(err, 'Sign-up failed.'));
+        btn.innerHTML = 'Create Account <span class="material-symbols-outlined" style="font-size:18px">check</span>'; btn.disabled = false;
+      }
+    }, 400);
+  } catch (err) {
+    console.error('Signup submit handler failed:', err);
+    showFatalErr('Something went wrong. Please refresh the page and try again.');
+  }
 });
 
 var googleBtn = document.getElementById('googleBtn');
 googleBtn.addEventListener('click', async function () {
-  googleBtn.disabled = true;
   try {
-    // Navigates the whole page to Google — execution doesn't resume past
-    // this call. The result is picked up above via checkGoogleRedirectResult
-    // on the next load, once Google sends the browser back here.
-    await EC_AUTH.beginGoogleLogin();
+    if (typeof EC_SECURITY === 'undefined' || typeof EC_AUTH === 'undefined') {
+      showFatalErr('This page failed to fully load. Please refresh and try again.'); return;
+    }
+    googleBtn.disabled = true;
+    try {
+      // Navigates the whole page to Google — execution doesn't resume past
+      // this call. The result is picked up above via checkGoogleRedirectResult
+      // on the next load, once Google sends the browser back here.
+      await EC_AUTH.beginGoogleLogin();
+    } catch (err) {
+      showErr(1, EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
+      googleBtn.disabled = false;
+    }
   } catch (err) {
-    showErr(1, EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
+    console.error('Google sign-in handler failed:', err);
+    showFatalErr('Something went wrong. Please refresh the page and try again.');
     googleBtn.disabled = false;
   }
 });

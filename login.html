@@ -13,6 +13,14 @@
 if (sessionStorage.getItem('ec_google_redirect_pending')) {
   sessionStorage.removeItem('ec_google_redirect_pending');
   document.documentElement.classList.add('ec-gsi-returning');
+  // Safety net: this class hides the entire page behind a loader until
+  // checkGoogleRedirectResult() resolves further down. If that call ever
+  // hangs (a stalled network request to Google, rather than a clean
+  // resolve/reject) the page would otherwise stay hidden forever with no
+  // way to interact with it. Forcing it off after a few seconds means a
+  // hung request degrades to "show the normal form" instead of "the whole
+  // page appears broken."
+  setTimeout(() => document.documentElement.classList.remove('ec-gsi-returning'), 6000);
 }
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
@@ -130,27 +138,29 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
 <script src="bg.js"></script>
 <script src="transitions.js"></script>
 <script>
-// Redirect if already logged in
-const _u = EC_AUTH.current();
-if (_u) location.href = EC_AUTH.dashFor(_u.role);
-
-// Landed back here after beginGoogleLogin's redirect to Google — pick up
-// the result. No-ops (resolves null) on an ordinary page load.
-EC_AUTH.checkGoogleRedirectResult().then(user => {
-  if (!user) { document.documentElement.classList.remove('ec-gsi-returning'); return; }
-  location.href = user._totpPending ? 'verify-2fa' : (EC_AUTH.dashFor(user.role) + '?intro=1');
-}).catch(err => {
-  document.documentElement.classList.remove('ec-gsi-returning');
-  showErr(EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
-});
-
-// ── Lockout state on load ─────────────────────────────────────────────────
-const btn      = document.getElementById('submitBtn');
-const errBox   = document.getElementById('errBox');
+// DOM refs and the submit/click listeners below are wired up
+// unconditionally, before anything that touches EC_AUTH/EC_SECURITY — if
+// one of those scripts fails to load (blocked by a network policy, an
+// extension, a CDN hiccup), the button must still visibly react instead of
+// silently doing nothing. Every block that depends on them is wrapped in
+// its own try/catch for the same reason: one broken dependency must never
+// take the whole page's interactivity down with it.
+const btn       = document.getElementById('submitBtn');
+const errBox    = document.getElementById('errBox');
 const loginForm = document.getElementById('loginForm');
+const emailInput = document.getElementById('emailInput');
+const googleBtn = document.getElementById('googleBtn');
 let _lockoutTimer = null;
 
+// Last-resort error path — must not itself depend on EC_SECURITY, since a
+// failure to load EC_SECURITY is one of the things it needs to report.
+function showFatalErr(msg) {
+  errBox.textContent = msg; errBox.style.display = 'block';
+  btn.textContent = 'Sign In'; btn.disabled = false;
+}
+
 function updateLockoutUI() {
+  if (typeof EC_SECURITY === 'undefined') return;
   if (!EC_SECURITY.isLockedOut()) {
     clearInterval(_lockoutTimer);
     btn.textContent = 'Sign In'; btn.disabled = false;
@@ -166,15 +176,12 @@ function updateLockoutUI() {
   btn.textContent = 'Locked'; btn.disabled = true;
 }
 
-if (EC_SECURITY.isLockedOut()) {
-  updateLockoutUI();
-  _lockoutTimer = setInterval(() => {
-    if (!EC_SECURITY.isLockedOut()) { updateLockoutUI(); clearInterval(_lockoutTimer); }
-    else updateLockoutUI();
-  }, 1000);
+function showErr(msg) {
+  errBox.textContent = msg; errBox.style.display = 'block';
+  loginForm.style.animation = 'shake .4s ease';
+  setTimeout(() => { loginForm.style.animation = ''; }, 400);
+  if (typeof EC_SECURITY === 'undefined' || !EC_SECURITY.isLockedOut()) { btn.textContent = 'Sign In'; btn.disabled = false; }
 }
-
-const emailInput = document.getElementById('emailInput');
 
 document.getElementById('togglePwd').addEventListener('click', () => {
   const inp  = document.getElementById('pwdInput');
@@ -185,64 +192,105 @@ document.getElementById('togglePwd').addEventListener('click', () => {
 
 loginForm.addEventListener('submit', e => {
   e.preventDefault();
+  try {
+    if (typeof EC_SECURITY === 'undefined') { showFatalErr('This page failed to fully load. Please refresh and try again.'); return; }
 
-  // Honeypot check — bail silently if tripped
-  if (EC_SECURITY.isHoneypotTripped(loginForm)) return;
+    // Honeypot check — bail silently if tripped
+    if (EC_SECURITY.isHoneypotTripped(loginForm)) return;
 
-  // Block if locked out
-  if (EC_SECURITY.isLockedOut()) { updateLockoutUI(); return; }
+    // Block if locked out
+    if (EC_SECURITY.isLockedOut()) { updateLockoutUI(); return; }
 
-  // Rate limit
-  if (!EC_SECURITY.checkRateLimit('login_submit')) {
-    showErr('Too many requests. Please slow down and try again.'); return;
-  }
-
-  const email = EC_SECURITY.sanitizeInput(emailInput.value, 'email');
-  const pwd   = document.getElementById('pwdInput').value;
-  if (!email || !pwd) { showErr('Please enter your email and password.'); return; }
-  if (!EC_SECURITY.isValidEmail(email)) { showErr('Please enter a valid email address.'); return; }
-
-  btn.textContent = 'Signing in…'; btn.disabled = true;
-
-  setTimeout(async () => {
-    try {
-      const user = await EC_AUTH.login(email, pwd);
-      location.href = user._totpPending ? 'verify-2fa' : (EC_AUTH.dashFor(user.role) + '?intro=1');
-    } catch (err) {
-      showErr(EC_SECURITY.safeErrMsg(err, 'Sign-in failed.'));
-      // Restart lockout timer if newly locked
-      if (EC_SECURITY.isLockedOut() && !_lockoutTimer) {
-        _lockoutTimer = setInterval(() => {
-          if (!EC_SECURITY.isLockedOut()) { updateLockoutUI(); clearInterval(_lockoutTimer); _lockoutTimer = null; }
-          else updateLockoutUI();
-        }, 1000);
-        updateLockoutUI();
-      }
+    // Rate limit
+    if (!EC_SECURITY.checkRateLimit('login_submit')) {
+      showErr('Too many requests. Please slow down and try again.'); return;
     }
-  }, 400);
+
+    const email = EC_SECURITY.sanitizeInput(emailInput.value, 'email');
+    const pwd   = document.getElementById('pwdInput').value;
+    if (!email || !pwd) { showErr('Please enter your email and password.'); return; }
+    if (!EC_SECURITY.isValidEmail(email)) { showErr('Please enter a valid email address.'); return; }
+
+    btn.textContent = 'Signing in…'; btn.disabled = true;
+
+    setTimeout(async () => {
+      try {
+        if (typeof EC_AUTH === 'undefined') throw new Error('Sign-in is unavailable right now. Please refresh the page and try again.');
+        const user = await EC_AUTH.login(email, pwd);
+        location.href = user._totpPending ? 'verify-2fa' : (EC_AUTH.dashFor(user.role) + '?intro=1');
+      } catch (err) {
+        showErr(EC_SECURITY.safeErrMsg(err, 'Sign-in failed.'));
+        // Restart lockout timer if newly locked
+        if (EC_SECURITY.isLockedOut() && !_lockoutTimer) {
+          _lockoutTimer = setInterval(() => {
+            if (!EC_SECURITY.isLockedOut()) { updateLockoutUI(); clearInterval(_lockoutTimer); _lockoutTimer = null; }
+            else updateLockoutUI();
+          }, 1000);
+          updateLockoutUI();
+        }
+      }
+    }, 400);
+  } catch (err) {
+    console.error('Login submit handler failed:', err);
+    showFatalErr('Something went wrong. Please refresh the page and try again.');
+  }
 });
 
-function showErr(msg) {
-  errBox.textContent = msg; errBox.style.display = 'block';
-  loginForm.style.animation = 'shake .4s ease';
-  setTimeout(() => { loginForm.style.animation = ''; }, 400);
-  if (!EC_SECURITY.isLockedOut()) { btn.textContent = 'Sign In'; btn.disabled = false; }
-}
-
-const googleBtn = document.getElementById('googleBtn');
 googleBtn.addEventListener('click', async () => {
-  if (EC_SECURITY.isLockedOut()) { updateLockoutUI(); return; }
-  googleBtn.disabled = true;
   try {
-    // Navigates the whole page to Google — execution doesn't resume past
-    // this call. The result is picked up above via checkGoogleRedirectResult
-    // on the next load, once Google sends the browser back here.
-    await EC_AUTH.beginGoogleLogin();
+    if (typeof EC_SECURITY === 'undefined' || typeof EC_AUTH === 'undefined') {
+      showFatalErr('This page failed to fully load. Please refresh and try again.'); return;
+    }
+    if (EC_SECURITY.isLockedOut()) { updateLockoutUI(); return; }
+    googleBtn.disabled = true;
+    try {
+      // Navigates the whole page to Google — execution doesn't resume past
+      // this call. The result is picked up above via checkGoogleRedirectResult
+      // on the next load, once Google sends the browser back here.
+      await EC_AUTH.beginGoogleLogin();
+    } catch (err) {
+      showErr(EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
+      googleBtn.disabled = false;
+    }
   } catch (err) {
-    showErr(EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.'));
+    console.error('Google sign-in handler failed:', err);
+    showFatalErr('Something went wrong. Please refresh the page and try again.');
     googleBtn.disabled = false;
   }
 });
+
+// Everything below here is best-effort convenience (auto-redirect if
+// already logged in, resuming a Google-redirect flow, restoring lockout
+// state) — none of it may prevent the listeners above from being attached.
+try {
+  const _u = EC_AUTH.current();
+  if (_u) location.href = EC_AUTH.dashFor(_u.role);
+} catch (err) { console.error('EC_AUTH.current() failed:', err); }
+
+try {
+  // Landed back here after beginGoogleLogin's redirect to Google — pick up
+  // the result. No-ops (resolves null) on an ordinary page load.
+  EC_AUTH.checkGoogleRedirectResult().then(user => {
+    if (!user) { document.documentElement.classList.remove('ec-gsi-returning'); return; }
+    location.href = user._totpPending ? 'verify-2fa' : (EC_AUTH.dashFor(user.role) + '?intro=1');
+  }).catch(err => {
+    document.documentElement.classList.remove('ec-gsi-returning');
+    showErr((typeof EC_SECURITY !== 'undefined') ? EC_SECURITY.safeErrMsg(err, 'Google sign-in failed.') : 'Google sign-in failed.');
+  });
+} catch (err) {
+  document.documentElement.classList.remove('ec-gsi-returning');
+  console.error('checkGoogleRedirectResult failed to start:', err);
+}
+
+try {
+  if (typeof EC_SECURITY !== 'undefined' && EC_SECURITY.isLockedOut()) {
+    updateLockoutUI();
+    _lockoutTimer = setInterval(() => {
+      if (!EC_SECURITY.isLockedOut()) { updateLockoutUI(); clearInterval(_lockoutTimer); }
+      else updateLockoutUI();
+    }, 1000);
+  }
+} catch (err) { console.error('Lockout check failed:', err); }
 </script>
 <script src="cookie-consent.js"></script>
 </body></html>
