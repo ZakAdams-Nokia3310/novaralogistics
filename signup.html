@@ -92,8 +92,7 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
     <div class="progress-steps" id="progressSteps">
       <div class="step"><div class="step-circle active" id="s1-circle">1</div><div class="step-label">Account</div></div>
       <div class="step"><div class="step-circle todo" id="s2-circle">2</div><div class="step-label">Personal</div></div>
-      <div class="step"><div class="step-circle todo" id="s3-circle">3</div><div class="step-label">Financial</div></div>
-      <div class="step"><div class="step-circle todo" id="s4-circle">4</div><div class="step-label">Review</div></div>
+      <div class="step"><div class="step-circle todo" id="s3-circle">3</div><div class="step-label">Review</div></div>
     </div>
 
     <form id="signupForm" novalidate>
@@ -174,45 +173,16 @@ if (sessionStorage.getItem('ec_google_redirect_pending')) {
         </div>
       </div>
 
-      <!-- STEP 3: Financial -->
+      <!-- STEP 3: Review & Consent -->
       <div id="step3" style="display:none">
-        <div class="info-box">
-          <span class="material-symbols-outlined" style="font-size:16px;color:#00f0ff;flex-shrink:0">info</span>
-          <span>Required for any future rental application's credit assessment — not shared until you actually apply.</span>
-        </div>
-        <div class="grid-2">
-          <div class="field"><label>Employment Status *</label><select id="f_employment" required><option value="">Select…</option><option>Full-time Employed</option><option>Self-employed</option><option>Business Owner</option><option>Contractor</option></select></div>
-          <div class="field"><label>Employer / Company Name *</label><input id="f_employer" placeholder="Atlas Quarry Ltd" required/></div>
-        </div>
-        <div class="grid-2">
-          <div class="field"><label>Monthly Income (R) *</label><input id="f_income" type="number" placeholder="50000" required/></div>
-          <div class="field"><label>Years Employed</label><input id="f_years" type="number" placeholder="3"/></div>
-        </div>
-        <div class="grid-2">
-          <div class="field"><label>Bank *</label><select id="f_bank" required><option value="">Select your bank…</option><option>ABSA</option><option>FNB</option><option>Standard Bank</option><option>Nedbank</option><option>Capitec</option><option>Investec</option><option>African Bank</option><option>Other</option></select></div>
-          <div class="field"><label>Account Type</label><select id="f_accountType"><option>Cheque Account</option><option>Savings Account</option><option>Business Account</option></select></div>
-        </div>
-        <div class="field">
-          <label>Outstanding Credit / Loans (R)</label>
-          <input type="number" placeholder="0" id="f_credit"/>
-        </div>
-        <div id="errBox3" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
-        <div class="btn-row">
-          <button type="button" class="btn-ghost" onclick="goStep(2)"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Back</button>
-          <button type="button" class="btn-main" onclick="goStep(4)">Review <span class="material-symbols-outlined" style="font-size:18px">arrow_forward</span></button>
-        </div>
-      </div>
-
-      <!-- STEP 4: Review & Consent -->
-      <div id="step4" style="display:none">
         <div id="reviewContent" style="font-size:13px;color:#b9cacb;line-height:2;margin-bottom:16px"></div>
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:#e2e2e8;margin-bottom:18px">
           <input type="checkbox" id="consentTerms" style="width:16px;height:16px;flex-shrink:0;margin-top:2px;accent-color:#00f0ff;padding:0;"/>
           <span>I have read and agree to the EquipCore <a href="terms" target="_blank" style="color:#00dbe9">Terms &amp; Conditions</a> and <a href="privacy" target="_blank" style="color:#00dbe9">Privacy Policy</a>.</span>
         </label>
-        <div id="errBox4" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
+        <div id="errBox3" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(255,100,100,0.08);border:1px solid rgba(255,100,100,0.2);border-radius:10px;font-size:13px;color:#ff6b6b;font-family:'JetBrains Mono',monospace"></div>
         <div class="btn-row">
-          <button type="button" class="btn-ghost" onclick="goStep(3)"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Back</button>
+          <button type="button" class="btn-ghost" onclick="goStep(2)"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span> Back</button>
           <button class="btn-main" id="submitBtn" type="submit">Create Account <span class="material-symbols-outlined" style="font-size:18px">check</span></button>
         </div>
       </div>
@@ -278,13 +248,12 @@ function clearErr(step) { document.getElementById('errBox' + step).style.display
 function goStep(n) {
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
-  if (n === 4 && !validateStep3()) return;
-  [1,2,3,4].forEach(function(i) {
+  [1,2,3].forEach(function(i) {
     document.getElementById('step' + i).style.display = (i === n ? '' : 'none');
     var c = document.getElementById('s' + i + '-circle');
     if (c) c.className = 'step-circle ' + (i < n ? 'done' : i === n ? 'active' : 'todo');
   });
-  if (n === 4) buildReview();
+  if (n === 3) buildReview();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -308,15 +277,6 @@ function validateStep2() {
   }
   return true;
 }
-function validateStep3() {
-  clearErr(3);
-  var required = ['f_employment', 'f_employer', 'f_income', 'f_bank'];
-  for (var i = 0; i < required.length; i++) {
-    if (!document.getElementById(required[i]).value.toString().trim()) { showErr(3, 'Please fill in all required fields.'); return false; }
-  }
-  return true;
-}
-
 // Password strength indicator
 document.getElementById('pwdInput').addEventListener('input', function(){
   var v = this.value, score = 0;
@@ -346,15 +306,6 @@ var PROVINCE_MAP = {
   'Eastern Cape':'EASTERN_CAPE', 'Mpumalanga':'MPUMALANGA', 'Limpopo':'LIMPOPO',
   'North West':'NORTH_WEST', 'Northern Cape':'NORTHERN_CAPE', 'Free State':'FREE_STATE',
 };
-var EMPLOYMENT_MAP = {
-  'Full-time Employed':'FULL_TIME_EMPLOYED', 'Self-employed':'SELF_EMPLOYED',
-  'Business Owner':'BUSINESS_OWNER', 'Contractor':'CONTRACTOR',
-};
-var BANK_MAP = {
-  'ABSA':'ABSA', 'FNB':'FNB', 'Standard Bank':'STANDARD_BANK', 'Nedbank':'NEDBANK',
-  'Capitec':'CAPITEC', 'Investec':'INVESTEC', 'African Bank':'AFRICAN_BANK', 'Other':'OTHER',
-};
-var ACCOUNT_TYPE_MAP = { 'Cheque Account':'CHEQUE', 'Savings Account':'SAVINGS', 'Business Account':'BUSINESS' };
 
 function buildReview() {
   var vals = {
@@ -363,14 +314,17 @@ function buildReview() {
     'Phone': document.getElementById('f_phone').value.trim(),
     'ID Number': document.getElementById('f_id').value.trim(),
     'Address': document.getElementById('f_address').value.trim(),
-    'Employer': document.getElementById('f_employer').value.trim(),
-    'Monthly Income': document.getElementById('f_income').value ? 'R ' + parseInt(document.getElementById('f_income').value, 10).toLocaleString() : '—',
   };
   document.getElementById('reviewContent').innerHTML = Object.entries(vals).map(function(entry) {
     return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span style="color:#849495;font-family:\'JetBrains Mono\',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em">' + EC_SECURITY.sanitizeHtml(entry[0]) + '</span><span style="text-align:right">' + EC_SECURITY.sanitizeHtml(entry[1] || '—') + '</span></div>';
   }).join('');
 }
 
+// Financial/KYC fields (employment, income, banking) are deliberately not
+// collected here — the account itself doesn't need them. apply-rental.html
+// collects them separately, in context, only when someone actually applies
+// to rent equipment (a credit-check-relevant action), and syncs them back
+// to the profile from there.
 function buildProfilePayload() {
   return {
     name: document.getElementById('nameInput').value.trim(),
@@ -382,13 +336,6 @@ function buildProfilePayload() {
     city: document.getElementById('f_city').value.trim() || null,
     province: PROVINCE_MAP[document.getElementById('f_province').value] || null,
     postalCode: document.getElementById('f_postal').value.trim() || null,
-    employmentStatus: EMPLOYMENT_MAP[document.getElementById('f_employment').value] || null,
-    employerName: document.getElementById('f_employer').value.trim() || null,
-    monthlyIncome: document.getElementById('f_income').value ? Number(document.getElementById('f_income').value) : null,
-    yearsEmployed: document.getElementById('f_years').value ? Number(document.getElementById('f_years').value) : null,
-    bank: BANK_MAP[document.getElementById('f_bank').value] || null,
-    accountType: ACCOUNT_TYPE_MAP[document.getElementById('f_accountType').value] || null,
-    outstandingCredit: document.getElementById('f_credit').value ? Number(document.getElementById('f_credit').value) : null,
     termsAccepted: document.getElementById('consentTerms').checked,
   };
 }
@@ -398,11 +345,11 @@ form.addEventListener('submit', function(e){
 
   if (typeof EC_SECURITY !== 'undefined' && EC_SECURITY.isHoneypotTripped(form)) return;
   if (typeof EC_SECURITY !== 'undefined' && !EC_SECURITY.checkRateLimit('signup_submit')) {
-    showErr(4, 'Too many requests. Please slow down.'); return;
+    showErr(3, 'Too many requests. Please slow down.'); return;
   }
-  clearErr(4);
+  clearErr(3);
   if (!document.getElementById('consentTerms').checked) {
-    showErr(4, 'You must accept the Terms & Conditions and Privacy Policy to continue.'); return;
+    showErr(3, 'You must accept the Terms & Conditions and Privacy Policy to continue.'); return;
   }
 
   var pwd = document.getElementById('pwdInput').value;
@@ -423,7 +370,7 @@ form.addEventListener('submit', function(e){
       }
       location.href = EC_AUTH.dashFor(user.role) + '?intro=1';
     } catch (err) {
-      showErr(4, EC_SECURITY.safeErrMsg(err, 'Sign-up failed.'));
+      showErr(3, EC_SECURITY.safeErrMsg(err, 'Sign-up failed.'));
       btn.innerHTML = 'Create Account <span class="material-symbols-outlined" style="font-size:18px">check</span>'; btn.disabled = false;
     }
   }, 400);

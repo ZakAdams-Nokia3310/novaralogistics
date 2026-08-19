@@ -264,13 +264,14 @@ const PUBLIC_SCHEMAS = {
 // might send only name) but termsAccepted is hard-required: the server
 // stamps termsAcceptedAt itself the moment this is true, never trusting a
 // client-supplied timestamp.
+// Financial/KYC fields (employment, income, banking) are deliberately not
+// accepted here — self-registration must not store them. apply-rental.html
+// collects those separately via UpdateUserProfile, only in the context of
+// an actual rental application.
 const REGISTER_SELF_SCHEMA = z.object({
   name: str(200),
   phone: optPhone(), idNumber: optStr(20), dateOfBirth: optDateStr(),
   address: optStr(400), city: optStr(100), province: PROVINCE.nullish(), postalCode: optStr(10),
-  employmentStatus: EMPLOYMENT_STATUS.nullish(), employerName: optStr(200),
-  monthlyIncome: money().nullish(), yearsEmployed: z.number().int().min(0).max(80).nullish(),
-  bank: BANK_NAME.nullish(), accountType: ACCOUNT_TYPE.nullish(), outstandingCredit: money().nullish(),
   termsAccepted: z.boolean(),
 }).strict();
 
