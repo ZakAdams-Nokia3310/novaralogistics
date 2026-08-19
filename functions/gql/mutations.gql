@@ -336,6 +336,37 @@ mutation AssignDriverToVehicle($id: UUID!, $assignedDriverId: UUID) {
   vehicle_update(id: $id, data: { assignedDriverId: $assignedDriverId, updatedAt_expr: "request.time" })
 }
 
+# Marketplace listing terms — kept separate from UpdateVehicleDetails below
+# so that mutation's existing shape (used by vehicle-detail.html's main Save
+# Changes form) never changes.
+mutation UpdateVehicleListing(
+  $id: UUID!
+  $province: SaProvince
+  $hireMode: HireMode
+  $operatorIncluded: Boolean
+  $fuelIncluded: Boolean
+  $transportIncluded: Boolean
+  $hourlyRate: Float
+  $dailyRate: Float
+  $weeklyRate: Float
+  $monthlyRate: Float
+  $supplierOrganisationId: UUID
+) {
+  vehicle_update(id: $id, data: {
+    province: $province
+    hireMode: $hireMode
+    operatorIncluded: $operatorIncluded
+    fuelIncluded: $fuelIncluded
+    transportIncluded: $transportIncluded
+    hourlyRate: $hourlyRate
+    dailyRate: $dailyRate
+    weeklyRate: $weeklyRate
+    monthlyRate: $monthlyRate
+    supplierOrganisationId: $supplierOrganisationId
+    updatedAt_expr: "request.time"
+  })
+}
+
 mutation UpdateVehicleDetails(
   $id: UUID!
   $make: String!

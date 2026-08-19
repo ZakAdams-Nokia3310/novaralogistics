@@ -224,6 +224,21 @@ const DC_DATA = (() => {
       vin:              v.vin || null,
       trackingCompany:  v.trackingCompany || null,
       lastServiceDate:  v.lastServiceDate || null,
+      // ── Marketplace listing — all nullable, see schema.gql's Vehicle doc
+      // comment. supplierOrgId/Name is who owns/lists the equipment,
+      // distinct from orgId/orgName above (which stays "who's scoped to
+      // rent it," unchanged).
+      province:            v.province || null,
+      hireMode:            v.hireMode ? lo(v.hireMode) : null,
+      operatorIncluded:    v.operatorIncluded ?? null,
+      fuelIncluded:        v.fuelIncluded ?? null,
+      transportIncluded:   v.transportIncluded ?? null,
+      hourlyRate:          v.hourlyRate ?? null,
+      dailyRate:           v.dailyRate ?? null,
+      weeklyRate:          v.weeklyRate ?? null,
+      monthlyRate:         v.monthlyRate ?? null,
+      supplierOrgId:       v.supplierOrganisation?.id || null,
+      supplierOrgName:     v.supplierOrganisation?.name || null,
       addedAt:          toDate(v.createdAt),
       updatedAt:        toDate(v.updatedAt),
     };
@@ -308,19 +323,73 @@ const DC_DATA = (() => {
   // any key not listed there makes CreateVehicle/UpdateVehicleDetails fail
   // server-side with a 500.
   const VEHICLE_TYPE = {
-    'Excavator':              'EXCAVATOR',
-    'Backhoe Loader':         'BACKHOE_LOADER',
-    'Wheel Loader':           'WHEEL_LOADER',
-    'Heavy Truck':            'HEAVY_TRUCK',
-    'Articulated Hauler':     'ARTICULATED_HAULER',
-    'Drill Rig':              'DRILL_RIG',
-    'Crane':                  'CRANE',
+    'Heavy Truck': 'HEAVY_TRUCK',
+    'Rigid Truck': 'RIGID_TRUCK',
+    'Tipper Truck': 'TIPPER_TRUCK',
+    'Side Tipper': 'SIDE_TIPPER',
+    'Rigid Dump Truck': 'RIGID_DUMP_TRUCK',
+    'Concrete Mixer': 'CONCRETE_MIXER',
+    'Crane Truck': 'CRANE_TRUCK',
+    'Road Sweeper': 'ROAD_SWEEPER',
+    'Water Bowser': 'WATER_BOWSER',
+    'Flatbed Truck': 'FLATBED_TRUCK',
+    'Curtainsider Truck': 'CURTAINSIDER_TRUCK',
+    'Refrigerated Truck': 'REFRIGERATED_TRUCK',
+    'Tanker Truck': 'TANKER_TRUCK',
+    'Car Transporter': 'CAR_TRANSPORTER',
+    'Asphalt Paver': 'ASPHALT_PAVER',
+    'Cold Planer': 'COLD_PLANER',
+    'Concrete Pump': 'CONCRETE_PUMP',
+    'Superlink': 'SUPERLINK',
+    'Horse & Trailer': 'HORSE_TRAILER',
+    'Flatbed Trailer': 'FLATBED_TRAILER',
+    'Curtainsider Trailer': 'CURTAINSIDER_TRAILER',
+    'Refrigerated Trailer': 'REFRIGERATED_TRAILER',
+    'Tanker Trailer': 'TANKER_TRAILER',
+    'Tipper Trailer': 'TIPPER_TRAILER',
+    'Lowboy Trailer': 'LOWBOY_TRAILER',
+    'Skeletal Trailer': 'SKELETAL_TRAILER',
+    'Car Transporter Trailer': 'CAR_TRANSPORTER_TRAILER',
+    'Excavator': 'EXCAVATOR',
+    'Mini Excavator': 'MINI_EXCAVATOR',
+    'Backhoe Loader (TLB)': 'BACKHOE_LOADER',
+    'Wheel Loader': 'WHEEL_LOADER',
+    'Compact Track Loader': 'COMPACT_TRACK_LOADER',
+    'Skid Steer Loader': 'SKID_STEER_LOADER',
+    'Bulldozer': 'BULLDOZER',
+    'Motor Grader': 'MOTOR_GRADER',
+    'Compactor': 'COMPACTOR',
+    'Articulated Hauler (ADT)': 'ARTICULATED_HAULER',
+    'Drill Rig': 'DRILL_RIG',
+    'Crusher': 'CRUSHER',
+    'Screening Plant': 'SCREENING_PLANT',
+    'Crane': 'CRANE',
+    'Mobile Crane': 'MOBILE_CRANE',
+    'Tower Crane': 'TOWER_CRANE',
+    'Crawler Crane': 'CRAWLER_CRANE',
+    'Overhead Crane': 'OVERHEAD_CRANE',
+    'Boom Truck': 'BOOM_TRUCK',
+    'Forklift': 'FORKLIFT',
+    'Rough Terrain Forklift': 'ROUGH_TERRAIN_FORKLIFT',
+    'Order Picker': 'ORDER_PICKER',
+    'Pallet Jack': 'PALLET_JACK',
+    'Telehandler': 'TELEHANDLER',
+    'Scissor Lift': 'SCISSOR_LIFT',
+    'Boom Lift': 'BOOM_LIFT',
+    'Straddle Carrier': 'STRADDLE_CARRIER',
     'Container Reachstacker': 'CONTAINER_REACHSTACKER',
-    'High Reach Truck':       'HIGH_REACH_TRUCK',
-    'Forklift':               'FORKLIFT',
-    'Generator':              'GENERATOR',
-    'Van':                    'VAN',
-    'Other':                  'OTHER',
+    'High Reach Truck': 'HIGH_REACH_TRUCK',
+    'Generator': 'GENERATOR',
+    'Compressor': 'COMPRESSOR',
+    'Light Tower': 'LIGHT_TOWER',
+    'Water Pump': 'WATER_PUMP',
+    'Tractor': 'TRACTOR',
+    'Agricultural Implement': 'AGRICULTURAL_IMPLEMENT',
+    'Irrigation Equipment': 'IRRIGATION_EQUIPMENT',
+    'Van': 'VAN',
+    'Pickup Truck': 'PICKUP_TRUCK',
+    'Minibus': 'MINIBUS',
+    'Other': 'OTHER',
   };
 
   const VEHICLE_STATUS = {
@@ -502,6 +571,17 @@ const DC_DATA = (() => {
     // vehicle" — real assignment (see schema.gql's Vehicle.assignedDriver)
     // instead of the old "first on_rent vehicle in the org" guess.
     getVehicleAssignedToDriver(driverId) { return _vehicles.find(v => v.assignedDriverId === driverId) || null; },
+
+    // Cross-organisation marketplace browse — every AVAILABLE vehicle
+    // platform-wide, not scoped to the caller's own org. Fetched fresh
+    // on-demand (not part of init()'s cache, same precedent as
+    // getAuditLogs()/getAllNotificationsForReports()) — this is a distinct
+    // dataset from _vehicles, which stays org-scoped for
+    // rent-equipment.html's existing behaviour.
+    async getMarketplaceVehicles() {
+      const d = await query('ListMarketplaceVehicles');
+      return (d.vehicles || []).map(normVehicle);
+    },
     getRentalsForVehicle(vehicleId) { return _rentals.filter(r => r.vehicleId === vehicleId); },
     getMaintenanceQueries() {
       if (!_orgScope) return _maintenance;
@@ -896,6 +976,26 @@ const DC_DATA = (() => {
     // driverId may be null/empty to unassign.
     async assignDriverToVehicle(id, driverId) {
       await mutate('AssignDriverToVehicle', { id, assignedDriverId: driverId || null });
+      await _loadVehicles(); saveCache();
+    },
+
+    // Marketplace listing terms — separate from updateVehicleDetails below,
+    // matching the separate UpdateVehicleListing mutation (see its doc
+    // comment in functions/gql/mutations.gql for why).
+    async updateVehicleListing(id, data) {
+      await mutate('UpdateVehicleListing', {
+        id,
+        province:              data.province || null,
+        hireMode:               data.hireMode ? data.hireMode.toUpperCase() : null,
+        operatorIncluded:      data.operatorIncluded ?? null,
+        fuelIncluded:          data.fuelIncluded ?? null,
+        transportIncluded:     data.transportIncluded ?? null,
+        hourlyRate:            data.hourlyRate === '' || data.hourlyRate == null ? null : +data.hourlyRate,
+        dailyRate:             data.dailyRate === '' || data.dailyRate == null ? null : +data.dailyRate,
+        weeklyRate:            data.weeklyRate === '' || data.weeklyRate == null ? null : +data.weeklyRate,
+        monthlyRate:           data.monthlyRate === '' || data.monthlyRate == null ? null : +data.monthlyRate,
+        supplierOrganisationId: data.supplierOrganisationId || null,
+      });
       await _loadVehicles(); saveCache();
     },
 

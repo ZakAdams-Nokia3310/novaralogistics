@@ -56,6 +56,7 @@ const EC_SECURITY = (() => {
     'profile'           : ['admin', 'user', 'driver'],
     'apply-rental'      : ['admin', 'user', 'driver'],
     'rent-equipment'    : ['admin', 'user', 'driver'],
+    'marketplace'       : ['admin', 'user', 'driver'],
   };
 
   // ── Cryptographically secure random ───────────────────────────────────────

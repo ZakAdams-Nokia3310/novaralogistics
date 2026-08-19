@@ -40,20 +40,31 @@ const USER_ROLE = z.enum(['ADMIN', 'USER', 'DRIVER', 'GUEST']);
 const USER_STATUS = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']);
 const ORG_STATUS = z.enum(['ACTIVE', 'SUSPENDED']);
 const VEHICLE_STATUS = z.enum(['AVAILABLE', 'ON_RENT', 'MAINTENANCE', 'RETIRED']);
+// Must stay a superset match of dataconnect/schema/schema.gql's VehicleType
+// enum exactly — this used to be a much larger list than the DB enum
+// supported (accepting values like TIPPER_TRUCK/MOBILE_CRANE that Postgres
+// would reject with a 500); the schema enum was expanded to match this list
+// (plus a handful of new SA-specific additions) instead of shrinking this
+// one, so every value below is now genuinely valid end-to-end.
 const VEHICLE_TYPE = z.enum([
-  'EXCAVATOR', 'MINI_EXCAVATOR', 'BACKHOE_LOADER', 'WHEEL_LOADER', 'COMPACT_TRACK_LOADER',
-  'SKID_STEER_LOADER', 'BULLDOZER', 'MOTOR_GRADER', 'COMPACTOR', 'HEAVY_TRUCK', 'RIGID_TRUCK',
-  'TIPPER_TRUCK', 'FLATBED_TRUCK', 'CURTAINSIDER_TRUCK', 'REFRIGERATED_TRUCK', 'TANKER_TRUCK',
-  'CONCRETE_MIXER', 'CAR_TRANSPORTER', 'CRANE_TRUCK', 'FLATBED_TRAILER', 'CURTAINSIDER_TRAILER',
-  'REFRIGERATED_TRAILER', 'TANKER_TRAILER', 'TIPPER_TRAILER', 'LOWBOY_TRAILER', 'SKELETAL_TRAILER',
-  'CAR_TRANSPORTER_TRAILER', 'DRILL_RIG', 'RIGID_DUMP_TRUCK', 'ARTICULATED_HAULER', 'CRANE',
-  'MOBILE_CRANE', 'TOWER_CRANE', 'CRAWLER_CRANE', 'OVERHEAD_CRANE', 'BOOM_TRUCK',
-  'CONTAINER_REACHSTACKER', 'STRADDLE_CARRIER', 'HIGH_REACH_TRUCK', 'FORKLIFT',
-  'ROUGH_TERRAIN_FORKLIFT', 'ORDER_PICKER', 'PALLET_JACK', 'TELEHANDLER', 'SCISSOR_LIFT',
-  'BOOM_LIFT', 'GENERATOR', 'COMPRESSOR', 'LIGHT_TOWER', 'WATER_PUMP', 'ROAD_SWEEPER',
-  'WATER_BOWSER', 'CONCRETE_PUMP', 'ASPHALT_PAVER', 'COLD_PLANER', 'VAN', 'PICKUP_TRUCK',
-  'MINIBUS', 'OTHER',
+  // Original 13, exact original order, then all SA-specific additions
+  // appended after — see the matching comment on schema.gql's VehicleType
+  // enum for why order (not just membership) matters here.
+  'EXCAVATOR', 'ARTICULATED_HAULER', 'WHEEL_LOADER', 'HEAVY_TRUCK', 'BACKHOE_LOADER', 'DRILL_RIG',
+  'CRANE', 'FORKLIFT', 'GENERATOR', 'HIGH_REACH_TRUCK', 'CONTAINER_REACHSTACKER', 'VAN', 'OTHER',
+  'RIGID_TRUCK', 'TIPPER_TRUCK', 'SIDE_TIPPER', 'RIGID_DUMP_TRUCK', 'CONCRETE_MIXER', 'CRANE_TRUCK',
+  'ROAD_SWEEPER', 'WATER_BOWSER', 'FLATBED_TRUCK', 'CURTAINSIDER_TRUCK', 'REFRIGERATED_TRUCK',
+  'TANKER_TRUCK', 'CAR_TRANSPORTER', 'ASPHALT_PAVER', 'COLD_PLANER', 'CONCRETE_PUMP', 'SUPERLINK',
+  'HORSE_TRAILER', 'FLATBED_TRAILER', 'CURTAINSIDER_TRAILER', 'REFRIGERATED_TRAILER',
+  'TANKER_TRAILER', 'TIPPER_TRAILER', 'LOWBOY_TRAILER', 'SKELETAL_TRAILER',
+  'CAR_TRANSPORTER_TRAILER', 'MINI_EXCAVATOR', 'COMPACT_TRACK_LOADER', 'SKID_STEER_LOADER',
+  'BULLDOZER', 'MOTOR_GRADER', 'COMPACTOR', 'CRUSHER', 'SCREENING_PLANT', 'MOBILE_CRANE',
+  'TOWER_CRANE', 'CRAWLER_CRANE', 'OVERHEAD_CRANE', 'BOOM_TRUCK', 'ROUGH_TERRAIN_FORKLIFT',
+  'ORDER_PICKER', 'PALLET_JACK', 'TELEHANDLER', 'SCISSOR_LIFT', 'BOOM_LIFT', 'STRADDLE_CARRIER',
+  'COMPRESSOR', 'LIGHT_TOWER', 'WATER_PUMP', 'TRACTOR', 'AGRICULTURAL_IMPLEMENT',
+  'IRRIGATION_EQUIPMENT', 'PICKUP_TRUCK', 'MINIBUS',
 ]);
+const HIRE_MODE = z.enum(['WET_HIRE', 'DRY_HIRE', 'EITHER']);
 const MAINT_TYPE = z.enum(['DRIVER_ISSUE', 'ROADSIDE', 'TYRES', 'WINDSCREEN', 'SERVICE', 'GENERAL']);
 const MAINT_PRIORITY = z.enum(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']);
 const MAINT_STATUS = z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED']);
@@ -81,6 +92,10 @@ const SCHEMAS = {
   ListAllOrgRequests: EMPTY,
   ListAllUsers: EMPTY,
   ListAllVehicles: EMPTY,
+  // Cross-organisation marketplace browse — deliberately unscoped (see
+  // registry/dataOperations.js's ListMarketplaceVehicles: roles ALL_ROLES,
+  // no orgField override), unlike every other List* above.
+  ListMarketplaceVehicles: EMPTY,
   ListAllMaintenanceQueries: EMPTY,
   ListAllRentals: EMPTY,
   ListAllRentalApplications: EMPTY,
@@ -138,6 +153,15 @@ const SCHEMAS = {
     vin: optStr(50), trackingCompany: optStr(100), lastServiceDate: optDateStr(),
   }).strict(),
   AssignDriverToVehicle: z.object({ id: uuid(), assignedDriverId: optUuid() }).strict(),
+  // Marketplace listing terms — kept as its own mutation, separate from
+  // UpdateVehicleDetails, so that mutation's existing contract (used by
+  // vehicle-detail.html's main Save Changes form) never changes shape.
+  UpdateVehicleListing: z.object({
+    id: uuid(), province: PROVINCE.nullish(), hireMode: HIRE_MODE.nullish(),
+    operatorIncluded: z.boolean().nullish(), fuelIncluded: z.boolean().nullish(), transportIncluded: z.boolean().nullish(),
+    hourlyRate: money().nullish(), dailyRate: money().nullish(), weeklyRate: money().nullish(), monthlyRate: money().nullish(),
+    supplierOrganisationId: optUuid(),
+  }).strict(),
   DeleteVehicle: z.object({ id: uuid() }).strict(),
 
   // ── Maintenance ──

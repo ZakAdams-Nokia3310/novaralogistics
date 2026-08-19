@@ -287,14 +287,18 @@ function typeLabel(t) {
 // any value not listed there makes CreateVehicle/UpdateVehicleDetails fail
 // server-side with a 500.
 const VEH_TYPE_GROUPS = [
-  { g: 'Earth Moving',         t: ['Excavator','Backhoe Loader','Wheel Loader'] },
-  { g: 'Trucks & Haulage',     t: ['Heavy Truck','Articulated Hauler'] },
-  { g: 'Mining',                t: ['Drill Rig'] },
-  { g: 'Cranes & Lifting',     t: ['Crane','Container Reachstacker','High Reach Truck'] },
-  { g: 'Forklifts & Warehouse',t: ['Forklift'] },
-  { g: 'Power & Utilities',    t: ['Generator'] },
-  { g: 'Light Vehicles',       t: ['Van'] },
-  { g: 'Other',                t: ['Other'] },
+  { g: 'Trucks & Haulage — Rigid & Tippers', t: ['Heavy Truck','Rigid Truck','Tipper Truck','Side Tipper','Rigid Dump Truck','Concrete Mixer','Crane Truck','Road Sweeper','Water Bowser'] },
+  { g: 'Trucks & Haulage — Specialised Bodies', t: ['Flatbed Truck','Curtainsider Truck','Refrigerated Truck','Tanker Truck','Car Transporter','Asphalt Paver','Cold Planer','Concrete Pump'] },
+  { g: 'Trucks & Haulage — Trailers', t: ['Superlink','Horse & Trailer','Flatbed Trailer','Curtainsider Trailer','Refrigerated Trailer','Tanker Trailer','Tipper Trailer','Lowboy Trailer','Skeletal Trailer','Car Transporter Trailer'] },
+  { g: 'Yellow Machinery — Earth Moving', t: ['Excavator','Mini Excavator','Backhoe Loader (TLB)','Wheel Loader','Compact Track Loader','Skid Steer Loader','Bulldozer','Motor Grader','Compactor'] },
+  { g: 'Yellow Machinery — Haulage', t: ['Articulated Hauler (ADT)'] },
+  { g: 'Plant & Processing — Mining & Drilling', t: ['Drill Rig','Crusher','Screening Plant'] },
+  { g: 'Cranes & Lifting', t: ['Crane','Mobile Crane','Tower Crane','Crawler Crane','Overhead Crane','Boom Truck'] },
+  { g: 'Forklifts & Warehouse', t: ['Forklift','Rough Terrain Forklift','Order Picker','Pallet Jack','Telehandler','Scissor Lift','Boom Lift','Straddle Carrier','Container Reachstacker','High Reach Truck'] },
+  { g: 'Plant & Processing — Power & Utilities', t: ['Generator','Compressor','Light Tower','Water Pump'] },
+  { g: 'Agricultural', t: ['Tractor','Agricultural Implement','Irrigation Equipment'] },
+  { g: 'Light Vehicles', t: ['Van','Pickup Truck','Minibus'] },
+  { g: 'Other', t: ['Other'] },
 ];
 
 let _vtDD = null;

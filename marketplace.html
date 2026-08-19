@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head><script src="canonical-redirect.js"></script>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<title>Marketplace — EquipCore</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="theme.css" rel="stylesheet"/>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;}
+  body{font-family:'Inter',sans-serif;color:#e2e2e8;min-height:100vh;}
+  .ms{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+  .glass{background:rgba(255,255,255,.05);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.09);}
+  .glass-lo{background:rgba(255,255,255,.03);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.07);}
+  #sidebar-root{width:220px;height:100vh;position:fixed;left:0;top:0;z-index:50;display:flex;flex-direction:column;background:rgba(5,7,11,.94);border-right:1px solid rgba(255,255,255,.06);}
+  .main{margin-left:220px;min-height:100vh;}
+  .topbar{height:56px;position:sticky;top:0;z-index:40;background:rgba(8,10,14,.82);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 26px;}
+  .body{padding:22px 26px;}
+  .btnp{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:#00f0ff;color:#003a3c;font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:13px;border-radius:9px;border:none;cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btnp:hover{filter:brightness(1.08);}
+  .btnp:disabled,.btnp.disabled{opacity:.4;cursor:not-allowed;filter:none;}
+  .btng{display:inline-flex;align-items:center;gap:5px;padding:8px 12px;background:rgba(255,255,255,.05);color:#e2e2e8;font-family:'Hanken Grotesk',sans-serif;font-weight:600;font-size:13px;border-radius:9px;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-decoration:none;transition:all .18s;}
+  .btng:hover{background:rgba(255,255,255,.08);}
+  .b{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+  .b::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .ba{background:rgba(0,212,170,.1);color:#00d4aa;}
+  .bp{background:rgba(255,217,61,.1);color:#ffd93d;}
+  .bblue{background:rgba(125,211,252,.1);color:#7dd3fc;}
+  .bpurp{background:rgba(209,188,255,.1);color:#d1bcff;}
+  input,select{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#e2e2e8;font-family:'Inter',sans-serif;font-size:13px;padding:9px 12px;outline:none;transition:border-color .18s;}
+  input:focus,select:focus{border-color:#00f0ff;}
+  select option{background:#111317;}
+
+  .eqgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .eqcard{border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .18s,transform .18s;}
+  .eqcard:hover{border-color:rgba(0,240,255,.2);transform:translateY(-2px);}
+  .eqcard-img{height:140px;background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .eqcard-img img{width:100%;height:100%;object-fit:cover;}
+  .eqcard-body{padding:14px 16px;display:flex;flex-direction:column;gap:8px;flex:1;}
+  .eqcard-name{font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px;}
+  .eqcard-meta{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495;}
+  .eqcard-rate{font-family:'Hanken Grotesk',sans-serif;font-weight:800;font-size:16px;color:#00f0ff;}
+  .eqcard-actions{margin-top:auto;padding-top:6px;}
+  @media(max-width:768px){#sidebar-root{display:none!important}.main{margin-left:0!important}}
+  @media(max-width:600px){.body{padding:14px 12px!important}.filterbar{flex-direction:column;align-items:stretch!important}}
+</style>
+</head>
+<body>
+<aside id="sidebar-root"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div style="font-family:'Hanken Grotesk',sans-serif;font-weight:700;font-size:15px">Marketplace</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495">Browse listed equipment from every supplier on the platform</div>
+    </div>
+    <a href="rent-equipment" class="btng"><span class="material-symbols-outlined ms" style="font-size:15px">local_shipping</span>My Org's Fleet</a>
+  </div>
+
+  <div class="body">
+    <!-- Filters -->
+    <div class="filterbar" style="display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap">
+      <div style="position:relative;flex:1;min-width:200px">
+        <span class="material-symbols-outlined ms" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:16px;color:#849495;pointer-events:none">search</span>
+        <input id="qSearch" placeholder="Search make, model, or supplier…" style="padding-left:36px;width:100%" oninput="renderGrid()"/>
+      </div>
+      <select id="qCategory" onchange="renderGrid()" style="min-width:200px"></select>
+      <select id="qProvince" onchange="renderGrid()" style="min-width:160px">
+        <option value="all">All Provinces</option>
+        <option value="GAUTENG">Gauteng</option>
+        <option value="WESTERN_CAPE">Western Cape</option>
+        <option value="KWAZULU_NATAL">KwaZulu-Natal</option>
+        <option value="EASTERN_CAPE">Eastern Cape</option>
+        <option value="MPUMALANGA">Mpumalanga</option>
+        <option value="LIMPOPO">Limpopo</option>
+        <option value="NORTH_WEST">North West</option>
+        <option value="NORTHERN_CAPE">Northern Cape</option>
+        <option value="FREE_STATE">Free State</option>
+      </select>
+      <select id="qHireMode" onchange="renderGrid()" style="min-width:150px">
+        <option value="all">Wet or Dry Hire</option>
+        <option value="WET_HIRE">Wet Hire</option>
+        <option value="DRY_HIRE">Dry Hire</option>
+        <option value="EITHER">Either</option>
+      </select>
+    </div>
+
+    <div id="resultCount" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#849495;margin-bottom:12px"></div>
+    <div class="eqgrid" id="eqGrid"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="security.js"></script>
+<script src="auth.js"></script>
+<script src="frontend/token-client.js"></script>
+<script src="dc.js?v=2"></script>
+<script src="sidebar.js?v=2"></script>
+<script src="bg.js"></script>
+<script src="transitions.js"></script>
+<script>
+buildSidebar('marketplace');
+const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
+const user = EC_AUTH.require(['admin', 'user', 'driver']);
+
+function titleCase(snake) {
+  return (snake || '').toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+function provinceLabel(p) { return titleCase(p); }
+function hireModeBadge(m) {
+  if (m === 'wet_hire') return `<span class="b bp">Wet Hire</span>`;
+  if (m === 'dry_hire') return `<span class="b bblue">Dry Hire</span>`;
+  if (m === 'either')   return `<span class="b ba">Wet or Dry</span>`;
+  return '';
+}
+function rateLabel(v) {
+  if (v.dailyRate)   return 'R' + v.dailyRate.toLocaleString('en-ZA') + ' / day';
+  if (v.hourlyRate)  return 'R' + v.hourlyRate.toLocaleString('en-ZA') + ' / hour';
+  if (v.weeklyRate)  return 'R' + v.weeklyRate.toLocaleString('en-ZA') + ' / week';
+  if (v.monthlyRate) return 'R' + v.monthlyRate.toLocaleString('en-ZA') + ' / month';
+  return 'Contact for rate';
+}
+
+// Same grouping shape as admin-fleet.html's VEH_TYPE_GROUPS (duplicated by
+// design, not a shared module — see this session's marketplace-layer plan)
+// but keyed by the raw enum value rather than a display label, since this
+// page filters live Vehicle rows rather than populating a data-entry form.
+const CATEGORY_GROUPS = {
+  'Trucks & Haulage — Rigid & Tippers': ['HEAVY_TRUCK','RIGID_TRUCK','TIPPER_TRUCK','SIDE_TIPPER','RIGID_DUMP_TRUCK','CONCRETE_MIXER','CRANE_TRUCK','ROAD_SWEEPER','WATER_BOWSER'],
+  'Trucks & Haulage — Specialised Bodies': ['FLATBED_TRUCK','CURTAINSIDER_TRUCK','REFRIGERATED_TRUCK','TANKER_TRUCK','CAR_TRANSPORTER','ASPHALT_PAVER','COLD_PLANER','CONCRETE_PUMP'],
+  'Trucks & Haulage — Trailers': ['SUPERLINK','HORSE_TRAILER','FLATBED_TRAILER','CURTAINSIDER_TRAILER','REFRIGERATED_TRAILER','TANKER_TRAILER','TIPPER_TRAILER','LOWBOY_TRAILER','SKELETAL_TRAILER','CAR_TRANSPORTER_TRAILER'],
+  'Yellow Machinery — Earth Moving': ['EXCAVATOR','MINI_EXCAVATOR','BACKHOE_LOADER','WHEEL_LOADER','COMPACT_TRACK_LOADER','SKID_STEER_LOADER','BULLDOZER','MOTOR_GRADER','COMPACTOR'],
+  'Yellow Machinery — Haulage': ['ARTICULATED_HAULER'],
+  'Plant & Processing — Mining & Drilling': ['DRILL_RIG','CRUSHER','SCREENING_PLANT'],
+  'Cranes & Lifting': ['CRANE','MOBILE_CRANE','TOWER_CRANE','CRAWLER_CRANE','OVERHEAD_CRANE','BOOM_TRUCK'],
+  'Forklifts & Warehouse': ['FORKLIFT','ROUGH_TERRAIN_FORKLIFT','ORDER_PICKER','PALLET_JACK','TELEHANDLER','SCISSOR_LIFT','BOOM_LIFT','STRADDLE_CARRIER','CONTAINER_REACHSTACKER','HIGH_REACH_TRUCK'],
+  'Plant & Processing — Power & Utilities': ['GENERATOR','COMPRESSOR','LIGHT_TOWER','WATER_PUMP'],
+  'Agricultural': ['TRACTOR','AGRICULTURAL_IMPLEMENT','IRRIGATION_EQUIPMENT'],
+  'Light Vehicles': ['VAN','PICKUP_TRUCK','MINIBUS'],
+  'Other': ['OTHER'],
+};
+function categoryOf(type) {
+  const t = (type || '').toUpperCase();
+  return Object.entries(CATEGORY_GROUPS).find(([, types]) => types.includes(t))?.[0] || 'Other';
+}
+
+let _listings = [];
+
+function populateCategoryFilter() {
+  const present = new Set(_listings.map(v => categoryOf(v.type)));
+  const sel = document.getElementById('qCategory');
+  sel.innerHTML = '<option value="all">All Categories</option>' +
+    Object.keys(CATEGORY_GROUPS).filter(g => present.has(g)).map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+}
+
+function renderGrid() {
+  const q = document.getElementById('qSearch').value.trim().toLowerCase();
+  const categoryFilter = document.getElementById('qCategory').value;
+  const provinceFilter = document.getElementById('qProvince').value;
+  const hireModeFilter = document.getElementById('qHireMode').value;
+
+  let vehicles = _listings.slice();
+  if (categoryFilter !== 'all') vehicles = vehicles.filter(v => categoryOf(v.type) === categoryFilter);
+  if (provinceFilter !== 'all') vehicles = vehicles.filter(v => (v.province || '').toUpperCase() === provinceFilter);
+  if (hireModeFilter !== 'all') vehicles = vehicles.filter(v => (v.hireMode || '').toUpperCase() === hireModeFilter);
+  if (q) {
+    vehicles = vehicles.filter(v =>
+      `${v.make} ${v.model} ${v.supplierOrgName || ''}`.toLowerCase().includes(q));
+  }
+
+  document.getElementById('resultCount').textContent =
+    `${vehicles.length} listing${vehicles.length !== 1 ? 's' : ''}`;
+
+  const grid = document.getElementById('eqGrid');
+  if (!vehicles.length) {
+    grid.innerHTML = `<div class="glass" style="grid-column:1/-1;border-radius:13px;text-align:center;padding:36px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:12px">No listings match your filters.</div>`;
+    return;
+  }
+  grid.innerHTML = vehicles.map(v => {
+    const img = v.imageUrl
+      ? `<img src="${esc(v.imageUrl)}" alt=""/>`
+      : `<span class="material-symbols-outlined ms" style="font-size:32px;color:#556">local_shipping</span>`;
+    const included = [
+      v.operatorIncluded ? 'Operator' : null,
+      v.fuelIncluded ? 'Fuel' : null,
+      v.transportIncluded ? 'Transport' : null,
+    ].filter(Boolean).join(' · ');
+    return `
+      <div class="eqcard glass">
+        <div class="eqcard-img">${img}</div>
+        <div class="eqcard-body">
+          <div>
+            <div class="eqcard-name">${esc(v.make)} ${esc(v.model)}</div>
+            <div class="eqcard-meta">${esc(titleCase(v.type))}${v.year ? ' · ' + v.year : ''}</div>
+            <div class="eqcard-meta" style="margin-top:2px">${v.province ? '📍 ' + esc(provinceLabel(v.province)) : 'Location not set'} · ${esc(v.supplierOrgName || 'Platform Fleet')}</div>
+          </div>
+          <div class="eqcard-rate">${rateLabel(v)}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${hireModeBadge(v.hireMode)}${included ? `<span class="b bpurp">${esc(included)}</span>` : ''}</div>
+          <div class="eqcard-actions"><a href="apply-rental?vehicleId=${escA(v.id)}" class="btnp" style="width:100%;justify-content:center"><span class="material-symbols-outlined ms" style="font-size:15px">add_circle</span>Apply to Rent</a></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+DC_DATA.getMarketplaceVehicles().then(listings => {
+  _listings = listings;
+  populateCategoryFilter();
+  renderGrid();
+}).catch(() => {
+  document.getElementById('eqGrid').innerHTML = `<div class="glass" style="grid-column:1/-1;border-radius:13px;text-align:center;padding:36px;color:#ff6b6b;font-family:'JetBrains Mono',monospace;font-size:12px">Unable to load the marketplace — please refresh.</div>`;
+});
+</script>
+</body></html>

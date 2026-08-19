@@ -29,6 +29,13 @@ enum OrgRequestStatus {
 }
 
 enum VehicleType {
+  # Original 13 values, kept in their exact original relative order — a
+  # Postgres ALTER TYPE ... ADD VALUE only stays cheap (metadata-only, no
+  # table rewrite) when existing values don't change position; reordering
+  # them (even just adding new ones between/before old ones) forces Data
+  # Connect into a full type-recreation-and-column-recast migration instead,
+  # which timed out repeatedly on this project's small instance. All new SA
+  # categories are appended after, never interleaved.
   EXCAVATOR
   ARTICULATED_HAULER
   WHEEL_LOADER
@@ -42,6 +49,60 @@ enum VehicleType {
   CONTAINER_REACHSTACKER
   VAN
   OTHER
+  RIGID_TRUCK
+  TIPPER_TRUCK
+  SIDE_TIPPER
+  RIGID_DUMP_TRUCK
+  CONCRETE_MIXER
+  CRANE_TRUCK
+  ROAD_SWEEPER
+  WATER_BOWSER
+  FLATBED_TRUCK
+  CURTAINSIDER_TRUCK
+  REFRIGERATED_TRUCK
+  TANKER_TRUCK
+  CAR_TRANSPORTER
+  ASPHALT_PAVER
+  COLD_PLANER
+  CONCRETE_PUMP
+  SUPERLINK
+  HORSE_TRAILER
+  FLATBED_TRAILER
+  CURTAINSIDER_TRAILER
+  REFRIGERATED_TRAILER
+  TANKER_TRAILER
+  TIPPER_TRAILER
+  LOWBOY_TRAILER
+  SKELETAL_TRAILER
+  CAR_TRANSPORTER_TRAILER
+  MINI_EXCAVATOR
+  COMPACT_TRACK_LOADER
+  SKID_STEER_LOADER
+  BULLDOZER
+  MOTOR_GRADER
+  COMPACTOR
+  CRUSHER
+  SCREENING_PLANT
+  MOBILE_CRANE
+  TOWER_CRANE
+  CRAWLER_CRANE
+  OVERHEAD_CRANE
+  BOOM_TRUCK
+  ROUGH_TERRAIN_FORKLIFT
+  ORDER_PICKER
+  PALLET_JACK
+  TELEHANDLER
+  SCISSOR_LIFT
+  BOOM_LIFT
+  STRADDLE_CARRIER
+  COMPRESSOR
+  LIGHT_TOWER
+  WATER_PUMP
+  TRACTOR
+  AGRICULTURAL_IMPLEMENT
+  IRRIGATION_EQUIPMENT
+  PICKUP_TRUCK
+  MINIBUS
 }
 
 enum VehicleStatus {
@@ -49,6 +110,14 @@ enum VehicleStatus {
   ON_RENT
   MAINTENANCE
   RETIRED
+}
+
+# Marketplace listing terms — see Vehicle's hireMode/operatorIncluded/etc.
+# fields below.
+enum HireMode {
+  WET_HIRE
+  DRY_HIRE
+  EITHER
 }
 
 enum MaintenanceType {
@@ -299,6 +368,24 @@ type Vehicle @table(name: "vehicles") {
   vin: String @col(dataType: "varchar(50)")
   trackingCompany: String @col(dataType: "varchar(100)")
   lastServiceDate: Date
+  # ── Marketplace listing (all nullable — a vehicle with none of these set
+  # simply doesn't appear in marketplace browsing/filtering; the org-scoped
+  # rent-equipment.html flow is completely unaffected by any of this). ──
+  province: SaProvince
+  hireMode: HireMode
+  operatorIncluded: Boolean
+  fuelIncluded: Boolean
+  transportIncluded: Boolean
+  hourlyRate: Float
+  dailyRate: Float
+  weeklyRate: Float
+  monthlyRate: Float
+  # Who owns/lists this equipment — deliberately a SEPARATE field from
+  # `organisation` above, which means "which customer org is scoped to see/
+  # rent this" (see rent-equipment.html's ListVehiclesByOrg usage) and must
+  # keep that exact meaning unchanged. Null means "the platform operator's
+  # own fleet" — no backfill needed on existing rows.
+  supplierOrganisation: Organisation
   createdAt: Timestamp! @default(expr: "request.time")
   updatedAt: Timestamp! @default(expr: "request.time")
 }

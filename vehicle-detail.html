@@ -129,6 +129,54 @@
           <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:6px">Only drivers in this vehicle's organisation are listed.</div>
         </div>
 
+        <!-- ── Marketplace Listing ── -->
+        <div class="sec"><span class="material-symbols-outlined ms">storefront</span> Marketplace Listing</div>
+        <div class="grid2">
+          <div class="fg"><label>Province</label>
+            <select id="fProvince">
+              <option value="">— Not set —</option>
+              <option value="GAUTENG">Gauteng</option>
+              <option value="WESTERN_CAPE">Western Cape</option>
+              <option value="KWAZULU_NATAL">KwaZulu-Natal</option>
+              <option value="EASTERN_CAPE">Eastern Cape</option>
+              <option value="MPUMALANGA">Mpumalanga</option>
+              <option value="LIMPOPO">Limpopo</option>
+              <option value="NORTH_WEST">North West</option>
+              <option value="NORTHERN_CAPE">Northern Cape</option>
+              <option value="FREE_STATE">Free State</option>
+            </select>
+          </div>
+          <div class="fg"><label>Hire Mode</label>
+            <select id="fHireMode">
+              <option value="">— Not set —</option>
+              <option value="WET_HIRE">Wet Hire (machine + operator)</option>
+              <option value="DRY_HIRE">Dry Hire (machine only)</option>
+              <option value="EITHER">Either</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:18px">
+          <label style="display:flex;align-items:center;gap:7px;text-transform:none;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;letter-spacing:0;margin-bottom:0"><input type="checkbox" id="fOperatorIncl" style="width:auto"/> Operator included</label>
+          <label style="display:flex;align-items:center;gap:7px;text-transform:none;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;letter-spacing:0;margin-bottom:0"><input type="checkbox" id="fFuelIncl" style="width:auto"/> Fuel included</label>
+          <label style="display:flex;align-items:center;gap:7px;text-transform:none;font-family:'Inter',sans-serif;font-size:13px;color:#e2e2e8;letter-spacing:0;margin-bottom:0"><input type="checkbox" id="fTransportIncl" style="width:auto"/> Transport included</label>
+        </div>
+        <div class="grid2">
+          <div class="fg"><label>Hourly Rate (R)</label><input id="fHourlyRate" type="number" min="0" step="0.01" placeholder="—"/></div>
+          <div class="fg"><label>Daily Rate (R)</label><input id="fDailyRate" type="number" min="0" step="0.01" placeholder="—"/></div>
+          <div class="fg"><label>Weekly Rate (R)</label><input id="fWeeklyRate" type="number" min="0" step="0.01" placeholder="—"/></div>
+          <div class="fg"><label>Monthly Rate (R)</label><input id="fMonthlyRate" type="number" min="0" step="0.01" placeholder="—"/></div>
+        </div>
+        <div class="fg" style="max-width:380px">
+          <label>Supplier Organisation</label>
+          <select id="fSupplierOrg"></select>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#849495;margin-top:6px">Who owns/lists this equipment for the marketplace. Leave unset for the platform's own fleet.</div>
+        </div>
+        <div style="margin-bottom:28px">
+          <button type="button" class="btnp" id="saveListingBtn" onclick="saveMarketplaceListing()">
+            <span class="material-symbols-outlined ms" style="font-size:16px">storefront</span> Save Listing
+          </button>
+        </div>
+
         <!-- ── Service ── -->
         <div class="sec"><span class="material-symbols-outlined ms">build</span> Odometer &amp; Service</div>
         <div class="grid3">
@@ -285,6 +333,20 @@ function render(v) {
     .concat(drivers.map(d => `<option value="${d.id}"${d.id === v.assignedDriverId ? ' selected' : ''}>${esc(d.name)}</option>`))
     .join('');
 
+  document.getElementById('fProvince').value = v.province || '';
+  document.getElementById('fHireMode').value = v.hireMode ? v.hireMode.toUpperCase() : '';
+  document.getElementById('fOperatorIncl').checked = !!v.operatorIncluded;
+  document.getElementById('fFuelIncl').checked = !!v.fuelIncluded;
+  document.getElementById('fTransportIncl').checked = !!v.transportIncluded;
+  document.getElementById('fHourlyRate').value = v.hourlyRate ?? '';
+  document.getElementById('fDailyRate').value = v.dailyRate ?? '';
+  document.getElementById('fWeeklyRate').value = v.weeklyRate ?? '';
+  document.getElementById('fMonthlyRate').value = v.monthlyRate ?? '';
+  const suppliers = DC_DATA.getAllOrgs();
+  document.getElementById('fSupplierOrg').innerHTML = ['<option value="">— Platform Fleet (unset) —</option>']
+    .concat(suppliers.map(o => `<option value="${o.id}"${o.id === v.supplierOrgId ? ' selected' : ''}>${esc(o.name)}</option>`))
+    .join('');
+
   const histBody = document.getElementById('rentalHistBody');
   if (!rentals.length) {
     histBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:24px;color:#849495;font-family:'JetBrains Mono',monospace;font-size:11px">No rental history for this vehicle yet</td></tr>`;
@@ -349,6 +411,31 @@ async function saveDriverAssignment() {
     render(DC_DATA.getVehicleById(vehicleId));
   } catch (err) {
     showToast('err', 'Failed to update driver: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function saveMarketplaceListing() {
+  const btn = document.getElementById('saveListingBtn');
+  btn.disabled = true;
+  try {
+    await DC_DATA.updateVehicleListing(vehicleId, {
+      province: document.getElementById('fProvince').value || null,
+      hireMode: document.getElementById('fHireMode').value || null,
+      operatorIncluded: document.getElementById('fOperatorIncl').checked,
+      fuelIncluded: document.getElementById('fFuelIncl').checked,
+      transportIncluded: document.getElementById('fTransportIncl').checked,
+      hourlyRate: document.getElementById('fHourlyRate').value,
+      dailyRate: document.getElementById('fDailyRate').value,
+      weeklyRate: document.getElementById('fWeeklyRate').value,
+      monthlyRate: document.getElementById('fMonthlyRate').value,
+      supplierOrganisationId: document.getElementById('fSupplierOrg').value || null,
+    });
+    showToast('ok', 'Marketplace listing saved.');
+    render(DC_DATA.getVehicleById(vehicleId));
+  } catch (err) {
+    showToast('err', 'Failed to save listing: ' + err.message);
   } finally {
     btn.disabled = false;
   }

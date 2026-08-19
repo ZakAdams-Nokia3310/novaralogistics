@@ -97,6 +97,19 @@ query ListAllVehicles {
     vin
     trackingCompany
     lastServiceDate
+    province
+    hireMode
+    operatorIncluded
+    fuelIncluded
+    transportIncluded
+    hourlyRate
+    dailyRate
+    weeklyRate
+    monthlyRate
+    supplierOrganisation {
+      id
+      name
+    }
     createdAt
     updatedAt
   }
@@ -294,8 +307,56 @@ query ListVehiclesByOrg($organisationId: UUID!) {
     vin
     trackingCompany
     lastServiceDate
+    province
+    hireMode
+    operatorIncluded
+    fuelIncluded
+    transportIncluded
+    hourlyRate
+    dailyRate
+    weeklyRate
+    monthlyRate
+    supplierOrganisation {
+      id
+      name
+    }
     createdAt
     updatedAt
+  }
+}
+
+# Cross-organisation marketplace browse — every AVAILABLE vehicle
+# platform-wide, not scoped to the caller's own org (unlike ListVehiclesByOrg
+# above). See registry/dataOperations.js's ListMarketplaceVehicles doc
+# comment for why this deliberately has no org-scoping override.
+query ListMarketplaceVehicles {
+  vehicles(where: { status: { eq: AVAILABLE } }, orderBy: { updatedAt: DESC }) {
+    id
+    organisation {
+      id
+      name
+    }
+    supplierOrganisation {
+      id
+      name
+    }
+    make
+    model
+    year
+    type
+    regPlate
+    description
+    imageUrl
+    status
+    province
+    hireMode
+    operatorIncluded
+    fuelIncluded
+    transportIncluded
+    hourlyRate
+    dailyRate
+    weeklyRate
+    monthlyRate
   }
 }
 

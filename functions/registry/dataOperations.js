@@ -73,6 +73,13 @@ module.exports = {
   // (see the query's nested where filter in functions/gql/queries.gql).
   ListRentalEvents: { kind: 'query', roles: ADMIN, orgRoles: ['admin', 'user', 'driver'], orgField: 'organisationId' },
 
+  // Marketplace browse — deliberately cross-organisation (no orgField
+  // override, unlike every operation above): any signed-in role sees every
+  // supplier's AVAILABLE listings platform-wide, not just their own org's
+  // fleet. Distinct from ListVehiclesByOrg, which stays org-scoped for
+  // rent-equipment.html's existing "my org's fleet" behaviour.
+  ListMarketplaceVehicles: { kind: 'query', roles: ALL_ROLES },
+
   // ── Notifications — any signed-in role, own data only ──
   ListNotifications: { kind: 'query', roles: ADMIN, ownField: 'userId' },
   // No ownField here — a notification's own id isn't the owning user's id,
@@ -119,6 +126,7 @@ module.exports = {
   UpdateVehicleService:  { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
   UpdateVehicleDetails:  { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
   AssignDriverToVehicle: { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
+  UpdateVehicleListing:  { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
   DeleteVehicle:          { kind: 'mutation', roles: ADMIN, featureKey: 'admin-fleet' },
 
   // ── Maintenance ──
