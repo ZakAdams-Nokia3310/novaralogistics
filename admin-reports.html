@@ -91,6 +91,7 @@
     <div id="panelUsers" style="display:none"></div>
     <div id="panelNotifications" style="display:none"></div>
     <div id="panelActivity" style="display:none"></div>
+    <div id="panelFlagged" style="display:none"></div>
     <div id="panelCustom" style="display:none"></div>
   </div>
 </div>
@@ -123,6 +124,14 @@ const TABS = [
   { key: 'Activity',     icon: 'history' },
   { key: 'Custom',       icon: 'tune', label: 'Custom Report' },
 ];
+// Platform-owner-only — every request/action that was attempted and DIDN'T
+// go through (auth failures, permission denials, rate limiting, bot checks,
+// TOTP failures) across both the admin and user sides. Not part of the
+// regular Activity tab's scope (that's a general log; this is specifically
+// "what got rejected and might need attention") and not shown to regular
+// admins at all, matching the same platform-owner-only split used for org
+// creation/approval/suspend elsewhere in this app.
+if (EC_SECURITY.isSuperAdmin()) TABS.push({ key: 'Flagged', icon: 'flag' });
 
 document.getElementById('tabBar').innerHTML = TABS.map((t, i) =>
   `<button class="tab-btn${i === 0 ? ' active' : ''}" id="tab${t.key}" onclick="switchTab('${t.key}')">
@@ -138,6 +147,7 @@ function switchTab(key) {
   });
   if (key === 'Notifications') loadNotificationsTab();
   if (key === 'Activity') loadActivityTab();
+  if (key === 'Flagged') loadFlaggedTab();
 }
 
 // ── Global filters: date range + organisation ───────────────────────────────
@@ -720,6 +730,73 @@ function exportActivityCSV() {
     { key: 'userName', label: 'User' }, { key: 'userRole', label: 'Role' }, { key: 'action', label: 'Action' },
     { key: 'page', label: 'Page' }, { key: 'createdAt', label: 'When' },
   ], 'activity.csv');
+}
+
+// ── Flagged tab (platform-owner-only — requests/actions that didn't go
+//    through, from either the admin or user side) ── lazy-loaded, own fetch
+// independent of the Activity tab's 200-cap cache: failures are typically
+// sparse relative to routine DATA_MUTATION/PUBLIC_SUBMIT traffic, so
+// reusing that cache risks the most recent real failure having already
+// scrolled out of a 200-event window. Same audit-log source either way
+// (functions/services/auditLog.js), just filtered to a curated list of
+// denial/failure action types instead of everything.
+const FLAGGED_ACTIONS = new Set([
+  'ACCESS_DENIED_NO_TOKEN', 'ACCESS_DENIED_BAD_TOKEN', 'ACCESS_DENIED_ROLE',
+  'DATA_ACCESS_DENIED', 'UNAUTHORIZED_ACCESS_ATTEMPT',
+  'LOGIN_FAILED', 'LOGIN_FAILED_LOCKED', 'LOGIN_FAILED_UNVERIFIED_EMAIL', 'LOGIN_FAILED_NO_DB_RECORD',
+  'BOT_CHECK_FAILED', 'RATE_LIMIT_EXCEEDED',
+  'ROLE_CHANGE_FAILED', 'EMAIL_CHANGE_FAILED', 'PASSWORD_CHANGE_FAILED',
+  'TOTP_ENROLL_FAILED', 'TOTP_CHALLENGE_FAILED', 'TOTP_SELF_RECOVERY_DENIED_STALE_AUTH',
+]);
+
+let _flaggedLoaded = false, _flaggedCache = [];
+async function loadFlaggedTab() {
+  if (!_flaggedLoaded) {
+    document.getElementById('panelFlagged').innerHTML = '<div style="padding:30px;text-align:center;color:#849495">Loading flagged activity…</div>';
+    try {
+      const all = await DC_DATA.getAuditLogs(500);
+      _flaggedCache = all.filter(l => FLAGGED_ACTIONS.has(l.action));
+      _flaggedLoaded = true;
+    } catch (err) {
+      document.getElementById('panelFlagged').innerHTML = `<div style="padding:30px;text-align:center;color:#ff6b6b">Unable to load flagged activity: ${esc(err.message)}</div>`;
+      return;
+    }
+  }
+  renderFlaggedTab();
+}
+function renderFlaggedTab() {
+  const logs = _flaggedCache.filter(l => inRange(l.createdAt));
+  const actionCounts = {};
+  logs.forEach(l => { actionCounts[l.action] = (actionCounts[l.action]||0)+1; });
+  const byAction = Object.entries(actionCounts).sort((a,b)=>b[1]-a[1]).map(([a,n]) => ({ label: titleCase(a), n }));
+  const rows = logs.slice(0, 100).map(l => `<tr>
+    <td>${esc(l.userName)}<div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#849495">${esc(l.userRole || 'anonymous')}</div></td>
+    <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#ff6b6b">${esc(l.action)}</span></td>
+    <td style="color:#b9cacb">${esc(l.page || '—')}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.details)}">${esc(l.details || '—')}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#849495">${l.createdAt ? new Date(l.createdAt).toLocaleString('en-ZA') : '—'}</td>
+  </tr>`).join('');
+  document.getElementById('panelFlagged').innerHTML = `
+    <div class="info-box" style="margin-bottom:14px;padding:10px 14px;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.15);border-radius:10px;font-size:12px;color:#ff9d9d;display:flex;align-items:center;gap:8px">
+      <span class="material-symbols-outlined ms" style="font-size:16px">flag</span>
+      Requests and actions that didn't go through — failed logins, permission denials, rate limiting, bot checks, and 2FA failures, from both the admin and user side.
+    </div>
+    <div id="flaggedMini"></div>
+    <div class="glass" style="border-radius:13px;padding:18px;margin-bottom:14px"><div class="panelTitle">By Type</div><div id="flaggedBars"></div></div>
+    <div class="glass" style="border-radius:13px;overflow-x:auto">
+      <div style="padding:13px 16px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;justify-content:flex-end"><button class="btnx" onclick="exportFlaggedCSV()">Export CSV</button></div>
+      <table class="tbl" style="min-width:640px"><thead><tr><th>User</th><th>Action</th><th>Page</th><th>Details</th><th>When</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="5" style="text-align:center;padding:30px;color:#849495">Nothing flagged in this range</td></tr>'}</tbody></table>
+    </div>`;
+  miniStats([{ v: logs.length, l: 'Flagged events in range (of ' + _flaggedCache.length + ' loaded)' }], 'flaggedMini', 1);
+  barList(byAction, 'flaggedBars');
+  window._flaggedDetailCache = logs.slice(0, 100);
+}
+function exportFlaggedCSV() {
+  exportCSV(window._flaggedDetailCache || [], [
+    { key: 'userName', label: 'User' }, { key: 'userRole', label: 'Role' }, { key: 'action', label: 'Action' },
+    { key: 'page', label: 'Page' }, { key: 'details', label: 'Details' }, { key: 'createdAt', label: 'When' },
+  ], 'flagged-activity.csv');
 }
 
 // ── Custom report builder (new) ─────────────────────────────────────────────
