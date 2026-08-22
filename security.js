@@ -415,6 +415,27 @@ const EC_SECURITY = (() => {
     return grant.create || grant.edit;
   }
 
+  // Fine-grained counterparts to canEdit() above, for the specific pages
+  // that distinguish an "Add X" button from a row's Edit/Delete/status
+  // controls — a create-only custom role sees the Add button but not the
+  // row actions, and vice versa, instead of canEdit()'s blanket either-or.
+  // Delete rides along with edit, same as the server-side split (see
+  // dataController.js's actionForOperation) — no separate canDelete.
+  function canCreate(pageKey) {
+    let user = null;
+    try { user = JSON.parse(sessionStorage.getItem('ec_session') || 'null'); } catch {}
+    if (!user) return false;
+    if (user.role === 'admin' || user.role === 'super_admin') return true;
+    return normalizeGrant(user.permissions && user.permissions[pageKey]).create;
+  }
+  function canEditRow(pageKey) {
+    let user = null;
+    try { user = JSON.parse(sessionStorage.getItem('ec_session') || 'null'); } catch {}
+    if (!user) return false;
+    if (user.role === 'admin' || user.role === 'super_admin') return true;
+    return normalizeGrant(user.permissions && user.permissions[pageKey]).edit;
+  }
+
   // Gate for the small set of actions restricted to the platform owner even
   // from other admins — creating organisations, approving org requests, and
   // suspending/reinstating orgs. Unlike canEdit, there is no custom-role
@@ -669,6 +690,8 @@ const EC_SECURITY = (() => {
     // Guard
     guardPage,
     canEdit,
+    canCreate,
+    canEditRow,
     isSuperAdmin,
     hasPageAccess,
     PAGE_ROLES,

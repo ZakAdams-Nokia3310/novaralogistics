@@ -242,8 +242,11 @@
 buildSidebar('admin-maintenance');
 const admin = EC_AUTH.require(['admin']);
 const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
-const _canEdit = EC_SECURITY.canEdit('admin-maintenance');
-if (!_canEdit) document.getElementById('logQueryBtn').style.display = 'none';
+// Fine-grained: Log Query is create; updating an existing query's status
+// below is edit — a role with only one of the two sees only the matching
+// control.
+const _canEditRow = EC_SECURITY.canEditRow('admin-maintenance');
+if (!EC_SECURITY.canCreate('admin-maintenance')) document.getElementById('logQueryBtn').style.display = 'none';
 DC_DATA.setOrgScope(admin.orgId);
 
 let activeType = 'all';
@@ -366,7 +369,7 @@ function renderTable() {
       <td>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btng" style="font-size:12px;padding:8px 12px" onclick="openDetail('${escA(item.id)}')">Details</button>
-          ${_canEdit && item.status !== 'resolved' ? `
+          ${_canEditRow && item.status !== 'resolved' ? `
             ${item.status === 'open' ? `<button class="btng" style="font-size:12px;padding:8px 12px;color:#ffd93d;border-color:rgba(255,217,61,.2)" onclick="updateStatus('${escA(item.id)}','in_progress')">In Progress</button>` : ''}
             <button class="btng" style="font-size:12px;padding:8px 12px;color:#00d4aa;border-color:rgba(0,212,170,.2)" onclick="updateStatus('${escA(item.id)}','resolved')">Resolve</button>
           ` : ''}
@@ -476,7 +479,7 @@ function openDetail(id) {
 
   const actions = document.getElementById('dActions');
   actions.innerHTML = '';
-  if (_canEdit && item.status !== 'resolved') {
+  if (_canEditRow && item.status !== 'resolved') {
     if (item.status === 'open') {
       const b1 = document.createElement('button');
       b1.className = 'btng';

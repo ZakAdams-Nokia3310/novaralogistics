@@ -290,8 +290,12 @@ const _ecUser = EC_AUTH.require(['admin']);
 // Rental applicant/equipment data can originate from the public,
 // unauthenticated rental-application form — escape before innerHTML.
 const esc = EC_SECURITY.sanitizeHtml, escA = EC_SECURITY.escJsAttr;
-const _canEdit = EC_SECURITY.canEdit('admin-rentals');
-if (!_canEdit) document.getElementById('addRentalBtn').style.display = 'none';
+// Fine-grained: Add Rental is create; every other action below (approve,
+// chase, mark returned, credit-check flow, application review) acts on an
+// EXISTING rental/application, so it's edit — a role with only one of the
+// two sees only the matching controls.
+const _canEditRow = EC_SECURITY.canEditRow('admin-rentals');
+if (!EC_SECURITY.canCreate('admin-rentals')) document.getElementById('addRentalBtn').style.display = 'none';
 DC_DATA.setOrgScope(_ecUser.orgId);
 
 function today() {
@@ -332,7 +336,7 @@ function actionCell(rental) {
   // rental-detail.html is an edit/delete surface, not a pure read view (see
   // FEATURE_PAGE_ALIASES in security.js) — a view-only custom-role holder
   // can't open it, so don't offer a link that would just bounce them.
-  if (!_canEdit) return '<span style="color:#849495;font-size:11px">View only</span>';
+  if (!_canEditRow) return '<span style="color:#849495;font-size:11px">View only</span>';
   const view = `<button class="btng" style="font-size:11px;padding:4px 8px" onclick="location.href='rental-detail?id=${id}'">View</button>`;
   if (rental.status === 'pending') return `
     <div style="display:flex;gap:5px">
@@ -594,7 +598,7 @@ function creditCheckBadge(a) {
 }
 
 function creditCheckActionBtn(a) {
-  if (!_canEdit) return '';
+  if (!_canEditRow) return '';
   const s = a.creditCheckStatus;
   if (s === 'completed') return `<button class="btng" style="flex:1;justify-content:center;color:#00d4aa;border-color:rgba(0,212,170,.22)" onclick="viewCreditCheck('${escA(a.id)}')"><span class="material-symbols-outlined ms" style="font-size:15px">fact_check</span>View Credit Check</button>`;
   if (s === 'requested') return `<button class="btng" disabled style="flex:1;justify-content:center;opacity:.65;cursor:wait"><span class="material-symbols-outlined ms ccspin" style="font-size:15px">progress_activity</span>Credit Check In Progress</button>`;
@@ -821,7 +825,7 @@ function renderReviewCreditSection(d) {
   }
   wrap.innerHTML = header + `
     <div style="font-size:12px;color:#849495;margin-bottom:9px">Not yet sent. Approval requires a completed or explicitly declined credit check.</div>
-    ${_canEdit ? `<div style="display:flex;gap:8px">
+    ${_canEditRow ? `<div style="display:flex;gap:8px">
       <button class="btnp" style="flex:1;justify-content:center;font-size:12px;padding:8px" onclick="sendForCreditCheck('${escA(d.id)}')">Send for Credit Check</button>
       <button class="btng" style="flex:1;justify-content:center;font-size:12px;padding:8px" onclick="declineCreditCheckFlow('${escA(d.id)}')">Decline Check</button>
     </div>` : ''}`;
@@ -879,7 +883,7 @@ async function openReviewApp(id) {
   renderReviewCreditSection(d);
 
   const actionsWrap = document.getElementById('reviewAppActions');
-  const canReview = _canEdit && d.status === 'PENDING';
+  const canReview = _canEditRow && d.status === 'PENDING';
   actionsWrap.style.display = canReview ? 'flex' : 'none';
   if (canReview) {
     const resolved = d.creditCheckStatus === 'COMPLETED' || d.creditCheckStatus === 'DECLINED';
